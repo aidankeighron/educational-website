@@ -1,9 +1,9 @@
 ---
-title: Project 1 Week 1
+title: Falling Sand 1
 author: aidan
 date: 2025-03-13 12:00:00 +0800
-categories: [JavaScript, Project 1]
-tags: [JavaScript]
+categories: [JavaScript, FallingSand]
+tags: [JavaScript, Easy]
 ---
 
 # About the project

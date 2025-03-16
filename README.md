@@ -3,3 +3,5 @@
 [Getting Started](https://chirpy.cotes.page/posts/getting-started/)
 
 [GitHub](https://github.com/cotes2020/jekyll-theme-chirpy)
+
+Running `bundle exec jekyll s`
