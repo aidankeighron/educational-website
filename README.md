@@ -17,4 +17,4 @@ If a code snipped is referencing a real file from a project add:
 {: .nolineno }
 ```
 
-This adds the file name to the code block and removes line numbers so users don't get confused
+This adds the file name to the code block and removes line numbers so users don't get confused 
