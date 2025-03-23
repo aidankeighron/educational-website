@@ -1,8 +1,8 @@
 ---
 title: Falling Sand 1
 author: aidan
-date: 2025-03-13 12:00:00 +0800
-categories: [JavaScript, FallingSand]
+date: 2025-03-25 12:00:00 +0800
+categories: [JavaScript]
 tags: [JavaScript, Easy]
 ---
 
