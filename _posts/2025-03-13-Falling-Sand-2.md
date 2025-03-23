@@ -1,12 +1,15 @@
 ---
 title: Falling Sand 1
 author: aidan
-date: 2025-03-13 12:00:00 +0800
+date: 2025-03-20 12:00:00 +0800
 categories: [JavaScript, FallingSand]
 tags: [JavaScript, Easy]
+description: In this project, you will learn the fundamentals of programming by building a fun and interactive simulation of different particles.
+comments: false
+pin: true
 ---
 
-# About the project
+## About the project
 
 Welcome to the Falling Sand tutorial! In this project, you will learn the fundamentals of programming by building a fun and interactive simulation of different particles.
 
@@ -26,54 +29,33 @@ By the end of this tutorial, you will have a working simulation where you can cl
 
 Once you've completed this tutorial, you can expand on it in many ways! You could add more particle types with unique behaviors (like fire that burns wood, or ice that melts), implement more complex physics like animals and plants. The possibilities are endless!
 
-# Setup
+## Setup
 
 First, you'll need to get the project code and set up your development environment.
 
-1. **Set up your IDE:** We will be using VS Code in this tutorial but you can use any IDE, you can download VS Code from [https://code.visualstudio.com/](https://code.visualstudio.com/). Install the Live Server extension in Visual Studio Code, open the Extensions marketplace (usually by clicking on the four squares icon on the left sidebar) and search for "Live Server" by Ritwick Dey. Click "Install".
+1. **Set up your IDE:** We will be using VS Code in this tutorial but you can use any IDE, you can download VS Code from [https://code.visualstudio.com/](https://code.visualstudio.com/){:target="\_blank"}. Install the Live Server extension in Visual Studio Code: open the Extensions marketplace (usually by clicking on the four squares icon on the left sidebar) and search for "Live Server" by Ritwick Dey. Click "Install".
 
-2. **Download the starter code:** If you don't have it already, download GitHub desktop: [https://desktop.github.com/download/](https://desktop.github.com/download/). Fork the project on GitHub: Go to [https://github.com/aidankeighron/Falling-Sand-Tutorial](https://github.com/aidankeighron/Falling-Sand-Tutorial) and click the "Fork" button in the top right corner. This will create a copy of the project in your own GitHub account. Then open your newly created fork and clone it in GitHub desktop.
+2. **Download the starter code:** If you don't have it already, download GitHub desktop: [https://desktop.github.com/download/](https://desktop.github.com/download/){:target="\_blank"}. Fork the project on GitHub: Go to [https://github.com/aidankeighron/Falling-Sand-Tutorial](https://github.com/aidankeighron/Falling-Sand-Tutorial){:target="\_blank"} and click the "Fork" button in the top right corner. This will create a copy of the project in your own GitHub account. Then open your newly created fork and clone it in GitHub desktop.
 
-# Running the project
+## Running the project
 
 Now let's get the project running in your browser.
 
 - **Open the forked project in VS Code:** Go to "File" -> "Open Folder" and select the directory where you cloned your forked repository.
-- **Start Live Server:** Open the index.html file in VS Code. Right-click anywhere in the file and select "Open with Live Server".
+- **Start Live Server:** Open the `index.html` file in VS Code. Right-click anywhere in the file and select "Open with Live Server".
 - **Open in a new tab (if it didn't automatically):** Live Server will usually open the webpage in your default browser. If it doesn't, you should see a message in the VS Code status bar at the bottom indicating the port number (e.g., "Port: 5500"). Open a new tab in your browser and navigate to http://127.0.0.1:5500/ (or the port number shown in VS Code).
 - 
 You should now see a webpage with the title "Falling Sand" and a blank rectangle (the canvas) in the center.
 
-# Basic JavaScript knowledge
+## Basic JavaScript knowledge
 
 This section will cover some fundamental JavaScript concepts that we'll be using in this tutorial. If you are already comfortable with JavaScript, feel free to skip to the next section.
 
-### **`let` vs `const`**
-
-In JavaScript, we use let and const to declare variables. Variables are like containers that hold data.
-
-- **`let`:** Use let when you know the value of the variable might change later in your code.
-
-```js
-let message = "Hello!";
-console.log(message); // Output: Hello!
-message = "Goodbye!";
-console.log(message); // Output: Goodbye!
-```
-
-- **`const`:** Use const when you know the value of the variable will not change after it's initially assigned.
-
-```js
-const pi = 3.14159;
-console.log(pi); // Output: 3.14159
-// pi = 3.14; // This would cause an error!
-```
-
-### HTML DOM (accessing HTML DOM using getElementById)
+### HTML DOM (accessing HTML DOM using `getElementById`)
 
 The HTML Document Object Model (DOM) represents the structure of your HTML document as a tree of objects. JavaScript can interact with this tree to dynamically change the content and behavior of your webpage.
 
-`getElementById()` is a JavaScript method that allows you to access a specific HTML element by its id attribute. In our index.html file, you'll find elements with IDs like canvas, speedRange, and clear-button. We can access these elements in our JavaScript code like this:
+`getElementById()` is a JavaScript method that allows you to access a specific HTML element by its id attribute. In our `index.html` file, you'll find elements with IDs like canvas, speedRange, and clear-button. We can access these elements in our JavaScript code like this:
 
 ```js
 const canvasElement = document.getElementById('canvas');
@@ -100,30 +82,34 @@ clearButtonElement.addEventListener('click', function() {
 In this code:
 
 - We get the button element using its ID.
-- We use the addEventListener() method to attach a function to the 'click' event.
-- The function inside addEventListener will be executed every time the button is clicked.
+- We use the `addEventListener()` method to attach a function to the `'click'` event.
+- The function inside `addEventListener` will be executed every time the button is clicked.
 
 
-# Draw particles on click
+## Draw particles on click
 
 Now let's start drawing particles on the canvas when you click the mouse.
 
-Brief overview of how canvas works
-The HTML <canvas> element is used to draw graphics on a webpage using JavaScript. It's like a blank painting surface that you can control with code. To draw on the canvas, you first need to get its 2D rendering context. This context provides methods for drawing shapes, text, images, and more.
+### Brief overview of how canvas works
 
-In our canvas.js file, you'll see this code at the top:
+The HTML `<canvas>` element is used to draw graphics on a webpage using JavaScript. It's like a blank painting surface that you can control with code. To draw on the canvas, you first need to get its 2D rendering context. This context provides methods for drawing shapes, text, images, and more.
 
-JavaScript
+In our `canvas.js` file, you'll see this code at the top:
 
+```js
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext("2d");
-This code gets the canvas element from our HTML and then gets its 2D rendering context, which we store in the ctx variable. We'll use this ctx variable to draw our particles.
+```
+{: file="canvas.js" }
+{: .nolineno }
 
-Explain mouse listeners (in context of code)
-In the canvas.js file, you'll also find a function called setUpMouseListeners():
+This code gets the canvas element from our HTML and then gets its 2D rendering context, which we store in the `ctx` variable. We'll use this `ctx` variable to draw our particles.
 
-JavaScript
+### Mouse Listeners
 
+In the `canvas.js` file, you'll also find a function called `setUpMouseListeners()`:
+
+```js
 export function setUpMouseListeners() {
     canvas.addEventListener("mousedown", (event) => {
         isDragging = true;
@@ -136,15 +122,19 @@ export function setUpMouseListeners() {
         isDragging = false;
     });
 }
-This function sets up three event listeners on our canvas element:
+```
+{: file="canvas.js" }
+{: .nolineno }
 
-mousedown: This event is triggered when you press the mouse button down while the cursor is over the canvas. When this happens, we set the isDragging variable to true and store the current mouse coordinates in the mousePosition variable.
-mousemove: This event is triggered every time you move the mouse cursor while it's over the canvas. We update the mousePosition variable with the latest coordinates.
-mouseup: This event is triggered when you release the mouse button. We set the isDragging variable back to false.
-In our main.js file, inside the update() function, you'll see how we use these listeners to create particles when the mouse is clicked and dragged:
+This function sets up three event listeners on our `canvas` element:
 
-JavaScript
+- **mousedown:** This event is triggered when you press the mouse button down while the cursor is over the canvas. When this happens, we set the `isDragging` variable to true and store the current mouse coordinates in the `mousePosition` variable.
+- **mousemove:** This event is triggered every time you move the mouse cursor while it's over the canvas. We update the `mousePosition` variable with the latest coordinates.
+- **mouseup:** This event is triggered when you release the mouse button. We set the `isDragging` variable back to `false`.
 
+In our `main.js` file, inside the `update()` function, you'll see how we use these listeners to create particles when the mouse is clicked and dragged:
+
+```js
 function update() {
     // Get mouse position
     const {isDragging, mousePosition} = getMouse();
@@ -154,13 +144,15 @@ function update() {
     }
     // ... rest of the update function
 }
-Write body of redraw function in canvas.js
-Now, let's write the code that actually draws the particles on the canvas. Open the canvas.js file and find the redraw() function. You'll see a TODO comment inside the inner for loop.
+```
+{: file="main.js" }
+{: .nolineno }
 
-Have them put this inside the body of the for loop first (you may want to show the for loop too or the whole method so they know exactly where it goes):
+### Draw particles on the canvas
 
-JavaScript
+Now, let's write the code that actually draws the particles on the canvas. Open the `canvas.js` file and find the `redraw()` function. You'll see a `TODO` comment inside the inner for loop.
 
+```js
 export function redraw() {
     // Clear previous frame
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -179,20 +171,24 @@ export function redraw() {
         }
     }
 }
-This code iterates through each cell in our grid (which represents the canvas). For each cell, it gets the particle at that location. It then sets the fillStyle of the canvas context to the particle's color and draws a filled rectangle using ctx.fillRect(). The col * eachSize and row * eachSize calculations convert the grid coordinates to pixel coordinates on the canvas.
+```
+{: file="canvas.js" }
+{: .nolineno }
 
-This code has an error, grid uses null to represent empty spaces so this will cause an error. Try clicking on the canvas now. Open your browser's developer tools (usually by pressing F12 or right-clicking and selecting "Inspect"). Go to the "Console" tab. You should see an error message.
+This code iterates through each cell in our grid (which represents the canvas). For each cell, it gets the particle at that location. It then sets the `fillStyle` of the canvas context to the particle's color and draws a filled rectangle using `ctx.fillRect()`. The `col * eachSize` and `row * eachSize` calculations convert the grid coordinates to pixel coordinates on the canvas. Once you have added the above code go ahead and run it and try to create some particles by clicking or dragging on the canvas.
 
-Explain briefly what the error message means, and explain how we use null to represent empty spaces.
+### Debugging errors
 
-The error message you are seeing likely says something like "Cannot read properties of null (reading 'color')". This means that at some point in our grid, there is a null value, and we are trying to access the color property of something that doesn't exist (i.e., null).
+> **The code we just added has an error.** `grid` uses `null` to represent empty spaces. This will cause an error when we try to access `particle.color` because `particle` is `null`. Open your browser's developer tools (usually by pressing `F12` or right-clicking and selecting "Inspect"). Go to the "Console" tab. You should see many error messages.
+{: .prompt-danger }
 
-In our grid, we are using null to represent empty spaces where there is no particle. When the redraw() function encounters a null value, it tries to access particle.color, which causes the error because null doesn't have a color property.
+The error message you are seeing likely says something like `Cannot read properties of null (reading 'color')`. This means that at some point in our grid, there is a `null` value, and we are trying to access the color property of something that doesn't exist (i.e., `null`).
 
-Then give them this working code or have them add a null check themselves (explain how null is false):
+In our grid, we are using `null` to represent empty spaces where there is no particle. When the `redraw()` function encounters a `null` value, it tries to access `particle.color`, which causes the error because `null` doesn't have a color property.
 
-JavaScript
+To fix this issue we need to add a `null` check to make sure we are not drawing any empty particles. This can be done by wrapping our drawing code in `if (particle != null)` or even easier `if (particle)`, this works because `null` is considered `false`, while our object (Class) is considered `true`.
 
+```js
 export function redraw() {
     // Clear previous frame
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -212,22 +208,30 @@ export function redraw() {
         }
     }
 }
-We've added a simple if (particle) check. In JavaScript, null is considered a "falsy" value, meaning that in a conditional statement, it will evaluate to false. So, this if statement only executes the drawing code if particle is not null, effectively skipping over empty spaces in our grid.
+```
+{: file="canvas.js" }
+{: .nolineno }
 
-Try clicking on the canvas again. You should now see orange squares appearing where you click!
+> There are surprisingly few things in JavaScript that are considered `false`. Mainly `false`, `0`, `""` (empty string), `null` and `undefined`, and `NaN`. It is important to note that empty lists `[]` and objects `{}` are considered `true`.
+{: .prompt-info }
 
-Move sand particle
+**Try clicking on the canvas again. You should now see orange squares appearing where you click!**
+
+## Sand particle
+
 Now that we can draw sand particles, let's make them fall!
 
-Explain JS classes and go over inheritance
-In programming, classes are like blueprints for creating objects. An object is a collection of data (properties) and actions (methods). In our project, we'll use classes to represent different types of particles, like Sand.
+### Inheritance
+
+In programming, `classes` are like blueprints for creating `objects`. An `object` is a collection of data (properties) and actions (methods). In our project, we'll use classes to represent different types of particles, like `Sand`.
+
+If you are confused about what classes are and how they work check out [this](https://www.w3schools.com/js/js_classes.asp){:target="\_blank"} breakdown
 
 Inheritance is a powerful concept in object-oriented programming where a new class (called a subclass or derived class) can inherit properties and methods from an existing class (called a superclass or base class). This helps us write more organized and reusable code.
 
-In our particles.js file, you'll see a base Particle class:
+In our `particles.js` file, you'll see a base Particle class:
 
-JavaScript
-
+```js
 /**
  * Base particle class
  */
@@ -260,12 +264,15 @@ class Particle {
 
     }
 }
-This is our base blueprint for all particles. It has a constructor that initializes the color and type properties, and it has two methods: swap() and update().
+```
+{: file="particles.js" }
+{: .nolineno }
+
+This is our base blueprint for all particles. It has a constructor that initializes the color and type properties, and it has two methods: `swap()` and `update()`.
 
 Next, you'll see the Sand class:
 
-JavaScript
-
+```js
 /**
  * Sand particle
  */
@@ -284,91 +291,80 @@ export class Sand extends Particle {
         // TODO update sand
     }
 }
-Notice the extends Particle keyword. This tells JavaScript that the Sand class inherits from the Particle class. This means that the Sand class automatically gets the color, type, swap(), and update() properties and methods from the Particle class. In the Sand class's constructor, we call super() to execute the Particle class's constructor and then set the specific color and type for sand.
+```
+{: file="particles.js" }
+{: .nolineno }
 
-The update(row, col) method is where we'll define how a sand particle behaves over time.
+Notice the `extends Particle` keyword. This tells JavaScript that the `Sand` class inherits from the `Particle` class. This means that the `Sand` class automatically gets the `color`, `type`, `swap()`, and `update()` properties and methods from the Particle class.
 
-Have them move the sand down one row every time update is called.
-To make the sand fall, we need to modify the update() method in the Sand class. We want the sand particle to move down one row in the grid every time the update() function is called.
+The `update(row, col)` method is where we'll define how a sand particle behaves over time. We need to modify this to move the sand down one row in the grid every time the `update()` is called.
 
-Give them this code for moveParticle:
+First we need a helper function to move a particle in the grid. Open the `canvas.js` file and find the `moveParticle()` function. Replace the `TODO` comment with the following code:
 
-Open the canvas.js file and find the moveParticle() function. Replace the TODO comment with the following code:   
-
-JavaScript
-
+```js
 export function moveParticle(row, col, newRow, newCol, swap) {
     grid[newRow][newCol] = grid[row][col];
     return true;
 }
-This function takes the current row and column (row, col) of a particle and the new row and column (newRow, newCol) where we want to move it. It then simply copies the particle from its old position in the grid to its new position.
+```
+{: file="canvas.js" }
+{: .nolineno }
 
-And this for the sand particle update function:
+This function takes the current row and column `(row, col)` of a particle and the new row and column `(newRow, newCol)`, where we want to move it. It then simply copies the particle from its old position in the grid to its new position (ignore the `return true;` for now).
 
-Now, open the particles.js file and find the update() method inside the Sand class. Replace the TODO comment with the following code:
+Now, open the `particles.js` file and find the `update()` method inside the `Sand` class. Replace the `TODO` comment with the following code:
 
-JavaScript
-
+```js
 update(row, col) {
     moveParticle(row, col, row+1, col);
 }
-This code calls the moveParticle() function to move the sand particle from its current row and col to the row below it (row + 1) in the same column (col).
+```
+{: file="particles.js" }
+{: .nolineno }
 
-Now, try clicking on the canvas a few times. You should see the sand particles appear, but they won't fall yet. This is because we haven't told our simulation to continuously update the particles. This is being done in the main.js file within the update() function and the setInterval.
 
-Have them try and fix the streaking issue, (hint its in the moveParticle function) (hint 2 what do we use to represent and empty particle) (hint 3 are we currently moving the particle or just making a new one)
+> Make sure you put this code in the `update` function of the `Sand` class **not** the base `Particle` class.
+{: .prompt-warning }
 
-You might notice that when the sand moves down, it leaves a trail behind it. This is because we are only copying the sand particle to the new position and not removing it from its old position.
+This code calls the `moveParticle()` function to move the sand particle from its current row and col to the row below it.
 
-Answer:
+### Issues with moving
 
-Open the canvas.js file and modify the moveParticle() function to also set the old position to null:
+**There are two errors with the current implementation, they should become apparent as soon as you run this code and click on the screen. Lets fix them.**
 
-JavaScript
 
-export function moveParticle(row, col, newRow, newCol, swap) {
-    grid[newRow][newCol] = grid[row][col];
-    grid[row][col] = null; // This line is the fix!
-    return true;
+When the sand reaches the bottom of the canvas, you might start seeing errors in the console again. This is because we are trying to move the sand to a row that doesn't exist (outside the bounds of our grid).
+
+To fix this, we need to update the `checkBounds` function to checks if a given row and column are within the valid bounds of our grid.
+
+> Task 1: Modify the `checkBounds` functions so it returns `true` if the `(row, col)` is within the bounds of `grid` and `false` otherwise. After writing function, use it in `moveParticle` to prevent a particle from being moved out of bounds. 
+{: .prompt-tip }
+
+<details>
+<summary>Task 1: Hint</summary>
+<blockquote>
+Think about the dimensions of our grid. How can you check if a given row is within the valid range of rows? What about the column?
+</blockquote>
+</details>
+
+<br>
+
+> **Try to complete the task before moving on**
+{: .prompt-danger }
+
+**Answer:**
+
+```js
+export function checkBounds(row, col) {
+    return row < grid.length && row >= 0 && col < grid[0].length && col >= 0;
 }
-Now, when the sand moves, we first place it in the new position and then set the old position to null, effectively removing it from its previous location. Try clicking on the canvas again – the streaking issue should be gone!
+```
+{: file="canvas.js" }
+{: .nolineno }
 
-The will get errors when sand hits the bottom. Have them create the checkBounds function to return false if the sand is outside the grid.
+`moveParticle` should look something like this:
 
-You might have noticed that when the sand reaches the bottom of the canvas, you might start seeing errors in the console again. This is because we are trying to move the sand to a row that doesn't exist (outside the bounds of our grid).   
-
-To fix this, we need to create a function that checks if a given row and column are within the valid bounds of our grid.
-
-Don't give them the answer (this will probably be a 335 nested dropdown where they drop down through a few hints before getting the answer)
-
-<details>
-<summary>Hint 1</summary>
-Think about the dimensions of our grid. How can you check if a given row is within the valid range of rows? What about the col?
-</details>
-
-<details>
-<summary>Hint 2</summary>
-Our grid has a certain number of rows (its length) and each row has a certain number of columns (the length of the first row, grid[0].length). You need to make sure the row index is not less than 0 and not greater than or equal to the total number of rows. Similarly for the col index.
-</details>
-
-<details>
-<summary>Hint 3</summary>
-You need to return true if both the row and col are within the valid bounds, and false otherwise. Use the && (AND) operator to combine your checks.
-</details>
-
-JavaScript
-
-row < grid.length && row >= 0 && col < grid[0].length && col >= 0;
-Have them use checkBounds to check the bounds of (row, col) and (newRow, newCol) and return false if either of the checks fail.
-
-Now that you have the checkBounds logic, let's implement it in our moveParticle() function. We should only attempt to move a particle if both its current position and its new position are within the bounds of the grid.
-
-Modify the moveParticle() function in canvas.js to include these checks.
-
-Move particle should look something like this:
-
-JavaScript
-
+```js
 export function moveParticle(row, col, newRow, newCol, swap) {
     if (!checkBounds(row, col) || !checkBounds(newRow, newCol)) {
         return false;
@@ -378,11 +374,51 @@ export function moveParticle(row, col, newRow, newCol, swap) {
     grid[row][col] = null;
     return true;
 }
-We've added an if condition at the beginning of the moveParticle() function. It checks if either the current position (row, col) or the new position (newRow, newCol) is outside the bounds of the grid using our checkBounds() function. If either of them is out of bounds, we immediately return false, indicating that the particle could not be moved.
+```
+{: file="canvas.js" }
+{: .nolineno }
 
-Now, the errors when the sand hits the bottom should be gone!
+You might notice that when the sand moves down, it leaves a trail behind it. This is because we are only copying the sand particle to the new position and not removing it from its old position.
 
-Sand physics
+> Task 2: Modify the `moveParticle` function to stop the particles streaking as they fall
+{: .prompt-tip }
+
+<details>
+<summary>Task 2: Hint</summary>
+<blockquote>
+What do we use to represent an empty particle
+
+<details>
+<summary>Hint 2</summary>
+<blockquote>
+Are we moving the particle or just making a new one
+</blockquote>
+</details>
+
+</blockquote>
+</details>
+
+<br>
+
+> **Try to complete the task before moving on**
+{: .prompt-danger }
+
+**Answer:**
+
+```js
+export function moveParticle(row, col, newRow, newCol, swap) {
+    grid[newRow][newCol] = grid[row][col];
+    grid[row][col] = null; // This line is the fix!
+    return true;
+}
+```
+{: file="canvas.js" }
+{: .nolineno }
+
+Now, the errors when the sand hits the bottom and the streaking should be gone!
+
+### Sand physics
+
 Let's make our sand behave a bit more realistically. Currently, it just falls straight down. We should add a check to make sure it doesn't overwrite other sand if there is already sand below it.
 
 Add a check in moveParticle to make sure sand does not overwrite another sand if it is below:
@@ -544,7 +580,7 @@ END OF TUTORIAL 1
 
 Congratulations! You've completed the first part of the Falling Sand tutorial. You can now create and make sand particles fall and react to simple physics. In the next part, we'll introduce more particle types and make them interact with each other.
 
-Water particle
+## Water particle
 Now let's add a new particle type: Water!
 
 Explain water particle code from solution branch:
@@ -603,7 +639,7 @@ You'll need to use the getRandomLocation() function from canvas.js to get a rand
 
 Have fun experimenting and see what kind of interesting water behaviors you can create! Remember to refresh your browser after making changes to the code.
 
-Swap function
+## Swap function
 Now let's implement the swap() function in our particles.js file. This will allow us to define how different particles interact when they try to move into the same space.
 
 Explain the swap functions and have them implement a system where sand falls beneath water.
@@ -724,7 +760,8 @@ solution: https://github.com/aidankeighron/Falling-Sand-Tutorial/tree/solution
 
 You can refer to the solution branch on GitHub if you encounter any issues.
 
-Add more particles (Rock and Dirt)
+## Add more particles (Rock and Dirt)
+
 Let's add two more particle types to our simulation: Rock and Dirt.
 
 Rock is just an extension of the base particle class with a different color and name and nothing else (you don't even need to define update or swap functions because it inherits it from Particle). DO NOT have them just create empty functions, explain the inheritance.
@@ -801,7 +838,8 @@ export function checkParticleType(value) {
 }
 Now you should be able to select Rock and Dirt from the dropdown and create them in your simulation! Rock will stay in place, and Dirt will fall like sand.
 
-Have water convert dirt into grass
+## Have water convert dirt into grass
+
 Let's add an interesting interaction: when water touches dirt, it will turn the dirt into grass!
 
 Create grass it inherits from sand, don't give them the code for this.
@@ -880,7 +918,8 @@ If the particle below is indeed dirt, we use the setParticle() function (from ca
 
 Now, try creating some dirt and then some water on top of it – you should see the dirt turn into grass!
 
-Expand
+## Expand
+
 Add x new particles.
 
 Here are a couple of ideas for new particles you can add to your simulation:
