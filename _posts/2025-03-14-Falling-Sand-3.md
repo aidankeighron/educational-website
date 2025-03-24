@@ -13,7 +13,10 @@ pin: true
 
 Now let's add a new particle type: Water!
 
-For water we will be using random numbers a lot. We have a `getRandomInt(min, max)` function in `util.js` that will be very helpful. It generates a random number between `min` and `max` inclusive (min and max are possible numbers). This is used to give a smippit of code
+For water we will be using random numbers a lot. We have a `getRandomInt(min, max)` function in `util.js` that will be very helpful. It generates a random number between `min` and `max` inclusive (min and max are possible numbers). This is used to give a snippet of code a random chance to run or not run.
+
+> Remember `0` is `false` and any other number, positive or negative is `true`.
+{: .prompt-info }
 
 ```js
 if (getRandomInt(0, 4)) { 
@@ -25,113 +28,128 @@ if (!getRandomInt(0, 3)) {
 }
 ```
 
-This code snippet uses the getRandomInt() function from util.js to generate a random integer between 0 (inclusive) and 4 (inclusive). The if condition will evaluate to true if the result of getRandomInt() is any number other than 0. In JavaScript, 0 is considered a "falsy" value, while any non-zero number is "truthy". Therefore, the body of this if statement has a 75% chance (since there are 4 non-zero numbers out of 5 possibilities) of being executed.
+Using this lets write some basic physics for a water particle. Add this class below `Sand` in `particles.js`:
 
-Explain how they can invert the probability with !
+```js
+export class Water extends Particle {
+    constructor() {
+        super();
+        this.color = "blue";
+        this.type = "water";
+    }
 
-You can easily invert this probability using the ! (NOT) operator:
+    update(row, col) {
+        // Try to move down
+        if (getRandomInt(0, 2) && !getParticle(row+1, col)) {
+            moveParticle(row, col, row+1, col, super.swap);
+        } 
+        
+        // Move left or right
+        if (getRandomInt(0, 1) && !getParticle(row, col+1)) {
+            moveParticle(row, col, row, col+1, super.swap);
+        }
+        else if (!getParticle(row, col-1)) {
+            moveParticle(row, col, row, col-1, super.swap);
+        }
+    }
+}
+```
+{: file="particles.js" }
+{: .nolineno }
 
-JavaScript
+And add water as an option when creating a particle
 
-if (!getRandomInt(0, 4)) { // body }
-Now, the if condition will only be true if getRandomInt(0, 4) returns 0. This means the body of the if statement will now have a 25% chance of being executed.
+```js
+/**
+ * Create particle based on dropdown name
+ * 
+ * @param {string} value 
+ * @returns 
+ */
+export function checkParticleType(value) {
+    if (value == "Sand") {
+        return new Sand();
+    }
+    // 👇 Put the following code here 👇
+    if (value == "Water") {
+        return new Water();
+    }
+    // 👆 Put the following code here 👆
+}
+```
+{: file="particles.js" }
+{: .nolineno }
 
-Task (don't give them answer and all) Have them mess around with water physics (what random range to use), extra movement options, floating water? random change to move to a random location, have them get creative with it (add what I just mentioned as examples). You need to add x new options?
+Now when you switch the particle dropdown to `Water` you will be able to create water particles.
 
-Task: Experiment with the Water particle's update() function in particles.js. Try the following:
+> Task: Mess around with water physics change the probabilities of movement, add extra movement options, make floating water? Random chance to move to a random location. Add **`3`** new things to waters `update` function
+{: .prompt-tip }
 
-Change the random range: Modify the arguments to getRandomInt() to see how it affects the probability of water moving horizontally. What happens if you use getRandomInt(0, 2)? What about getRandomInt(0, 10)?
 
 <details>
-<summary>Hint</summary>
-Look for the lines in the Water's update() function that use getRandomInt(). The second argument controls the upper limit of the random number (exclusive).
-</details>
-
+<summary>Suggestion 1</summary>
+<blockquote>
 Add more movement options: Currently, water tries to move down, then left or right. Try adding a small chance for it to move diagonally down-left or down-right.
-
-<details>
-<summary>Hint</summary>
-You can add more if conditions within the update() function, using getRandomInt() to control the probability of these new movements. Remember to use moveParticle() to actually move the water.
+</blockquote>
 </details>
 
+
+<details>
+<summary>Suggestion 2</summary>
+<blockquote>
 Floating water? Try making water have a small chance to move upwards. What parameters for getRandomInt() would you use for a very low probability?
-
-<details>
-<summary>Hint</summary>
-Moving upwards would involve decreasing the row value in moveParticle(). Think about how to make this happen very rarely.
+</blockquote>
 </details>
 
-Random change to move to a random location: This is a more advanced challenge! Try giving water a very small chance to teleport to a completely random empty location on the grid.
 
 <details>
-<summary>Hint</summary>
-You'll need to use the getRandomLocation() function from canvas.js to get a random row and col. Make sure the target location is empty before moving the water there!
+<summary>Suggestion 3</summary>
+<blockquote>
+Random change to move to a random location: This is a more advanced challenge! Try giving water a very small chance to teleport to a completely random location on the grid.
+</blockquote>
 </details>
 
-Have fun experimenting and see what kind of interesting water behaviors you can create! Remember to refresh your browser after making changes to the code.
+<br>
+
+Have fun experimenting and see what kind of interesting water behaviors you can create!
 
 ## Swap function
-Now let's implement the swap() function in our particles.js file. This will allow us to define how different particles interact when they try to move into the same space.
 
-Explain the swap functions and have them implement a system where sand falls beneath water.
+Now let's implement the `swap()` function in our `particles.js` file. This will allow us to define how different particles interact when they try to move into the same space.
 
-Currently, if sand tries to move into a space occupied by water, it will just stop. We want to make it so that sand falls beneath water. To do this, we need to implement the swap() method in both the Sand and Water classes.
+Currently, if sand tries to move into a space occupied by water, it will just stop and float on top of the water. We want to make it so that sand falls beneath water. To do this, we need to implement the `swap()` method in the Sand class. This will return `true` when a particle is allowed to swap with another when trying to move on to a grid location occupied by `other`.
 
-Open the particles.js file.
+Change the `swap()` function in the `Sand` class to look like this:
 
-Task: Implement the swap() method in the Sand class so that it returns true if the other particle is an instance of the Water class. Also, implement the swap() method in the Water class so that it returns true if the other particle is an instance of the Sand class.
 
-<details>
-<summary>Hint for Sand's swap()</summary>
-You can use the instanceof operator in JavaScript to check if an object is an instance of a particular class. For example, other instanceof Water will return true if other is a Water object.
-</details>
-
-<details>
-<summary>Hint for Water's swap()</summary>
-Similarly, in the Water class's swap() method, you'll check if other is an instance of the Sand class.
-</details>
-
-<details>
-<summary>Answer for Sand's swap()</summary>
-
-JavaScript
-
+```js
 swap(other) {
-    return other instanceof Water;
+    // Make sand fall below water
+    return other.type == "water";
 }
-</details>
+```
+{: file="particles.js" }
+{: .nolineno }
 
-<details>
-<summary>Answer for Water's swap()</summary>
+Now, lets modify the `moveParticle()` function to use the `swap` argument.
 
-JavaScript
-
-swap(other) {
-    return other instanceof Sand;
-}
-</details>
-
-Now, open the canvas.js file and modify the moveParticle() function to use the swap parameter.
-
-Task: Modify the moveParticle() function to check if there is a particle at the newRow and newCol. If there is, and the swap parameter is a function, call the swap function of the particle at the current location (grid[row][col]) with the particle at the new location as an argument. If the swap function returns true, then swap the positions of the two particles in the grid.
-
-JavaScript
-
+```js
 export function moveParticle(row, col, newRow, newCol, swap) {
     if (!checkBounds(row, col) || !checkBounds(newRow, newCol)) {
         return false;
     }
 
-    const targetParticle = getParticle(newRow, newCol);
-    const currentParticle = grid[row][col];
-
-    if (targetParticle) {
+    if (getParticle(newRow, newCol)) {
         // 👇 Add this check and swap logic 👇
-        if (swap && currentParticle.swap(targetParticle)) {
-            grid[newRow][newCol] = currentParticle;
-            grid[row][col] = targetParticle;
+        // If there is a particle but we can swap then flip the particles
+        if (swap && swap(getParticle(newRow, newCol))) {
+            const temp = grid[newRow][newCol];
+            grid[newRow][newCol] = grid[row][col];
+            grid[row][col] = temp;
             return true;
-        } else {
+        }
+        // If we can't swap then don't move
+        else {
             return false;
         }
         // 👆 Add this check and swap logic 👆
@@ -141,89 +159,47 @@ export function moveParticle(row, col, newRow, newCol, swap) {
     grid[row][col] = null;
     return true;
 }
-Now, open the particles.js file again and update the Sand and Water update() functions to pass a reference to their own swap method to the moveParticle() function.
+```
 
-Task: Modify the update() function for both Sand and Water to pass this.swap as the fifth argument to the moveParticle() function.
 
-<details>
-<summary>Answer for Sand's update()</summary>
+The `swap &&` in `if (swap && swap(getParticle(newRow, newCol))) {` just makes sure swap is not `undefined` or `null`.
 
-JavaScript
+## Add more particles (Stone and Dirt)
 
-update(row, col) {
-    let newRow = row + 1;
-    if (!checkBounds(newRow, col)) {
-        return;
-    }
+Let's add two more particle types to our simulation: `Stone` and `Dirt`.
 
-    if (!moveParticle(row, col, newRow, col, this.swap)) {
-        const direction = Math.random() < 0.5 ? -1 : 1;
-        moveParticle(row, col, row, col + direction, this.swap);
-    }
-}
-</details>
+Stone is just an extension of the base particle class with a different color and name (you don't even need to define update or swap functions because it inherits it from Particle).
 
-<details>
-<summary>Answer for Water's update() (simplified for basic movement)</summary>
+> Task: Create a new class called `Stone` that extends the Particle class. In its constructor, set the color to `"gray"` and the type to `"stone"`. You don't need to add any `update()` or `swap()` methods to the `Stone` class. Make sure to add `Stone` as an option in `checkParticleType`.
+{: .prompt-tip }
 
-JavaScript
+**Answer (click to unblur):**
 
-update(row, col) {
-    // Try to move down
-    let newRow = row + 1;
-    if (checkBounds(newRow, col) && !getParticle(newRow, col)) {
-        moveParticle(row, col, newRow, col, this.swap);
-        return;
-    }
-
-    // Try to move left or right randomly
-    const direction = Math.random() < 0.5 ? -1 : 1;
-    const newCol = col + direction;
-    if (checkBounds(row, newCol) && !getParticle(row, newCol)) {
-        moveParticle(row, col, row, newCol, this.swap);
-    }
-}
-</details>
-
-Now, when you run the simulation and create both sand and water, you should see the sand fall beneath the water!
-
-solution: https://github.com/aidankeighron/Falling-Sand-Tutorial/tree/solution
-
-You can refer to the solution branch on GitHub if you encounter any issues.
-
-## Add more particles (Rock and Dirt)
-
-Let's add two more particle types to our simulation: Rock and Dirt.
-
-Rock is just an extension of the base particle class with a different color and name and nothing else (you don't even need to define update or swap functions because it inherits it from Particle). DO NOT have them just create empty functions, explain the inheritance.
-
-Open the particles.js file.
-
-Task: Create a new class called Rock that extends the Particle class. In its constructor, set the color to "gray" and the type to "rock". You don't need to add any update() or swap() methods to the Rock class.
-
-JavaScript
-
+```js
 /**
  * Rock particle
  */
-export class Rock extends Particle {
+export class Stone extends Particle {
     constructor() {
         super(); // Call the constructor of the Particle class
         this.color = "gray";
-        this.type = "rock";
+        this.type = "stone";
     }
     // No update or swap needed!
 }
-Because the Rock class extends the Particle class, it automatically inherits the color and type properties from the Particle constructor. We just override the default values in the Rock constructor. Since rock shouldn't move or interact with other particles in this basic implementation, we don't need to define the update() or swap() methods. It will simply stay where it is placed.
+```
+{: file="particles.js" }
+{: .nolineno }
+{: .blur }
 
-Dirt inherits from Sand, you just need to change the color and title, the inheritance will copy the update and swap function (explain this).
+`Dirt` inherits from `Sand`, you just need to change the color and title, the inheritance will copy the `update` and `swap` function.
 
-Now let's add the Dirt particle. We want dirt to behave just like sand, but with a different color.
+> Task: Create a new class called `Dirt` that extends the Sand class. In its constructor, set the color to `"brown"` and the type to `"dirt"`. You don't need to add any `update()` or `swap()` methods to the `Dirt` class. Make sure to add `Dirt` as an option in `checkParticleType`.
+{: .prompt-tip }
 
-Task: Create a new class called Dirt that extends the Sand class. In its constructor, set the color to "brown" and the type to "dirt". You don't need to add any update() or swap() methods to the Dirt class.
+**Answer (click to unblur):**
 
-JavaScript
-
+```js
 /**
  * Dirt particle
  */
@@ -235,92 +211,45 @@ export class Dirt extends Sand {
     }
     // No update or swap needed! It inherits from Sand.
 }
-Since the Dirt class extends the Sand class, it inherits all the properties and methods of Sand, including its constructor, update(), and swap() methods. We only need to override the color and type in the Dirt constructor to give it its unique appearance.
+```
+{: file="particles.js" }
+{: .nolineno }
+{: .blur }
 
-Finally, we need to add these new particle types to the dropdown menu in our index.html file and update the checkParticleType() function in particles.js to handle them.
+If you have not done so yet update the `checkParticleType()` function to create and return instances of the `Stone` and `Dirt` classes when their corresponding values are selected in the dropdown.
 
-Task:
-
-Open the index.html file and add <option> tags for "Stone" and "Dirt" to the <select> element with the id="particle". Make sure the value attribute matches the type you set in the Rock and Dirt classes (e.g., "Stone" and "Dirt").
-
-HTML
-
-<select name="particle" id="particle">
-    <option value="Sand">Sand</option>
-    <option value="Water">Water</option>
-    <option value="Stone">Stone</option> <!- Add this -->
-    <option value="Dirt">Dirt</option>   <!- Add this -->
-    </select>
-Open the particles.js file and update the checkParticleType() function to create and return instances of the Rock and Dirt classes when their corresponding values are selected in the dropdown.
-
-JavaScript
-
+```js
 export function checkParticleType(value) {
     if (value == "Sand") {
         return new Sand();
     } else if (value == "Water") {
         return new Water();
     } else if (value == "Stone") { // Add this
-        return new Rock();
+        return new Stone();
     } else if (value == "Dirt") {   // Add this
         return new Dirt();
     }
     return null;
 }
-Now you should be able to select Rock and Dirt from the dropdown and create them in your simulation! Rock will stay in place, and Dirt will fall like sand.
+```
+{: file="particles.js" }
+{: .nolineno }
+
+Now you should be able to select `Stone` and `Dirt` from the dropdown and create them in your simulation! `Stone` will stay in place, and `Dirt` will fall like sand.
 
 ## Have water convert dirt into grass
 
 Let's add an interesting interaction: when water touches dirt, it will turn the dirt into grass!
 
-Create grass it inherits from sand, don't give them the code for this.
+> Task: Create a new class called `Grass` in `particles.js` that extends the `Sand` class. In its constructor, set the color to `"green"` and the type to `"grass"`. **DO NOT** add the particle as an option in `checkParticleType()`. Grass can ONLY be created with water and dirt.
+{: .prompt-tip }
 
-Task: Create a new class called Grass in particles.js that extends the Sand class. In its constructor, set the color to "lightgreen" and the type to "grass". Also, add an <option> tag for "Grass" in the index.html file and update the checkParticleType() function in particles.js.
 
-JavaScript
+Now, let's implement the logic for water turning dirt into grass. Go to the waters `update` function and add this code:
 
-/**
- * Grass particle
- */
-export class Grass extends Sand {
-    constructor() {
-        super();
-        this.color = "lightgreen";
-        this.type = "grass";
-    }
-}
-HTML
-
-<select name="particle" id="particle">
-    <option value="Sand">Sand</option>
-    <option value="Water">Water</option>
-    <option value="Stone">Stone</option>
-    <option value="Dirt">Dirt</option>
-    <option value="Grass">Grass</option> <!- Add this -->
-    </select>
-JavaScript
-
-export function checkParticleType(value) {
-    if (value == "Sand") {
-        return new Sand();
-    } else if (value == "Water") {
-        return new Water();
-    } else if (value == "Stone") {
-        return new Rock();
-    } else if (value == "Dirt") {
-        return new Dirt();
-    } else if (value == "Grass") { // Add this
-        return new Grass();
-    }
-    return null;
-}
-In the update function for water before anything else happens check if the particle below is dirt and if it is, remove the water and replace the dirt with grass:
-
-Now, let's implement the logic for water turning dirt into grass. Open the particles.js file and find the update() function in the Water class.
-
-JavaScript
-
+```js
 update(row, col) {
+    // 👇 Put the following code here 👇
     // Make water turn dirt into grass when it touches it
     if (getParticle(row+1, col)?.type == "dirt") {
         // Remove water and change dirt to grass
@@ -328,136 +257,75 @@ update(row, col) {
         setParticle(row, col, null);
         return;
     }
+    // 👆 Put the following code here 👆
 
     // Try to move down
-    let newRow = row + 1;
-    if (checkBounds(newRow, col) && !getParticle(newRow, col)) {
-        moveParticle(row, col, newRow, col, this.swap);
-        return;
+    if (getRandomInt(0, 2) && !getParticle(row+1, col)) {
+        moveParticle(row, col, row+1, col, this.swap);
+    } 
+    
+    // Move left or right
+    if (getRandomInt(0, 1) && !getParticle(row, col+1)) {
+        moveParticle(row, col, row, col+1, this.swap);
     }
-
-    // Try to move left or right randomly
-    const direction = Math.random() < 0.5 ? -1 : 1;
-    const newCol = col + direction;
-    if (checkBounds(row, newCol) && !getParticle(row, newCol)) {
-        moveParticle(row, col, row, newCol, this.swap);
+    else if (!getParticle(row, col-1)) {
+        moveParticle(row, col, row, col-1, this.swap);
     }
 }
-At the very beginning of the update() function for Water, we now check if the particle directly below the water (row + 1, col) exists and if its type is "dirt". We use the optional chaining operator (?.) to safely access the type property even if getParticle(row + 1, col) returns null.
-
-If the particle below is indeed dirt, we use the setParticle() function (from canvas.js) to replace the dirt with a new Grass particle. We also remove the water particle by setting the current cell (row, col) to null. The return statement here ensures that the water doesn't try to move further after converting the dirt to grass.
+```
+{: file="particles.js" }
+{: .nolineno }
 
 Now, try creating some dirt and then some water on top of it – you should see the dirt turn into grass!
 
-## Expand
+## Next Steps
 
-Add x new particles.
+
+### Adding new particles
+
+There are `3` things you need to do to add a new particle
+
+- Create a new class that inherits from `Particle` or is a subclass of `Particle`
+- Add the particle as an option in `checkParticleType`
+- Add the particle to the `type` dropdown in `index.html`
+
+Example of adding a new particle in `index.html`. `value` is the string that you use in `checkParticleType`, the text between the `option` tags is the text that is displayed on the dropdown.
+
+```html
+<!-- the rest of index.html -->
+
+<option value="Sand">Sand</option>
+<option value="Water">Water</option>
+<option value="Stone">Stone</option>
+<option value="Dirt">Dirt</option>
+<!-- <option value="Fire">Fire</option> -->
+<!-- <option value="Wood">Wood</option> -->
+<!-- <option value="Steam">Steam</option> -->
+```
+{: file="index.html" }
+{: .nolineno }
+
 
 Here are a couple of ideas for new particles you can add to your simulation:
 
-Some suggestions and how they work:
+#### Fire
 
-Fire:
+For the `Fire` particle you need to keep track of duration and max duration, every time update is called increase duration. Max duration should be initialized in the constructor  and once duration is `>=` to max duration is is remove (or has a chance to be removed). Fire works like water but moving up instead of down.
 
-In the Particle class add a property called duration, and one called maxDuration, every time update is called increase duration, maxDuration should be initialized in the constructor using a random number between x, and y. Fire works like water but moving up instead of down. And after the duration has ended it is removed. Show code examples of duration system?
+#### Wood
 
-JavaScript
+Acts like `Stone` but gets destroyed by fire and creates more of it. Maybe it absorbs water and that makes it harder to burn?
 
-class Particle {
-    constructor() {
-        this.color = "";
-        this.type = "";
-        this.duration = 0; // Current duration
-        this.maxDuration = 0; // Maximum duration
-    }
+#### Steam
 
-    swap(other) {
-        return false;
-    }
+Moves like water but upwards, has a very small chance to disappear, if it is at the top of the screen it has a chance to turn condense into water.
 
-    update(row, col) {
-        this.duration++;
-        if (this.duration > this.maxDuration) {
-            setParticle(row, col, null); // Remove particle if duration exceeded
-            return;
-        }
-    }
-}
-
-export class Fire extends Particle {
-    constructor() {
-        super();
-        this.color = "red";
-        this.type = "fire";
-        this.maxDuration = getRandomInt(20, 50); // Set random lifespan
-    }
-
-    update(row, col) {
-        super.update(row, col); // Call the base Particle's update method
-
-        // Try to move up
-        if (checkBounds(row - 1, col) && !getParticle(row - 1, col)) {
-            moveParticle(row, col, row - 1, col, this.swap);
-            return;
-        }
-
-        // Try to move left or right randomly
-        const direction = Math.random() < 0.5 ? -1 : 1;
-        const newCol = col + direction;
-        if (checkBounds(row, newCol) && !getParticle(row, newCol)) {
-            moveParticle(row, col, row, newCol, this.swap);
-        }
-    }
-}
-Remember to add "Fire" to the dropdown in index.html and handle it in checkParticleType() in particles.js.
-
-Steam:
-
-Moves like water but upwards, has a very small chance to disappear, if it is at the top of the screen it has a change to turn into water.
-
-JavaScript
-
-export class Steam extends Particle {
-    constructor() {
-        super();
-        this.color = "lightgray";
-        this.type = "steam";
-    }
-
-    update(row, col) {
-        // Small chance to disappear
-        if (Math.random() < 0.05) {
-            setParticle(row, col, null);
-            return;
-        }
-
-        // Try to move up
-        if (checkBounds(row - 1, col) && !getParticle(row - 1, col)) {
-            moveParticle(row, col, row - 1, col, this.swap);
-            return;
-        }
-
-        // Try to move left or right randomly
-        const direction = Math.random() < 0.5 ? -1 : 1;
-        const newCol = col + direction;
-        if (checkBounds(row, newCol) && !getParticle(row, newCol)) {
-            moveParticle(row, col, row, newCol, this.swap);
-            return;
-        }
-
-        // Chance to turn into water at the top
-        if (row === 0 && Math.random() < 0.1) {
-            setParticle(row, col, new Water());
-        }
-    }
-}
-Again, remember to add "Steam" to the dropdown and checkParticleType().
-
-Many more
 Think about other real-world substances or fantastical elements and how they might behave. Could you add:
 
-Wood: A solid particle that doesn't move.
-Acid: A particle that falls and dissolves other particles it touches.
-Ice: A particle that falls and can freeze water.
-Lava: A particle that falls and can burn other particles.
-The possibilities are endless! Get creative and have fun experimenting!
+- Acid: A particle that falls and dissolves other particles it touches.
+- Ice: A particle that falls and can freeze water.
+- Lava: A particle that falls and can burn other particles.
+
+
+> Task: Add at least `3` new particles and make sure to add interactions with other particles (don't just add `Metal` and make it act like `Stone`). Get creative with it.
+{: .prompt-tip }

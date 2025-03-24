@@ -18,3 +18,22 @@ If a code snipped is referencing a real file from a project add:
 ```
 
 This adds the file name to the code block and removes line numbers so users don't get confused 
+
+Snippets:
+
+```
+// 👇 Put the following code here 👇
+
+// 👆 Put the following code here 👆
+```
+
+```
+**Answer (click to unblur):**
+```
+
+```
+{: .prompt-tip }
+{: .prompt-info }
+{: .prompt-warning }
+{: .prompt-danger }
+```

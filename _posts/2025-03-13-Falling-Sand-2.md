@@ -312,11 +312,11 @@ export function moveParticle(row, col, newRow, newCol, swap) {
 
 This function takes the current row and column `(row, col)` of a particle and the new row and column `(newRow, newCol)`, where we want to move it. It then simply copies the particle from its old position in the grid to its new position (ignore the `return true;` for now).
 
-Now, open the `particles.js` file and find the `update()` method inside the `Sand` class. Replace the `TODO` comment with the following code:
+Now, open the `particles.js` file and find the `update()` method inside the `Sand` class. Replace the `TODO` comment with the following code (ignore `this.swap` we will be using it later):
 
 ```js
 update(row, col) {
-    moveParticle(row, col, row+1, col);
+    moveParticle(row, col, row+1, col, this.swap);
 }
 ```
 {: file="particles.js" }
@@ -457,9 +457,9 @@ Open the `particles.js` file and modify the `update()` function in the `Sand` cl
 ```js
 update(row, col) {
     // Try to move down
-    if (!moveParticle(row, col, row+1, col)) {
+    if (!moveParticle(row, col, row+1, col, this.swap)) {
         // If cannot move down, try to move left
-        moveParticle(row, col, row, col-1);
+        moveParticle(row, col, row, col-1, this.swap);
     }
 }
 ```
@@ -475,8 +475,8 @@ update(row, col) {
     let newRow = row + 1;
 
     // If nothing below move down
-    if (!moveParticle(row, col, newRow, col)) {
-        moveParticle(row, col, newRow, col-1);
+    if (!moveParticle(row, col, newRow, col, this.swap)) {
+        moveParticle(row, col, newRow, col-1, this.swap);
     }
 }
 ```
@@ -495,8 +495,8 @@ update(row, col) {
     // If nothing below move down
     if (!moveParticle(row, col, newRow, col)) {
         // Try to move left
-        if (!moveParticle(row, col, newRow, col-1)) {
-            moveParticle(row, col, newRow, col+1)
+        if (!moveParticle(row, col, newRow, col-1, this.swap)) {
+            moveParticle(row, col, newRow, col+1, this.swap)
         }
     }
 }
