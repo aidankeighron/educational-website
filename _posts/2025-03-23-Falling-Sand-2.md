@@ -7,6 +7,8 @@ tags: [JavaScript, Easy]
 description: Part 2 of the Falling Sand project. Creating new particles, and adding new interactions.
 comments: false
 pin: true
+media_subpath: /assets/tutorials/falling sand
+image: /demo.png
 ---
 
 ## Water particle

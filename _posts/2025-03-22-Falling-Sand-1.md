@@ -7,11 +7,15 @@ tags: [JavaScript, Easy]
 description: Part 1 of the Falling Sand Project. In this project, you will learn the fundamentals of programming by building a fun and interactive simulation of different particles.
 comments: false
 pin: true
+media_subpath: /assets/tutorials/falling sand
+image: /demo.png
 ---
 
 ## About the project
 
 Welcome to the Falling Sand tutorial! In this project, you will learn the fundamentals of programming by building a fun and interactive simulation of different particles.
+
+![Falling Sand Demo](/demo.gif)
 
 **What you will learn:**
 
@@ -33,9 +37,28 @@ Once you've completed this tutorial, you can expand on it in many ways! You coul
 
 First, you'll need to get the project code and set up your development environment.
 
-1. **Set up your IDE:** We will be using VS Code in this tutorial but you can use any IDE, you can download VS Code from [https://code.visualstudio.com/](https://code.visualstudio.com/){:target="\_blank"}. Install the Live Server extension in Visual Studio Code: open the Extensions marketplace (usually by clicking on the four squares icon on the left sidebar) and search for "Live Server" by Ritwick Dey. Click "Install".
+### Set up your IDE 
 
-2. **Download the starter code:** If you don't have it already, download GitHub desktop: [https://desktop.github.com/download/](https://desktop.github.com/download/){:target="\_blank"}. Fork the project on GitHub: Go to [https://github.com/aidankeighron/Falling-Sand-Tutorial](https://github.com/aidankeighron/Falling-Sand-Tutorial){:target="\_blank"} and click the "Fork" button in the top right corner. This will create a copy of the project in your own GitHub account. Then open your newly created fork and clone it in GitHub desktop.
+We will be using VS Code in this tutorial but you can use any IDE, you can download VS Code from [visualstudio.com](https://code.visualstudio.com/){:target="\_blank"}. 
+
+{% include embed/youtube.html id='KMxo3T_MTvY' %}
+
+**Install the Live Server extension in Visual Studio Code:** open the Extensions marketplace (usually by clicking on the four squares icon on the left sidebar) and search for "Live Server" by Ritwick Dey. Click "Install".
+
+[Tips and Tricks for VS Code](https://www.youtube.com/watch?v=ifTF3ags0XI&t=343s&ab_channel=Fireship){:target="\_blank"}
+
+### Download the starter code 
+
+For version control, we will use GitHub. If you're not familiar, GitHub is a platform for version control and collaboration, allowing developers to manage, share, and track changes to code efficiently, making teamwork and project management easier. Like Google Drive for programmers.
+
+{% include embed/youtube.html id='hwP7WQkmECE' %}
+
+Here is a more in-depth breakdown oh what GitHub is and how it works [Introduction to GitHub](https://digital.gov/resources/an-introduction-github/){:target="\_blank"}.
+
+If you don't have it already, download GitHub desktop: [desktop.github.com/download](https://desktop.github.com/download/){:target="\_blank"}. Fork the project on GitHub: Go to [github.com/aidankeighron/Falling-Sand-Tutorial](https://github.com/aidankeighron/Falling-Sand-Tutorial){:target="\_blank"} and click the "Fork" button in the top right corner. This will create a copy of the project in your own GitHub account. Then open your newly created fork and clone it in GitHub desktop.
+
+> A `fork` is a personal copy of a codebase where you can make changes without affecting others.
+{: .prompt-info }
 
 ## Running the project
 
@@ -49,13 +72,15 @@ You should now see a webpage with the title "Falling Sand" and a blank rectangle
 
 ## Basic JavaScript knowledge
 
-This section will cover some fundamental JavaScript concepts that we'll be using in this tutorial. If you are already comfortable with JavaScript, feel free to skip to the next section.
+This section will cover some fundamental JavaScript concepts that we'll be using in this tutorial. If you are already comfortable with JavaScript, feel free to skip to the next section. [w3schools](https://www.w3schools.com/js/default.asp) is a great resource for learning or refreshing your knowledge of any of these concepts.
 
 ### HTML DOM (accessing HTML DOM using `getElementById`)
 
 The HTML Document Object Model (DOM) represents the structure of your HTML document as a tree of objects. JavaScript can interact with this tree to dynamically change the content and behavior of your webpage.
 
 `getElementById()` is a JavaScript method that allows you to access a specific HTML element by its id attribute. In our `index.html` file, you'll find elements with IDs like canvas, speedRange, and clear-button. We can access these elements in our JavaScript code like this:
+
+**Example (you don't need to add this code)**
 
 ```js
 const canvasElement = document.getElementById('canvas');
@@ -65,11 +90,15 @@ const clearButtonElement = document.getElementById('clear-button');
 console.log(canvasElement); // This will log the canvas HTML element to the console.
 ```
 
+Further reading: [w3schools HTML DOM](https://www.w3schools.com/js/js_htmldom.asp)
+
 ### Event listeners
 
 Event listeners allow you to respond to specific events that happen on your webpage, such as a user clicking a button or moving their mouse. We attach event listeners to HTML elements using JavaScript.
 
 Here's an example of how we can add an event listener to our "Clear Screen" button:
+
+**Example (you don't need to add this code)**
 
 ```js
 const clearButtonElement = document.getElementById('clear-button');
@@ -85,6 +114,7 @@ In this code:
 - We use the `addEventListener()` method to attach a function to the `'click'` event.
 - The function inside `addEventListener` will be executed every time the button is clicked.
 
+Further reading: [w3schools Event Listener](https://www.w3schools.com/js/js_htmldom_eventlistener.asp)
 
 ## Draw particles on click
 
