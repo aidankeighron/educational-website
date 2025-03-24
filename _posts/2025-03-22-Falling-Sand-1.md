@@ -360,6 +360,7 @@ export function checkBounds(row, col) {
 ```
 {: file="canvas.js" }
 {: .nolineno }
+{: .blur }
 
 `moveParticle` should look something like this:
 

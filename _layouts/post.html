@@ -181,11 +181,9 @@ script_includes:
 
     for (let i = 0; i < blurredCodeBlocks.length; ++i) {
       const blurredCodeBlock = blurredCodeBlocks[i]; 
-      const removeBlur = () => {
+      blurredCodeBlock.addEventListener("click", () => {
         blurredCodeBlock.classList.remove("blur");
-        blurredCodeBlock.removeEventListener("click", removeBlur);
-      }
-      blurredCodeBlock.addEventListener("click", removeBlur);
+      });
     }
   </script>
 </article>
