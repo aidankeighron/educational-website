@@ -8,7 +8,7 @@ description: Part 2 of the Falling Sand project. Creating new particles, and add
 comments: false
 pin: true
 media_subpath: /assets/tutorials/falling sand
-image: /demo.png
+image: /demo.PNG
 ---
 
 ## Water particle
