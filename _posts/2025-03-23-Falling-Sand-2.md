@@ -59,7 +59,7 @@ export class Water extends Particle {
 {: file="particles.js" }
 {: .nolineno }
 
-And add water as an option when creating a particle
+And add water as an option when creating a particle in `checkParticleType` in `particles.js`.
 
 ```js
 /**
@@ -117,11 +117,11 @@ Have fun experimenting and see what kind of interesting water behaviors you can 
 
 ## Swap function
 
-Now let's implement the `swap()` function in our `particles.js` file. This will allow us to define how different particles interact when they try to move into the same space.
+Now let's implement the `swap` function in our `particles.js` file. This will allow us to define how different particles interact when they try to move into the same space.
 
-Currently, if sand tries to move into a space occupied by water, it will just stop and float on top of the water. We want to make it so that sand falls beneath water. To do this, we need to implement the `swap()` method in the Sand class. This will return `true` when a particle is allowed to swap with another when trying to move on to a grid location occupied by `other`.
+Currently, if sand tries to move into a space occupied by water, it will just stop and float on top of the water. We want to make it so that sand falls beneath water. To do this, we need to implement the `swap` method in the Sand class. This will return `true` when a particle is allowed to swap with another when trying to move on to a grid location occupied by `other`.
 
-Change the `swap()` function in the `Sand` class to look like this:
+Change the `swap` function in the `Sand` class to look like this:
 
 
 ```js
@@ -133,7 +133,7 @@ swap(other) {
 {: file="particles.js" }
 {: .nolineno }
 
-Now, lets modify the `moveParticle()` function to use the `swap` argument.
+Now, lets modify the `moveParticle` function in `canvas.js` to use the `swap` argument.
 
 ```js
 export function moveParticle(row, col, newRow, newCol, swap) {
@@ -162,6 +162,8 @@ export function moveParticle(row, col, newRow, newCol, swap) {
     return true;
 }
 ```
+{: file="canvas.js" }
+{: .nolineno }
 
 
 The `swap &&` in `if (swap && swap(getParticle(newRow, newCol))) {` just makes sure swap is not `undefined` or `null`.
@@ -172,7 +174,7 @@ Let's add two more particle types to our simulation: `Stone` and `Dirt`.
 
 Stone is just an extension of the base particle class with a different color and name (you don't even need to define update or swap functions because it inherits it from Particle).
 
-> Task: Create a new class called `Stone` that extends the Particle class. In its constructor, set the color to `"gray"` and the type to `"stone"`. You don't need to add any `update()` or `swap()` methods to the `Stone` class. Make sure to add `Stone` as an option in `checkParticleType`.
+> Task: Create a new class called `Stone` that extends the Particle class. In its constructor, set the color to `"gray"` and the type to `"stone"`. You don't need to add any `update` or `swap` methods to the `Stone` class. Make sure to add `Stone` as an option in `checkParticleType`.
 {: .prompt-tip }
 
 **Answer (click to unblur):**
@@ -196,7 +198,7 @@ export class Stone extends Particle {
 
 `Dirt` inherits from `Sand`, you just need to change the color and title, the inheritance will copy the `update` and `swap` function.
 
-> Task: Create a new class called `Dirt` that extends the Sand class. In its constructor, set the color to `"brown"` and the type to `"dirt"`. You don't need to add any `update()` or `swap()` methods to the `Dirt` class. Make sure to add `Dirt` as an option in `checkParticleType`.
+> Task: Create a new class called `Dirt` that extends the Sand class. In its constructor, set the color to `"brown"` and the type to `"dirt"`. You don't need to add any `update` or `swap` methods to the `Dirt` class. Make sure to add `Dirt` as an option in `checkParticleType`.
 {: .prompt-tip }
 
 **Answer (click to unblur):**
@@ -218,7 +220,7 @@ export class Dirt extends Sand {
 {: .nolineno }
 {: .blur }
 
-If you have not done so yet update the `checkParticleType()` function to create and return instances of the `Stone` and `Dirt` classes when their corresponding values are selected in the dropdown.
+If you have not done so yet update the `checkParticleType` function to create and return instances of the `Stone` and `Dirt` classes when their corresponding values are selected in the dropdown.
 
 ```js
 export function checkParticleType(value) {
@@ -243,11 +245,11 @@ Now you should be able to select `Stone` and `Dirt` from the dropdown and create
 
 Let's add an interesting interaction: when water touches dirt, it will turn the dirt into grass!
 
-> Task: Create a new class called `Grass` in `particles.js` that extends the `Sand` class. In its constructor, set the color to `"green"` and the type to `"grass"`. **DO NOT** add the particle as an option in `checkParticleType()`. Grass can ONLY be created with water and dirt.
+> Task: Create a new class called `Grass` in `particles.js` that extends the `Sand` class. In its constructor, set the color to `"green"` and the type to `"grass"`. **DO NOT** add the particle as an option in `checkParticleType`. Grass can ONLY be created with water and dirt.
 {: .prompt-tip }
 
 
-Now, let's implement the logic for water turning dirt into grass. Go to the waters `update` function and add this code:
+Now, let's implement the logic for water turning dirt into grass. Go to the Water's `update` function in `particles.js` and add this code:
 
 ```js
 update(row, col) {
