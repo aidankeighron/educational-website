@@ -8,7 +8,7 @@ description: Part 1 of the Falling Sand Project. In this project, you will learn
 comments: false
 pin: true
 media_subpath: /assets/tutorials/falling sand
-image: /demoHeader.png
+image: /demoHeader1.png
 ---
 
 ## About the project
