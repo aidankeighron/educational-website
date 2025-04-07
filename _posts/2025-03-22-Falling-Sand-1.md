@@ -79,7 +79,7 @@ You should now see a webpage with the title "Falling Sand" and a blank rectangle
 
 ## Basic JavaScript knowledge
 
-This section will cover some fundamental JavaScript concepts that we'll be using in this tutorial. If you are already comfortable with JavaScript, feel free to skip to the next section. [w3schools](https://www.w3schools.com/js/default.asp) is a great resource for learning or refreshing your knowledge of any of these concepts.
+This section will cover some fundamental JavaScript concepts that we'll be using in this tutorial. If you are already comfortable with JavaScript, feel free to skip to the next section. [w3schools](https://www.w3schools.com/js/default.asp){:target="\_blank"} is a great resource for learning or refreshing your knowledge of any of these concepts.
 
 ### HTML DOM (accessing HTML DOM using `getElementById`)
 
