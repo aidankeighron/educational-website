@@ -106,6 +106,10 @@ You should see your extension in your extension list (you might need to pin it).
 
 ## Create a basic UI
 
+Let’s improve the popup so users can upload their syllabus file for us to use!
+
+Within our `<body>` element, we’ll include an `<input>` element with the type set to "file" — this allows users to select and submit their syllabus. Just below the input, we’ll add a `<p>` tag that lets them know where to click to download their CSV. Later on, we’ll update the innerHTML of this `<p>` tag to contain the downloadable file link once it’s ready!
+
 ### HTML
 
 ### CSS
