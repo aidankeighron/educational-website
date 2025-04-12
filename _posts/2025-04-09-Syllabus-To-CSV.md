@@ -125,8 +125,6 @@ Now that we’ve set up a file input, let’s write the JavaScript needed to han
 
 We’ll be using `document.getElementById()` to grab our file input and attach an event listener that runs every time a user selects a file.
 
-### 📦 Step-by-step breakdown
-
 ```js
 document.getElementById('file-upload').addEventListener('change', async () => {}
 ```
@@ -156,7 +154,7 @@ A purpose field — this is useful if your API requires it (in this case, to lab
 
 The actual uploaded file, wrapped in a new File object.
 
-✅ Note: Wrapping the file again with new File([...]) is optional but helpful if you want to manipulate the name or metadata before sending.
+> ✅ **Note:**  Wrapping the file again with new File([...]) is optional but helpful if you want to manipulate the name or metadata before sending.
 
 This is the foundation of getting the syllabus file from the user and preparing it for conversion.
 
