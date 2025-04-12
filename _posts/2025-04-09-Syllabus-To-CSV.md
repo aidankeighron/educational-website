@@ -126,18 +126,28 @@ Now that we’ve set up a file input, let’s write the JavaScript needed to han
 We’ll be using `document.getElementById()` to grab our file input and attach an event listener that runs every time a user selects a file.
 
 ```js
-document.getElementById('file-upload').addEventListener('change', async () => {}
+document.getElementById('file-upload').addEventListener('change', async () => {
+    // all the lines below will go inside here
+});
 ```
+Here, we’re listening for the "change" event on the file input id (or whatever id you used) — this fires whenever a user picks a file.
+```js
+async () => {}
+```
+Async allows us to use await inside the function. Since we'll likely send the file to an external API (which takes time), we want to pause and wait for the response before moving on — this keeps the code clean and readable.
 
-Here, we’re listening for the "change" event on the file input id or whatever id you used — this fires whenever a user picks a file.
+Without async, we’d have to use .then() chains, which are harder to manage.
 
+Arrow function syntax (() => {}) is a modern way to write functions in JavaScript. It's short, clean, and avoids creating its own this context — which works well here since we don’t need to refer to the event handler’s context directly.
+
+> ✅ **Tip:** In short we use async () => {} to write cleaner, more modern code that lets us easily work with APIs that take time to respond.
 ```js
 const fileUploaded = this.files.item(0);
 ```
 
-This line should be within our function which grabs the first file the user selected. Since we’re only supporting one file at a time, we access the file at index 0.
+This line grabs the first file the user selected. Since we’re only supporting one file at a time, we access the file at index 0.
 
-Below you should create our own safety check to check if fileUploaded is null if it is we want to return.
+Below you should create your own safety check to check if fileUploaded is null. If it is, we want to return.
 
 ```js
 const form = new FormData();
@@ -156,9 +166,13 @@ The actual uploaded file, wrapped in a new File object.
 
 > ✅ **Note:**  Wrapping the file again with new File([...]) is optional but helpful if you want to manipulate the name or metadata before sending.
 
+> Important: All of these lines (fileUploaded, if (fileUploaded == null), and the FormData block) should be written inside the event listener function — directly under the async () => {} line.
+{: .prompt-info }
+
 This is the foundation of getting the syllabus file from the user and preparing it for conversion.
 
 In the next step, we’ll send this FormData to an OCR or AI model for parsing and response.
+
 ## Convert upload to PDF
 
 ### Upload PDF
