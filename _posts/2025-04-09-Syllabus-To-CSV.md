@@ -108,7 +108,7 @@ You should see your extension in your extension list (you might need to pin it).
 
 Let’s improve the popup so users can upload their syllabus file for us to use!
 
-Within our `<body>` element, we’ll add an `<input>` element with the type set to `"file"` — this allows users to select and submit their syllabus. Just below the input, we’ll include a `<p>` tag to let users know where they’ll be able to click and download their CSV file, which can contain text like **Click here to download your file!**.
+Within our `<body>` element, we’ll add an `<input>` element with the type set to `"file"` — this allows users to select and submit their syllabus and add a respective id which we will use for our event listeners. Just below the input, we’ll include a `<p>` tag to let users know where they’ll be able to click and download their CSV file, which can contain text like **Click here to download your file!**.
 
 > ✅ **Tip:** Make sure to properly close both the `<input>` and `<p>` tags.
 
@@ -121,6 +121,46 @@ Using `type="module"` allows us to use modern JavaScript features such as `impor
 
 ## Handle file uploads
 
+Now that we’ve set up a file input, let’s write the JavaScript needed to handle uploaded files and prepare them for processing.
+
+We’ll be using `document.getElementById()` to grab our file input and attach an event listener that runs every time a user selects a file.
+
+### 📦 Step-by-step breakdown
+
+```js
+document.getElementById('file-upload').addEventListener('change', async () => {}
+```
+
+Here, we’re listening for the "change" event on the file input id or whatever id you used — this fires whenever a user picks a file.
+
+```js
+const fileUploaded = this.files.item(0);
+```
+
+This line should be within our function which grabs the first file the user selected. Since we’re only supporting one file at a time, we access the file at index 0.
+
+Below you should create our own safety check to check if fileUploaded is null if it is we want to return.
+
+```js
+const form = new FormData();
+form.append('purpose', 'ocr');
+form.append('file', new File([fileUploaded], `${fileUploaded.name}`));
+```
+Here, we create a FormData object to prepare for sending the file to an external API.
+
+FormData works like a key-value map that you can send with fetch() for things like file uploads.
+
+We add two things:
+
+A purpose field — this is useful if your API requires it (in this case, to label it for OCR processing).
+
+The actual uploaded file, wrapped in a new File object.
+
+✅ Note: Wrapping the file again with new File([...]) is optional but helpful if you want to manipulate the name or metadata before sending.
+
+This is the foundation of getting the syllabus file from the user and preparing it for conversion.
+
+In the next step, we’ll send this FormData to an OCR or AI model for parsing and response.
 ## Convert upload to PDF
 
 ### Upload PDF
