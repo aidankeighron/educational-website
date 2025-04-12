@@ -185,6 +185,23 @@ Mistral OCR is a powerful AI model that can extract structured information from 
 > 🔗 Learn more: [Mistral OCR announcement](https://mistral.ai/news/mistral-ocr)
 
 ---
+### 🌐 What is an API?
+
+Before we use Mistral OCR, let’s take a quick step back and understand **what an API actually is**.
+
+An **API (Application Programming Interface)** is a way for two programs to talk to each other. In our case, we’ll be using JavaScript to talk to an external AI service (Mistral) — and that conversation happens through an API.
+
+> 🧠 Think of it like placing an order at a restaurant: you (the client) tell the waiter (the API) what you want, and the waiter brings it from the kitchen (the server). You don’t need to know how the kitchen works — just how to place an order properly.
+
+### 🎥 Helpful Videos
+
+- ▶️ [**What is an API?** (by Simply Explained)](https://www.youtube.com/watch?v=ByGJQzlzxQg&t=9s)  
+  *This video explains APIs using real-world analogies — perfect if you're just starting out.*
+
+- ▶️ [**4 Most Important HTTP Requests That Can Be Made to an API**](https://www.youtube.com/watch?v=tkfVQK6UxDI)  
+  *This breaks down the core HTTP methods you'll use when working with APIs: GET, POST, PUT, and DELETE.*
+
+---
 
 ### What is an API Key?
 
