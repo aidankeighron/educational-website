@@ -171,7 +171,7 @@ The actual uploaded file, wrapped in a new File object.
 
 This is the foundation of getting the syllabus file from the user and preparing it for conversion.
 
-In the next step, we’ll send this FormData to an OCR or AI model for parsing and response.
+In the next step, we’ll send this FormData to an OCR model for parsing and response.
 
 ## Convert upload to PDF
 
