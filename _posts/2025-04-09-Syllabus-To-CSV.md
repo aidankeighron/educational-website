@@ -108,13 +108,13 @@ You should see your extension in your extension list (you might need to pin it).
 
 Let’s improve the popup so users can upload their syllabus file for us to use!
 
-Within our `<body>` element, we’ll add an `<input>` element with the type set to `"file"` — this allows users to select and submit their syllabus. Just below the input, we’ll include a `<p>` tag to let users know where they’ll be able to click and download their CSV file.
+Within our `<body>` element, we’ll add an `<input>` element with the type set to `"file"` — this allows users to select and submit their syllabus. Just below the input, we’ll include a `<p>` tag to let users know where they’ll be able to click and download their CSV file, which can contain text like **Click here to download your file!**.
 
 > ✅ **Tip:** Make sure to properly close both the `<input>` and `<p>` tags.
 
 Next, we need to connect our JavaScript to this HTML. To do that, we’ll add a `<script>` tag right before the closing `</body>` tag. The script should have `type="module"` and `src="popup.js"`.
 
-This tells the browser to load the logic from our `popup.js` file — the place where all our “behind-the-scenes” functionality will live. Later, we’ll also update the `innerHTML` of the `<p>` tag to contain a downloadable link once the file has been processed.
+Using `type="module"` allows us to use modern JavaScript features such as `import` and `export` statements. The `src` attribute tells the browser to load the logic from our `popup.js` file — the place where all our “behind-the-scenes” functionality will live. Later, we’ll also update the `innerHTML` of the `<p>` tag to contain a downloadable link once the file has been processed.
 
 > Make sure to include the script tag at the bottom of the body or else your JavaScript will not work on your HTML elements.
 {: .prompt-info }
