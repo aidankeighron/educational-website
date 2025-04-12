@@ -253,6 +253,119 @@ You're now ready to securely connect to Mistral and begin sending files for pars
 
 ## Convert upload to PDF
 
+Now that we’ve built our `FormData` object containing the uploaded syllabus file, we’re ready to send it to **Mistral’s OCR API** for processing.
+
+We’ll do this using JavaScript’s `fetch()` function — this allows us to make requests to APIs directly from the browser.
+
+Here’s the full function:
+
+```js
+/**
+ * Convert a PDF to a JSON object
+ * 
+ * @param {FormData} form 
+ * @returns {Promise<Object>}
+ */
+async function PDFToJson(form) {
+    const uploadedPDF = await fetch('https://api.mistral.ai/v1/files', {
+        method: 'POST',
+        headers: {
+            "Authorization": `Bearer ${mistralApiKey}`
+        },
+        body: form,
+    });
+
+    const PDFJson = await uploadedPDF.json(); 
+
+}
+```
+🧠 Let’s break it down step-by-step:
+### The comment block at the top
+```js
+/**
+ * Convert a PDF to a JSON object
+ * 
+ * @param {FormData} form 
+ * @returns {Promise<Object>}
+ */
+```
+This is a JSDoc-style comment, which is a great practice even in beginner projects. It tells other developers (or future you):
+
+What this function does
+
+What kind of argument it expects (FormData)
+
+What it returns (a promise that resolves to a JSON object)
+
+> 💡 Writing clear comments like this helps others understand your code quickly and makes your project easier to maintain or expand in the future.
+{: .prompt-info }
+
+###  Fetch
+```js
+fetch('https://api.mistral.ai/v1/files', { ... })
+```
+This is the URL of Mistral’s file upload API. When we call this, we’re telling Mistral:
+
+> “Hey, I want to upload a file for OCR processing.”
+```js
+method: 'POST'
+```
+This tells the API we want to send data (in this case, the file).
+There are other methods like GET, PUT, and DELETE, but POST is most common for sending form or file data.
+
+### Headers
+```js
+headers: { "Authorization": "Bearer ... " }
+```
+APIs often require authentication — this is how they know who you are.
+
+The "Authorization" header tells the API,
+
+"Here’s my API key — please allow me to use your service."
+
+"Bearer" is the standard keyword used to pass tokens securely.
+
+You should already have your API key stored in hidden.js, and here we’re inserting it using backticks and ${} for string interpolation.
+
+### Body
+```js
+body:form
+```
+This is the actual file upload!
+We’re sending the FormData object we created earlier (which includes the PDF file) as the body of the request.
+```js
+await uploadedPDF.json()
+```
+Once Mistral finishes processing the file, it sends back a response — usually in JSON format.
+We call .json() on the response to convert it into an object we can work with in JavaScript.
+
+### What does Mistral send back?
+It doesn’t send back the converted syllabus — not yet.
+
+Instead, it responds with file metadata, like this:
+
+```json
+Copy
+Edit
+{
+  "id": "file-abc123",
+  "status": "uploaded",
+  "filename": "syllabus.pdf",
+  "created_at": "2024-03-23T15:12:00Z"
+}
+```
+This response tells us:
+
+The upload was successful ✅
+
+We now have a file ID that we can use to request a signed download URL in the next step
+
+The OCR processing hasn’t happened yet — we’ll request it next!
+
+> Important: This function does not do OCR yet. It only uploads the file and gives back an ID.
+We'll use this ID in a follow-up request to get the downloadable link and send that to Mistral's OCR model.
+{: .prompt-info }
+
 ### Upload PDF
 
 ### Parse into JSON
