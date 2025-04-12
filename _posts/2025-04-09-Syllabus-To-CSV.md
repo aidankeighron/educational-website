@@ -346,8 +346,6 @@ It doesn’t send back the converted syllabus — not yet.
 Instead, it responds with file metadata, like this:
 
 ```json
-Copy
-Edit
 {
   "id": "file-abc123",
   "status": "uploaded",
@@ -420,7 +418,60 @@ We’ll use that URL in the next step when we send the file to Mistral’s OCR m
 
 > Hint: Store the result in a variable like responseJSON, then access the URL with responseJSON.url
 
-### Parse PDF to Markdown
+## Parse PDF to Markdown
+
+Now that you’ve obtained a **temporary URL** to the uploaded file, it’s time to send that file to Mistral’s OCR model and get back structured text.
+
+---
+
+### Your Turn: Make the OCR API Call
+
+You’re going to use `fetch()` again — this time to **POST** the signed URL to Mistral’s OCR endpoint.
+
+**API Endpoint:** https://api.mistral.ai/v1/ocr
+
+In your request, you’ll need these headers:
+
+```js
+headers: {
+  "Content-Type": "application/json",
+  "Authorization": `Bearer ${mistralApiKey}`
+}
+```
+
+The Body (What You’re Sending)
+Before we send the body, we need to convert our JavaScript object into a string using JSON.stringify().
+
+What is JSON.stringify()?
+APIs expect request bodies to be sent as JSON strings — not raw JavaScript objects.
+JSON.stringify() takes an object and converts it into a JSON-formatted string that can be sent in the request.
+```js
+JSON.stringify({ name: "Arnav" });
+// -> '{"name":"Arnav"}'
+```
+
+Now, here’s the structure of the object you’ll send:
+```json
+{
+  "model": "mistral-ocr-latest",
+  "document": {
+    "type": "document_url",
+    "document_url": "THE_TEMPORARY_URL_HERE"
+  },
+  "include_image_base64": true
+}
+```
+> Replace "THE_TEMPORARY_URL_HERE" with responseJSON.url from the previous step.
+### Your Goal
+Use fetch() with method 'POST'
+
+Add the correct headers
+
+Convert the body to a JSON string using JSON.stringify()
+
+Use .json() to extract the result
+
+Return the variable that extracted the result
 
 ## Parse upload into assignment list
 
