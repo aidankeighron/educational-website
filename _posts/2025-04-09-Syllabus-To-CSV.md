@@ -141,6 +141,7 @@ Without async, we’d have to use .then() chains, which are harder to manage.
 Arrow function syntax (() => {}) is a modern way to write functions in JavaScript. It's short, clean, and avoids creating its own this context — which works well here since we don’t need to refer to the event handler’s context directly.
 
 > ✅ **Tip:** In short we use async () => {} to write cleaner, more modern code that lets us easily work with APIs that take time to respond.
+
 ```js
 const fileUploaded = this.files.item(0);
 ```
@@ -166,7 +167,7 @@ The actual uploaded file, wrapped in a new File object.
 
 > ✅ **Note:**  Wrapping the file again with new File([...]) is optional but helpful if you want to manipulate the name or metadata before sending.
 
-> Important: All of these lines (fileUploaded, if (fileUploaded == null), and the FormData block) should be written inside the event listener function — directly under the async () => {} line.
+> Important: All of these lines (fileUploaded, if (fileUploaded == null), and the FormData block) should be written inside the event listener function — directly with the async () => {} function.
 {: .prompt-info }
 
 This is the foundation of getting the syllabus file from the user and preparing it for conversion.
