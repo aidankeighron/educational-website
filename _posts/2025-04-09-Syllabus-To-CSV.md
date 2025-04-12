@@ -417,6 +417,7 @@ Once you’ve done that, you’ll have access to a temporary URL like:
 We’ll use that URL in the next step when we send the file to Mistral’s OCR model for analysis!
 
 > Hint: Store the result in a variable like responseJSON, then access the URL with responseJSON.url
+{: .prompt-info }
 
 ## Parse PDF to Markdown
 
@@ -475,8 +476,113 @@ Return the variable that extracted the result
 
 ## Parse upload into assignment list
 
-### Sending upload to gemini
+Now that you’ve received the OCR response from Mistral, it's time to prepare the text for assignment extraction.
 
-### Downloading the file
+The OCR response (`ocrJson`) contains a list of pages — and each page includes a `markdown` field with the text that Mistral pulled from that page.
+
+We want to loop through all those pages and combine the Markdown into one big string we can send to an AI model later.
+
+---
+
+### 🚧 Your Task: Combine All Markdown Pages
+
+Follow these steps to build the final syllabus content:
+
+1. **Store the OCR response**
+
+   You should already have a variable that holds the full response from your OCR request. If not, make sure you're calling the correct function to get that data.
+
+2. **Create a variable to store all the text**
+
+   Start with an empty string. This will hold the full Markdown content once you're done.
+
+3. **Loop through each page**
+
+   Use a `for...of` loop to go through the `pages` array in the response.
+
+4. **Inside the loop, access the `markdown` field of each page**
+
+   Each page object contains a `markdown` property — that's the extracted content from that page.
+
+5. **Append each `markdown` snippet to your string**
+
+   Add each page’s Markdown to your full text variable. Make sure to include a space or newline between pages so they don’t get mashed together.
+
+6. **(Optional) Print the final Markdown**
+
+   Once your loop is done, use `console.log()` to print the final result and make sure it looks correct.
+
+---
+
+>  Why are we doing this?  
+> By combining all the page content into one Markdown string, we can pass it to an AI model in a single prompt and ask it to extract assignments for us — much easier than handling one page at a time!
+
+Next, we’ll send that full Markdown string to an AI to find and extract a list of assignments.
+## Sending upload to gemini
+
+Now that you've combined all of your syllabus content into a single Markdown string, you're ready to send it to an AI model — in this case, **Google Gemini** — to extract your assignments and return them in a clean CSV format.
+
+---
+
+### 🔐 Step 1: Get Your Gemini API Key
+
+To use Gemini, you'll need to create an API key from Google’s developer console.
+
+1. Go to [https://ai.google.dev/gemini-api/docs/api-key](https://ai.google.dev/gemini-api/docs/api-key)
+2. Sign in with your Google account
+3. Click **Create API Key**
+4. Copy the key and store it safely — we’ll use this in our fetch request
+
+Just like we did with Mistral, you should store this key in your `hidden.js` file:
+
+```js
+const geminiApiKey = "your-gemini-api-key-here";
+```
+🚧 Your Task: Send the Markdown to Gemini
+Here’s what you need to do:
+
+Create this function
+```js
+async function JsonToCSV(markdownExport) {}
+```
+Use fetch() to send a POST request to this Gemini endpoint:
+
+
+https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=YOUR_API_KEY
+Replace YOUR_API_KEY with your Gemini key (preferably from hidden.js).
+
+In the headers, include:
+
+```
+"Content-Type": "application/json"
+```
+In the body of the request:
+
+Use JSON.stringify() to convert your request body to JSON
+
+Create a prompt asking Gemini to extract assignments from the Markdown you created
+
+Ask for a CSV format with these columns:
+
+Due Date
+
+Class
+
+Assignment Name
+
+Assignment Type (from: Homework, Reading, Project, Exam)
+
+Checkbox
+
+Make sure to include your entire markdownExport inside the prompt using a template string (${})
+
+> Tip: The more specific and clear your prompt is, the better your results will be. You’re essentially saying:
+"Hey Gemini, here’s a syllabus in Markdown. Can you pull out the assignments and return them in a neat table?"
+{: .prompt-info }
+
+Your goal here is to get back a Gemini response containing a CSV-formatted list of assignments from your syllabus.
+
+We’ll use this response in the next step to create a downloadable .csv file the user can save!
+## Downloading the file
 
 ## Extending your extension
