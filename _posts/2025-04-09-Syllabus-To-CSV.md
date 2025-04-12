@@ -337,6 +337,7 @@ We’re sending the FormData object we created earlier (which includes the PDF f
 await uploadedPDF.json()
 ```
 Once Mistral finishes processing the file, it sends back a response — usually in JSON format.
+> If you **don’t** call `.json()` and just look at the `response` object itself, you’ll get a **network response object**, not the actual data.
 We call .json() on the response to convert it into an object we can work with in JavaScript.
 
 ### What does Mistral send back?
@@ -366,9 +367,60 @@ The OCR processing hasn’t happened yet — we’ll request it next!
 We'll use this ID in a follow-up request to get the downloadable link and send that to Mistral's OCR model.
 {: .prompt-info }
 
-### Upload PDF
+### Upload PDF to get URL
 
-### Parse into JSON
+Now that we’ve uploaded the file, Mistral gave us a **file ID** in the response. We’re going to use that ID to request a **signed file URL** — a secure, temporary link to download or reference the uploaded file.
+
+---
+
+### 🚧 Your Turn: Make the API Call
+
+Use the `fetch()` function to make a **GET request** to this endpoint: https://api.mistral.ai/v1/files/FILE_ID/url?expiry=24
+> Replace `FILE_ID` with the ID you received from the previous step (`PDFJson.id`)
+
+This tells Mistral:  
+> “Please give me a temporary link to access the file I just uploaded.”
+
+The `expiry=24` part means the link will only work for **24 hours**.
+
+---
+
+### 🔐 Headers You’ll Need
+
+Your request should include a `headers` object with the following:
+
+```js
+headers: {
+  "Accept": "application/json",
+  "Authorization": `Bearer ${mistralApiKey}`
+}
+```
+
+What does "Accept": "application/json" mean?
+This tells the server:
+
+“Hey, I expect the response to be in JSON format.”
+
+Without it, some APIs may return unexpected formats or not work as intended.
+
+### ✅ Your Goal
+Make the fetch() call using the correct method (GET)
+
+Pass in the required headers
+
+Use .json() to extract the result into a usable object (just like we did when uploading the file)
+
+Once you’ve done that, you’ll have access to a temporary URL like:
+```json
+{
+  "url": "https://cdn.mistral.ai/files/abc123/syllabus.pdf?token=..."
+}
+```
+We’ll use that URL in the next step when we send the file to Mistral’s OCR model for analysis!
+
+> Hint: Store the result in a variable like responseJSON, then access the URL with responseJSON.url
+
+### Parse PDF to Markdown
 
 ## Parse upload into assignment list
 
