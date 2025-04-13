@@ -1,6 +1,6 @@
 ---
 title: Syllabus To CSV
-author: arnav
+author: arnav, aidan
 date: 2025-03-23 12:00:00 +0800
 categories: [JavaScript, Syllabus To CSV]
 tags: [JavaScript, Easy]
@@ -440,7 +440,7 @@ We'll use this ID in a follow-up request to get the downloadable link and send t
 
 Now that we’ve uploaded the file, Mistral gave us a **file ID** in the response. We’re going to use that ID to request a **signed file URL** — a secure, temporary link to download or reference the uploaded file.
 
-### : Make the API Call
+### Make the API Call
 
 Use the `fetch()` function to make a **GET request** to this endpoint: https://api.mistral.ai/v1/files/FILE_ID/url?expiry=24
 > Replace `FILE_ID` with the ID you received from the previous step (`PDFJson.id`)
