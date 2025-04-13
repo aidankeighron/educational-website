@@ -353,11 +353,9 @@ Let’s break it down step-by-step:
 {: .nolineno }
 This is a JSDoc-style comment, which is a great practice even in beginner projects. It tells other developers (or future you):
 
-What this function does
-
-What kind of argument it expects (FormData)
-
-What it returns (a promise that resolves to a JSON object)
+- What this function does
+- What kind of argument it expects (FormData)
+- What it returns (a promise that resolves to a JSON object)
 
 > Writing clear comments like this helps others understand your code quickly and makes your project easier to maintain or expand in the future.
 {: .prompt-info }
