@@ -1,6 +1,6 @@
 ---
 title: Syllabus To CSV
-author: arnav, aidan
+author: arnav
 date: 2025-03-23 12:00:00 +0800
 categories: [JavaScript, Syllabus To CSV]
 tags: [JavaScript, Easy]
