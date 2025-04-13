@@ -121,7 +121,7 @@ Using `type="module"` allows us to use modern JavaScript features such as `impor
 
 ## Handle file uploads
 
-Now that we’ve set up a file input, let’s write the JavaScript needed to handle uploaded files and prepare them for processing.
+Now that we’ve set up a file input, let’s write the JavaScript needed to handle uploaded files and prepare them for processing. Create a file in the root directoy named `popup.js`.
 
 We’ll be using `document.getElementById()` to grab our file input and attach an event listener that runs every time a user selects a file.
 
@@ -130,10 +130,14 @@ document.getElementById('file-upload').addEventListener('change', async () => {
     // all the lines below will go inside here
 });
 ```
+{: file="popup.js" }
+{: .nolineno }
 Here, we’re listening for the "change" event on the file input id (or whatever id you used) — this fires whenever a user picks a file.
 ```js
 async () => {}
 ```
+{: file="popup.js" }
+{: .nolineno }
 Async allows us to use await inside the function. Since we'll likely send the file to an external API (which takes time), we want to pause and wait for the response before moving on — this keeps the code clean and readable.
 
 Without async, we’d have to use .then() chains, which are harder to manage.
@@ -145,7 +149,8 @@ Arrow function syntax (() => {}) is a modern way to write functions in JavaScrip
 ```js
 const fileUploaded = this.files.item(0);
 ```
-
+{: file="popup.js" }
+{: .nolineno }
 This line grabs the first file the user selected. Since we’re only supporting one file at a time, we access the file at index 0.
 
 Below you should create your own safety check to check if fileUploaded is null. If it is, we want to return.
@@ -155,6 +160,9 @@ const form = new FormData();
 form.append('purpose', 'ocr');
 form.append('file', new File([fileUploaded], `${fileUploaded.name}`));
 ```
+{: file="popup.js" }
+{: .nolineno }
+
 Here, we create a FormData object to prepare for sending the file to an external API.
 
 FormData works like a key-value map that you can send with fetch() for things like file uploads.
@@ -172,6 +180,20 @@ The actual uploaded file, wrapped in a new File object.
 
 This is the foundation of getting the syllabus file from the user and preparing it for conversion.
 
+At this point your code should look similar to this.
+```js
+document.getElementById('file-upload').addEventListener('change', async () => {
+    const fileUploaded = this.files.item(0);
+    if(fileUploaded == null){
+        return;
+    }
+    const form = new FormData();
+    form.append('purpose', 'ocr');
+    form.append('file', new File([fileUploaded], `${fileUploaded.name}`));
+```
+{: file="popup.js" }
+{: .nolineno }
+
 In the next step, we’ll send this FormData to an OCR model for parsing and response.
 
 ## Getting Your first API Key
@@ -184,7 +206,6 @@ Mistral OCR is a powerful AI model that can extract structured information from 
 
 > Learn more: [Mistral OCR announcement](https://mistral.ai/news/mistral-ocr)
 
----
 ### What is an API?
 
 Before we use Mistral OCR, let’s take a quick step back and understand **what an API actually is**.
@@ -201,30 +222,27 @@ An **API (Application Programming Interface)** is a way for two programs to talk
 - [**4 Most Important HTTP Requests That Can Be Made to an API**](https://www.youtube.com/watch?v=tkfVQK6UxDI)  
   *This breaks down the core HTTP methods you'll use when working with APIs: GET, POST, PUT, and DELETE.*
 
----
-
 ### What is an API Key?
 
 An API key is like a password that allows your project to communicate with a third-party service (in this case, Mistral). It tells the API who you are and whether you’re allowed to use it.
 
 Think of it like a secret access badge — you’ll need one to send your file and get a response from Mistral.
 
----
-
 ### Step 1: Get your Mistral API Key
 
 1. Go to [https://console.mistral.ai/api-keys](https://console.mistral.ai/api-keys)
 2. Log in or create an account
-3. Click **“Create API Key”**
-4. Copy the key — it will look something like:  mistral-key-abc1234567890
+3. If this is your first time, you’ll be prompted to choose an API plan — make sure to select the free one
+4. Click **“Create API Key”**
+5. Copy the key — it will look something like:  mistral-key-abc1234567890
    
----
-
+> Important: If you skip selecting a plan, your API key won’t be usable yet. Be sure to select the free tier after signing up so you can continue with the tutorial.
+{: .prompt-warning }   
 ### Step 2: Create a `hidden.js` file
 
 To keep your API key separate from your main code (and avoid accidentally uploading it), let’s store it in a new file.
 
-Create a file called: hidden.js
+Create a file called: `hidden.js`
 
 And inside it, write:
 
@@ -237,17 +255,57 @@ export default {
   geminiApiKey
 };
 ```
+{: file="hidden.js" }
+{: .nolineno }
+
 > Never commit this file to GitHub!
-If you’re using Git, be sure to add hidden.js to your .gitignore.
+If you’re using Git, be sure to add `hidden.js` to your `.gitignore`.
 {: .prompt-danger }
 
+### What is a .gitignore file?
+When you use Git to track your project’s files (like code, images, config files), you don’t always want everything to be tracked or pushed to GitHub. That’s where `.gitignore` comes in.
+
+> A `.gitignore` file tells Git: Ignore these files. Don’t include them in version control or upload them to GitHub.
+
+This is really helpful for:
+
+- Sensitive files (like API keys in `hidden.js`)
+- Build folders (dist/, node_modules/, etc.)
+- System files (like .DS_Store on macOS or Thumbs.db on Windows)
+
+### How it works
+If a file or folder matches a rule in `.gitignore`, Git will pretend it doesn’t exist.
+It won’t track changes to it, and it won’t push it to a remote repo like GitHub.  
+
+### How to add something to .gitignore
+Just open the `.gitignore` file in your project root (or create one if it doesn’t exist), and add the filename or folder you want to ignore.
+
+For example:
+
+```gitignore
+# Ignore API key file
+hidden.js
+
+# Ignore all files in node_modules/
+node_modules/
+```
+{: file=".gitignore" }
+{: .nolineno }
+
+Now Git will skip these files when committing or pushing your code — keeping things secure and clean.
+
+> Best practice: Always add secret files like `hidden.js` to `.gitignore` before uploading your project to GitHub.
+{: .prompt-info }
+
 ### Step 3: Import your API keys
-In your popup.js, import them like this:
+In your `popup.js`, import them like this:
 ```js
 import apiKeys from "./hidden.js";
 const mistralApiKey = apiKeys.mistralApiKey;
 const geminiApiKey = apiKeys.geminiApiKey;
 ```
+{: file="popup.js" }
+{: .nolineno }
 
 You're now ready to securely connect to Mistral and begin sending files for parsing! Next up: we’ll write the code that sends our FormData to the Mistral OCR API!
 
@@ -279,6 +337,8 @@ async function PDFToJson(form) {
 
 }
 ```
+{: file="popup.js" }
+{: .nolineno }
 Let’s break it down step-by-step:
 ### The comment block at the top
 ```js
@@ -289,6 +349,8 @@ Let’s break it down step-by-step:
  * @returns {Promise<Object>}
  */
 ```
+{: file="popup.js" }
+{: .nolineno }
 This is a JSDoc-style comment, which is a great practice even in beginner projects. It tells other developers (or future you):
 
 What this function does
@@ -304,12 +366,16 @@ What it returns (a promise that resolves to a JSON object)
 ```js
 fetch('https://api.mistral.ai/v1/files', { ... })
 ```
+{: file="popup.js" }
+{: .nolineno }
 This is the URL of Mistral’s file upload API. When we call this, we’re telling Mistral:
 
 > “Hey, I want to upload a file for OCR processing.”
 ```js
 method: 'POST'
 ```
+{: file="popup.js" }
+{: .nolineno }
 This tells the API we want to send data (in this case, the file).
 There are other methods like GET, PUT, and DELETE, but POST is most common for sending form or file data.
 
@@ -317,6 +383,8 @@ There are other methods like GET, PUT, and DELETE, but POST is most common for s
 ```js
 headers: { "Authorization": "Bearer ... " }
 ```
+{: file="popup.js" }
+{: .nolineno }
 APIs often require authentication — this is how they know who you are.
 
 The "Authorization" header tells the API,
@@ -325,17 +393,21 @@ The "Authorization" header tells the API,
 
 "Bearer" is the standard keyword used to pass tokens securely.
 
-You should already have your API key stored in hidden.js, and here we’re inserting it using backticks and ${} for string interpolation.
+You should already have your API key stored in `hidden.js`, and here we’re inserting it using backticks and ${} for string interpolation.
 
 ### Body
 ```js
 body:form
 ```
+{: file="popup.js" }
+{: .nolineno }
 This is the actual file upload!
 We’re sending the FormData object we created earlier (which includes the PDF file) as the body of the request.
 ```js
 await uploadedPDF.json()
 ```
+{: file="popup.js" }
+{: .nolineno }
 Once Mistral finishes processing the file, it sends back a response — usually in JSON format.
 > If you **don’t** call `.json()` and just look at the `response` object itself, you’ll get a **network response object**, not the actual data.
 We call .json() on the response to convert it into an object we can work with in JavaScript.
@@ -353,6 +425,7 @@ Instead, it responds with file metadata, like this:
   "created_at": "2024-03-23T15:12:00Z"
 }
 ```
+{: .nolineno }
 This response tells us:
 
 The upload was successful!
@@ -369,8 +442,6 @@ We'll use this ID in a follow-up request to get the downloadable link and send t
 
 Now that we’ve uploaded the file, Mistral gave us a **file ID** in the response. We’re going to use that ID to request a **signed file URL** — a secure, temporary link to download or reference the uploaded file.
 
----
-
 ### Your Turn: Make the API Call
 
 Use the `fetch()` function to make a **GET request** to this endpoint: https://api.mistral.ai/v1/files/FILE_ID/url?expiry=24
@@ -380,8 +451,6 @@ This tells Mistral:
 > “Please give me a temporary link to access the file I just uploaded.”
 
 The `expiry=24` part means the link will only work for **24 hours**.
-
----
 
 ### Headers You’ll Need
 
@@ -393,7 +462,8 @@ headers: {
   "Authorization": `Bearer ${mistralApiKey}`
 }
 ```
-
+{: file="popup.js" }
+{: .nolineno }
 What does "Accept": "application/json" mean?
 This tells the server:
 
@@ -414,6 +484,7 @@ Once you’ve done that, you’ll have access to a temporary URL like:
   "url": "https://cdn.mistral.ai/files/abc123/syllabus.pdf?token=..."
 }
 ```
+{: .nolineno }
 We’ll use that URL in the next step when we send the file to Mistral’s OCR model for analysis!
 
 > Hint: Store the result in a variable like responseJSON, then access the URL with responseJSON.url
@@ -422,8 +493,6 @@ We’ll use that URL in the next step when we send the file to Mistral’s OCR m
 ## Parse PDF to Markdown
 
 Now that you’ve obtained a **temporary URL** to the uploaded file, it’s time to send that file to Mistral’s OCR model and get back structured text.
-
----
 
 ### Your Turn: Make the OCR API Call
 
@@ -439,7 +508,8 @@ headers: {
   "Authorization": `Bearer ${mistralApiKey}`
 }
 ```
-
+{: file="popup.js" }
+{: .nolineno }
 The Body (What You’re Sending)
 Before we send the body, we need to convert our JavaScript object into a string using JSON.stringify().
 
@@ -450,7 +520,7 @@ JSON.stringify() takes an object and converts it into a JSON-formatted string th
 JSON.stringify({ name: "Arnav" });
 // -> '{"name":"Arnav"}'
 ```
-
+{: .nolineno }
 Now, here’s the structure of the object you’ll send:
 ```json
 {
@@ -462,6 +532,8 @@ Now, here’s the structure of the object you’ll send:
   "include_image_base64": true
 }
 ```
+{: file="popup.js" }
+{: .nolineno }
 > Replace "THE_TEMPORARY_URL_HERE" with responseJSON.url from the previous step.
 ### Your Goal
 Use fetch() with method 'POST'
@@ -481,8 +553,6 @@ Now that you’ve received the OCR response from Mistral, it's time to prepare t
 The OCR response (`ocrJson`) contains a list of pages — and each page includes a `markdown` field with the text that Mistral pulled from that page.
 
 We want to loop through all those pages and combine the Markdown into one big string we can send to an AI model later.
-
----
 
 ### Your Task: Combine All Markdown Pages
 
@@ -512,8 +582,6 @@ Follow these steps to build the final syllabus content:
 
    Once your loop is done, use `console.log()` to print the final result and make sure it looks correct.
 
----
-
 >  Why are we doing this?  
 > By combining all the page content into one Markdown string, we can pass it to an AI model in a single prompt and ask it to extract assignments for us — much easier than handling one page at a time!
 
@@ -521,8 +589,6 @@ Next, we’ll send that full Markdown string to an AI to find and extract a list
 ## Sending upload to gemini
 
 Now that you've combined all of your syllabus content into a single Markdown string, you're ready to send it to an AI model — in this case, **Google Gemini** — to extract your assignments and return them in a clean CSV format.
-
----
 
 ### Step 1: Get Your Gemini API Key
 
@@ -538,6 +604,8 @@ Just like we did with Mistral, you should store this key in your `hidden.js` fil
 ```js
 const geminiApiKey = "your-gemini-api-key-here";
 ```
+{: file="hidden.js" }
+{: .nolineno }
 Your Task: Send the Markdown to Gemini
 Here’s what you need to do:
 
@@ -545,17 +613,21 @@ Create this function
 ```js
 async function JsonToCSV(markdownExport) {}
 ```
+{: file="popup.js" }
+{: .nolineno }
 Use fetch() to send a POST request to this Gemini endpoint:
 
 
 https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=YOUR_API_KEY
-Replace YOUR_API_KEY with your Gemini key (preferably from hidden.js).
+Replace YOUR_API_KEY with your Gemini key (preferably from `hidden.js`).
 
 In the headers, include:
 
 ```
 "Content-Type": "application/json"
 ```
+{: file="popup.js" }
+{: .nolineno }
 In the body of the request:
 
 Use JSON.stringify() to convert your request body to JSON
