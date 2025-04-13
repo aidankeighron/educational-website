@@ -440,7 +440,7 @@ We'll use this ID in a follow-up request to get the downloadable link and send t
 
 Now that we’ve uploaded the file, Mistral gave us a **file ID** in the response. We’re going to use that ID to request a **signed file URL** — a secure, temporary link to download or reference the uploaded file.
 
-### Your Turn: Make the API Call
+### : Make the API Call
 
 Use the `fetch()` function to make a **GET request** to this endpoint: https://api.mistral.ai/v1/files/FILE_ID/url?expiry=24
 > Replace `FILE_ID` with the ID you received from the previous step (`PDFJson.id`)
@@ -534,15 +534,11 @@ Now, here’s the structure of the object you’ll send:
 {: .nolineno }
 > Replace "THE_TEMPORARY_URL_HERE" with responseJSON.url from the previous step.
 ### Your Goal
-Use fetch() with method 'POST'
-
-Add the correct headers
-
-Convert the body to a JSON string using JSON.stringify()
-
-Use .json() to extract the result
-
-Return the variable that extracted the result
+- Use fetch() with method 'POST'
+- Add the correct headers
+- Convert the body to a JSON string using JSON.stringify()
+- Use .json() to extract the result
+- Return the variable that extracted the result
 
 ## Parse upload into assignment list
 
@@ -627,24 +623,16 @@ In the headers, include:
 {: file="popup.js" }
 {: .nolineno }
 In the body of the request:
+- Use JSON.stringify() to convert your request body to JSON
+- Create a prompt asking Gemini to extract assignments from the Markdown you created
+- Ask for a CSV format with these columns:
+- Due Date
+- Class
+- Assignment Name
+- Assignment Type (from: Homework, Reading, Project, Exam)
+- Checkbox
 
-Use JSON.stringify() to convert your request body to JSON
-
-Create a prompt asking Gemini to extract assignments from the Markdown you created
-
-Ask for a CSV format with these columns:
-
-Due Date
-
-Class
-
-Assignment Name
-
-Assignment Type (from: Homework, Reading, Project, Exam)
-
-Checkbox
-
-Make sure to include your entire markdownExport inside the prompt using a template string (${})
+Make sure to include your entire markdownExport inside the prompt using a template string (${}).
 
 > Tip: The more specific and clear your prompt is, the better your results will be. You’re essentially saying:
 "Hey Gemini, here’s a syllabus in Markdown. Can you pull out the assignments and return them in a neat table?"
