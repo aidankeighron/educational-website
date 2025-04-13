@@ -110,8 +110,8 @@ Let’s improve the popup so users can upload their syllabus file for us to use!
 
 Within our `<body>` element, we’ll add an `<input>` element with the type set to `"file"` — this allows users to select and submit their syllabus and add a respective id which we will use for our event listeners. Just below the input, we’ll include a `<p>` tag to let users know where they’ll be able to click and download their CSV file, which can contain text like **Click here to download your file!**.
 
-> ✅ **Tip:** Make sure to properly close both the `<input>` and `<p>` tags.
-
+> **Tip:** Make sure to properly close both the `<input>` and `<p>` tags.
+{: .prompt-info }
 Next, we need to connect our JavaScript to this HTML. To do that, we’ll add a `<script>` tag right before the closing `</body>` tag. The script should have `type="module"` and `src="popup.js"`.
 
 Using `type="module"` allows us to use modern JavaScript features such as `import` and `export` statements. The `src` attribute tells the browser to load the logic from our `popup.js` file — the place where all our “behind-the-scenes” functionality will live. Later, we’ll also update the `innerHTML` of the `<p>` tag to contain a downloadable link once the file has been processed.
@@ -140,8 +140,8 @@ Without async, we’d have to use .then() chains, which are harder to manage.
 
 Arrow function syntax (() => {}) is a modern way to write functions in JavaScript. It's short, clean, and avoids creating its own this context — which works well here since we don’t need to refer to the event handler’s context directly.
 
-> ✅ **Tip:** In short we use async () => {} to write cleaner, more modern code that lets us easily work with APIs that take time to respond.
-
+> **Tip:** In short we use async () => {} to write cleaner, more modern code that lets us easily work with APIs that take time to respond.
+{: .prompt-info }
 ```js
 const fileUploaded = this.files.item(0);
 ```
@@ -165,7 +165,7 @@ A purpose field — this is useful if your API requires it (in this case, to lab
 
 The actual uploaded file, wrapped in a new File object.
 
-> ✅ **Note:**  Wrapping the file again with new File([...]) is optional but helpful if you want to manipulate the name or metadata before sending.
+> **Note:**  Wrapping the file again with new File([...]) is optional but helpful if you want to manipulate the name or metadata before sending.
 
 > Important: All of these lines (fileUploaded, if (fileUploaded == null), and the FormData block) should be written inside the event listener function — directly with the async () => {} function.
 {: .prompt-info }
@@ -182,23 +182,23 @@ Before we can send our syllabus to an AI model, we need an API key to authentica
 
 Mistral OCR is a powerful AI model that can extract structured information from scanned documents, including PDFs — which is exactly what we need for turning a syllabus into a list of assignments.
 
-> 🔗 Learn more: [Mistral OCR announcement](https://mistral.ai/news/mistral-ocr)
+> Learn more: [Mistral OCR announcement](https://mistral.ai/news/mistral-ocr)
 
 ---
-### 🌐 What is an API?
+### What is an API?
 
 Before we use Mistral OCR, let’s take a quick step back and understand **what an API actually is**.
 
 An **API (Application Programming Interface)** is a way for two programs to talk to each other. In our case, we’ll be using JavaScript to talk to an external AI service (Mistral) — and that conversation happens through an API.
 
-> 🧠 Think of it like placing an order at a restaurant: you (the client) tell the waiter (the API) what you want, and the waiter brings it from the kitchen (the server). You don’t need to know how the kitchen works — just how to place an order properly.
+> Think of it like placing an order at a restaurant: you (the client) tell the waiter (the API) what you want, and the waiter brings it from the kitchen (the server). You don’t need to know how the kitchen works — just how to place an order properly.
 
-### 🎥 Helpful Videos
+### Helpful Videos
 
-- ▶️ [**What is an API?** (by Simply Explained)](https://www.youtube.com/watch?v=ByGJQzlzxQg&t=9s)  
+- [**What is an API?** (by Simply Explained)](https://www.youtube.com/watch?v=ByGJQzlzxQg&t=9s)  
   *This video explains APIs using real-world analogies — perfect if you're just starting out.*
 
-- ▶️ [**4 Most Important HTTP Requests That Can Be Made to an API**](https://www.youtube.com/watch?v=tkfVQK6UxDI)  
+- [**4 Most Important HTTP Requests That Can Be Made to an API**](https://www.youtube.com/watch?v=tkfVQK6UxDI)  
   *This breaks down the core HTTP methods you'll use when working with APIs: GET, POST, PUT, and DELETE.*
 
 ---
@@ -279,7 +279,7 @@ async function PDFToJson(form) {
 
 }
 ```
-🧠 Let’s break it down step-by-step:
+Let’s break it down step-by-step:
 ### The comment block at the top
 ```js
 /**
@@ -297,7 +297,7 @@ What kind of argument it expects (FormData)
 
 What it returns (a promise that resolves to a JSON object)
 
-> 💡 Writing clear comments like this helps others understand your code quickly and makes your project easier to maintain or expand in the future.
+> Writing clear comments like this helps others understand your code quickly and makes your project easier to maintain or expand in the future.
 {: .prompt-info }
 
 ###  Fetch
@@ -355,7 +355,7 @@ Instead, it responds with file metadata, like this:
 ```
 This response tells us:
 
-The upload was successful ✅
+The upload was successful!
 
 We now have a file ID that we can use to request a signed download URL in the next step
 
@@ -371,7 +371,7 @@ Now that we’ve uploaded the file, Mistral gave us a **file ID** in the respons
 
 ---
 
-### 🚧 Your Turn: Make the API Call
+### Your Turn: Make the API Call
 
 Use the `fetch()` function to make a **GET request** to this endpoint: https://api.mistral.ai/v1/files/FILE_ID/url?expiry=24
 > Replace `FILE_ID` with the ID you received from the previous step (`PDFJson.id`)
@@ -383,7 +383,7 @@ The `expiry=24` part means the link will only work for **24 hours**.
 
 ---
 
-### 🔐 Headers You’ll Need
+### Headers You’ll Need
 
 Your request should include a `headers` object with the following:
 
@@ -401,7 +401,7 @@ This tells the server:
 
 Without it, some APIs may return unexpected formats or not work as intended.
 
-### ✅ Your Goal
+### Your Goal
 Make the fetch() call using the correct method (GET)
 
 Pass in the required headers
@@ -484,7 +484,7 @@ We want to loop through all those pages and combine the Markdown into one big st
 
 ---
 
-### 🚧 Your Task: Combine All Markdown Pages
+### Your Task: Combine All Markdown Pages
 
 Follow these steps to build the final syllabus content:
 
@@ -524,7 +524,7 @@ Now that you've combined all of your syllabus content into a single Markdown str
 
 ---
 
-### 🔐 Step 1: Get Your Gemini API Key
+### Step 1: Get Your Gemini API Key
 
 To use Gemini, you'll need to create an API key from Google’s developer console.
 
@@ -538,7 +538,7 @@ Just like we did with Mistral, you should store this key in your `hidden.js` fil
 ```js
 const geminiApiKey = "your-gemini-api-key-here";
 ```
-🚧 Your Task: Send the Markdown to Gemini
+Your Task: Send the Markdown to Gemini
 Here’s what you need to do:
 
 Create this function
