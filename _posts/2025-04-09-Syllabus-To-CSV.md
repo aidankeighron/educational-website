@@ -19,8 +19,8 @@ Welcome to the Syllabus To CSV tutorial! In this project, you will learn the fun
 
 - How to setup and run a chrome extension.
 - How to call REST APIs and process their responses.
-- Create a basic UI with HTML and CSS
-- Interact with DOM elements with JS
+- Create a basic UI with HTML and CSS.
+- Interact with DOM elements with JS.
 
 **What you will make:**
 
@@ -63,7 +63,7 @@ This is a setup file that tells your browser some basic info about your extensio
 - Permissions
 - Much more
 
-Next lets create the base popup HTML. Create a file called `index.html`, give it a title (this can be the same as the manifest name)
+Next lets create the base popup HTML. Create a file called `index.html`, give it a title (this can be the same as the manifest name).
 
 ```html
 <!DOCTYPE html>
@@ -80,11 +80,11 @@ Next lets create the base popup HTML. Create a file called `index.html`, give it
 ```
 {: file="index.html" }
 
-This is telling the browser what you want the popup to look like. In the `head` tag you are specifying the metadata
+This is telling the browser what you want the popup to look like. In the `head` tag you are specifying the metadata.
 
-- What character set use
-- How big the popup should be (default width)
-- What the title of the popup should be (this is more useful with websites but still important to set)
+- What character set to use.
+- How big the popup should be (default width).
+- What the title of the popup should be (this is more useful with websites but still important to set).
 
 Next in the `body` tag we are defining the content of the extension. For now we are just adding some text.
 
