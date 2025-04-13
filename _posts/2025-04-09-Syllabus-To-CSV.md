@@ -119,6 +119,25 @@ Using `type="module"` allows us to use modern JavaScript features such as `impor
 > Make sure to include the script tag at the bottom of the body or else your JavaScript will not work on your HTML elements.
 {: .prompt-info }
 
+Your `index.html` should finally look like this:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syllabus to CSV</title>
+</head>
+<body>
+    <h1>MasterList</h1>
+    <input type="file" id="file-upload" name="filename">
+    <p>Click on the File to download it:<p>
+
+    <script type="module" src="popup.js"></script>
+</body>
+</html>
+```
 ## Handle file uploads
 
 Now that we’ve set up a file input, let’s write the JavaScript needed to handle uploaded files and prepare them for processing. Create a file in the root directoy named `popup.js`.
