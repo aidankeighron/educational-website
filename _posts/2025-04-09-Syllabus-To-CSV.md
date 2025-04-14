@@ -102,7 +102,7 @@ We will be using chrome as an example but it should be similar for most other br
 You should see your extension in your extension list (you might need to pin it). All you need to do to "run" your extension is to click on its icon. For debugging you can right-click on the icon and select `Inspect popup` to open dev tools. Whenever you make a change make sure to go to the extensions page and click the reload icon at the bottom of your extensions card.
 
 > Make sure you reload your extension after changing anything or you will not see the changes.
-{: .prompt-info }
+{: .prompt-danger }
 
 ## Create a basic UI
 
@@ -117,7 +117,7 @@ Next, we need to connect our JavaScript to this HTML. To do that, we’ll add a 
 Using `type="module"` allows us to use modern JavaScript features such as `import` and `export` statements. The `src` attribute tells the browser to load the logic from our `popup.js` file — the place where all our “behind-the-scenes” functionality will live. Later, we’ll also update the `innerHTML` of the `<p>` tag to contain a downloadable link once the file has been processed.
 
 > Make sure to include the script tag at the bottom of the body or else your JavaScript will not work on your HTML elements.
-{: .prompt-info }
+{: .prompt-warning }
 
 Your `index.html` should finally look like this:
 
@@ -193,9 +193,10 @@ A purpose field — this is useful if your API requires it (in this case, to lab
 The actual uploaded file, wrapped in a new File object.
 
 > **Note:**  Wrapping the file again with new File([...]) is optional but helpful if you want to manipulate the name or metadata before sending.
+{: .prompt-info }
 
 > Important: All of these lines (fileUploaded, if (fileUploaded == null), and the FormData block) should be written inside the event listener function — directly with the async () => {} function.
-{: .prompt-info }
+{: .prompt-danger }
 
 This is the foundation of getting the syllabus file from the user and preparing it for conversion.
 
@@ -224,6 +225,7 @@ Before we can send our syllabus to an AI model, we need an API key to authentica
 Mistral OCR is a powerful AI model that can extract structured information from scanned documents, including PDFs — which is exactly what we need for turning a syllabus into a list of assignments.
 
 > Learn more: [Mistral OCR announcement](https://mistral.ai/news/mistral-ocr)
+{: .prompt-info }
 
 ### What is an API?
 
@@ -232,6 +234,7 @@ Before we use Mistral OCR, let’s take a quick step back and understand **what 
 An **API (Application Programming Interface)** is a way for two programs to talk to each other. In our case, we’ll be using JavaScript to talk to an external AI service (Mistral) — and that conversation happens through an API.
 
 > Think of it like placing an order at a restaurant: you (the client) tell the waiter (the API) what you want, and the waiter brings it from the kitchen (the server). You don’t need to know how the kitchen works — just how to place an order properly.
+{: .prompt-info }
 
 ### Helpful Videos
 
@@ -257,6 +260,7 @@ Think of it like a secret access badge — you’ll need one to send your file a
    
 > Important: If you skip selecting a plan, your API key won’t be usable yet. Be sure to select the free tier after signing up so you can continue with the tutorial.
 {: .prompt-warning }   
+
 ### Step 2: Create a `hidden.js` file
 
 To keep your API key separate from your main code (and avoid accidentally uploading it), let’s store it in a new file.
@@ -314,7 +318,7 @@ node_modules/
 Now Git will skip these files when committing or pushing your code — keeping things secure and clean.
 
 > Best practice: Always add secret files like `hidden.js` to `.gitignore` before uploading your project to GitHub.
-{: .prompt-info }
+{: .prompt-tip }
 
 ### Step 3: Import your API keys
 In your `popup.js`, import them like this:
@@ -388,6 +392,8 @@ fetch('https://api.mistral.ai/v1/files', { ... })
 This is the URL of Mistral’s file upload API. When we call this, we’re telling Mistral:
 
 > “Hey, I want to upload a file for OCR processing.”
+{: .prompt-info }
+
 ```js
 method: 'POST'
 ```
@@ -425,8 +431,12 @@ await uploadedPDF.json()
 ```
 {: file="popup.js" }
 {: .nolineno }
+
 Once Mistral finishes processing the file, it sends back a response — usually in JSON format.
+
 > If you **don’t** call `.json()` and just look at the `response` object itself, you’ll get a **network response object**, not the actual data.
+{: .prompt-danger }
+
 We call .json() on the response to convert it into an object we can work with in JavaScript.
 
 ### What does Mistral send back?
@@ -462,10 +472,14 @@ Now that we’ve uploaded the file, Mistral gave us a **file ID** in the respons
 ### Make the API Call
 
 Use the `fetch()` function to make a **GET request** to this endpoint: https://api.mistral.ai/v1/files/FILE_ID/url?expiry=24
+
 > Replace `FILE_ID` with the ID you received from the previous step (`PDFJson.id`)
+{: .prompt-info }
 
 This tells Mistral:  
+
 > “Please give me a temporary link to access the file I just uploaded.”
+{: .prompt-info }
 
 The `expiry=24` part means the link will only work for **24 hours**.
 
@@ -551,7 +565,10 @@ Now, here’s the structure of the object you’ll send:
 ```
 {: file="popup.js" }
 {: .nolineno }
+
 > Replace "THE_TEMPORARY_URL_HERE" with responseJSON.url from the previous step.
+{: .prompt-warning }
+
 ### Your Goal
 - Use fetch() with method 'POST'
 - Add the correct headers
@@ -595,8 +612,10 @@ Follow these steps to build the final syllabus content:
 
    Once your loop is done, use `console.log()` to print the final result and make sure it looks correct.
 
->  Why are we doing this?  
+>  **Why are we doing this?**
+> 
 > By combining all the page content into one Markdown string, we can pass it to an AI model in a single prompt and ask it to extract assignments for us — much easier than handling one page at a time!
+{: .prompt-info }
 
 Next, we’ll send that full Markdown string to an AI to find and extract a list of assignments.
 ## Sending upload to gemini
@@ -660,6 +679,9 @@ Make sure to include your entire markdownExport inside the prompt using a templa
 Your goal here is to get back a Gemini response containing a CSV-formatted list of assignments from your syllabus.
 
 We’ll use this response in the next step to create a downloadable .csv file the user can save!
+
 ## Downloading the file
 
+
 ## Extending your extension
+
