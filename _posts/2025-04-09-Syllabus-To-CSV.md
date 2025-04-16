@@ -7,7 +7,8 @@ tags: [JavaScript, Easy]
 description: Convert your class syllabus into a CSV of all your assignments
 comments: false
 pin: true
-media_subpath: /assets/tutorials/syllabus to csv
+media_subpath: /assets/tutorials/csv
+image: /csv.png
 ---
 
 
