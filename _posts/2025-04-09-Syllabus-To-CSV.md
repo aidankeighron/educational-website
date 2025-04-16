@@ -490,11 +490,11 @@ This tells the server:
 Without it, some APIs may return unexpected formats or not work as intended.
 
 ### Your Goal
-Make the fetch() call using the correct method (GET)
+- Make the fetch() call using the correct method (GET)
 
-Pass in the required headers
+- Pass in the required headers
 
-Use .json() to extract the result into a usable object (just like we did when uploading the file)
+- Use .json() to extract the result into a usable object (just like we did when uploading the file)
 
 Once you’ve done that, you’ll have access to a temporary URL like:
 ```json
@@ -632,7 +632,8 @@ async function JsonToCSV(markdownExport) {}
 Use fetch() to send a POST request to this Gemini endpoint:
 
 
-https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=YOUR_API_KEY
+`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=YOUR_API_KEY`
+
 Replace YOUR_API_KEY with your Gemini key (preferably from `hidden.js`).
 
 In the headers, include:
