@@ -79,6 +79,21 @@ We'll begin by setting up our TypeScript configuration and creating the basic st
 
 ### Initial Project Setup
 
+First, create a new folder. Go to that folder and do 
+
+```
+mkdir backend && cd backend
+npm init -y
+```
+
+Then install dependencies:
+
+```
+# For backend dependencies
+npm install bcrypt jsonwebtoken mongoose cross-env 
+npm install --save-dev express dotenv nodemon ts-node typescript @types/bcrypt @types/jsonwebtoken @types/cors @types/express @types/node eslint prettier install
+```
+
 First, let's create a `tsconfig.json` file for our TypeScript configuration:
 
 ```json
