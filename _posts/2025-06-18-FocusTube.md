@@ -1,14 +1,13 @@
 ---
 title: FocusTube
-author: Johnny
+author: johnny
 date: 2025-5-27 12:00:00 +0800
-categories: [JavaScript, FocusTube]
-tags: [JavaScript, Medium]
+categories: [JavaScript, React, NextJS, FocusTube]
+tags: [JavaScript, React, Medium]
 description: In this project you will learn the fundamentals of NextJS and APIs in order to make a youtube clone/wrapper that removes the distracting algorithms that hook you in.
 comments: false
 pin: true
-media: /assets/tutorials/focustube
-image: /focus_thumbnail.png
+image: /assets/tutorials/focustube/focus-example.png
 ---
 
 ## About the project
