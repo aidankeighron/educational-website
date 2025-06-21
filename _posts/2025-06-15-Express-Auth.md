@@ -74,7 +74,7 @@ Let's get started!
 
 ## Part 1: Backend setup
 
-We'll begin by setting up our TypeScript configuration and creating the basic structure of our backend.
+We'll begin by setting up our TypeScript configuration and creating the basic structure of our backend. 
 
 ### Initial Project Setup
 
@@ -162,26 +162,309 @@ backend/
 └── tsconfig.json      
 ```
 
+### Creating the models 
+
+Now we will create our models. 
+
+A *model* or *schema* is basically how our data is stored inside the database. It is a blueprint to tell us how should the data look like (e.g. which fields should the data have, the restrictions to each field, etc). The two main types of database are *SQL* and *NoSQL*. Basically, a *SQL* database require the data to follow the schema as strictly as possible, and invalid data (which does not follow the schema) will generally not allowed to be persisted. On the other hand, *NoSQL* database are database that are more flexible, allowing users to store data that have wildly different schemas. 
+
+In this guide we will use MongoDB - a NoSQL database. You might notice that the data in our application follows a strict schema - that's more fit for a traditional SQL database. However, for the purpose of the MERN stack, and for the sake of simplicity, let's just use MongoDB. 
+
+Now think about what your models need. In this application, we need two entities: `User` and `Contact`. User will have name, username, email, password, and a list of contact. Contact will have name, number, and belongsTo (which user). 
+
+First, for our `User`: 
+
+{: file="backend/src/models/user.ts" }
+{: .nolineno }
+
+```typescript
+import mongoose from "mongoose";
+
+const userSchema = new mongoose.Schema({
+  username: {
+    type: String, 
+    required: true,
+    unique: true, 
+    minLength: 3, 
+    maxLength: 10, 
+    validate: {
+      validator: function (v: string) {
+        return /^[a-zA-Z][a-zA-Z0-9_]{2,15}$/.test(v);
+      }, 
+      message: () => "Wrong username format: Begin with letters, alphanumeric only"
+                    + "(with underscores), no spaces.",
+    }
+  },
+  name: {
+    type: String, 
+    required: true,
+    minLength: 3
+  }, 
+  email: {
+    type: String, 
+    required: true, 
+    unique: true,
+  },
+  passwordHash: String,
+  contacts: [ 
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Contact'
+    }
+  ]
+});
+
+userSchema.set("toJSON", {
+  transform: (doc, ret) => {
+    ret.id = ret._id.toString();
+    delete ret._id;
+    delete ret.__v;
+
+    // DO NOT REVEAL PASSWORD HASH!!!!
+    delete ret.passwordHash;
+  },
+});
+
+export default mongoose.model("User", userSchema);
+
+```
+
+The `validate` part above is to validate our name against regex - and if it doesn't match, the database will refuse to save the user to the database. For the `contacts` part, we're using `mongoose.Schema.Types.ObjectId` as type. When we store objects into MongoDb, each object will have its own id. Think of this as an array of id of `Contact`s, so that we can convert them back to actual `Contact` later. 
+
+Also, the "toJSON" part at the end of our file is defining what will the object be like when transformed into JSON. We *absolutely* don't want to reveal an user's `passwordHash`, so we must delete that from the returned result. There are two more fields: `_id` and `__v`, in which we don't need `__v`, and for `_id`, I chose to rename it to just `id`. 
+
+Next, for our `Contact`: 
+
+{: file="backend/src/models/contact.ts" }
+{: .nolineno}
+
+```typescript
+import mongoose from "mongoose";
+
+const contactSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    minLength: 3,
+  },
+  number: {
+    type: String,
+    required: true,
+    minLength: 8,
+    maxLength: 11,
+    validate: {
+      validator: function (v: string) {
+        return /^\d{2,3}-(\d+)$/.test(v);
+      },
+      message: () => "Wrong format (123-1234567).",
+    },
+  },
+
+  belongsTo: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  },
+});
+
+contactSchema.set("toJSON", {
+  transform: (doc, ret) => {
+    ret.id = ret._id.toString();
+    delete ret._id;
+    delete ret.__v;
+  },
+});
+
+export default mongoose.model("Contact", contactSchema);
+```
+
+If you were able to understand the `User` file above, this file should be pretty similar. One difference is that the `belongsTo` field is not an array but instead one object - which make sense, because contacts can only be created when a user is logged in, which means that the contact can only belong to one user only.
+
+### Creating controllers 
+
+After we have defined our models, we can move on to write controllers. 
+
+A *controller* can generally be understood as your request handler. For example, if you create a GET request to `localhost:3001/api/users`, the controllers will handle that request, do various backend operations, such as talking/querying to database or getting the data, and then send back to you the response from the server.  For most applications, with each model, you should write all the [CRUD](https://www.codecademy.com/article/what-is-crud) controllers for each object. In RESTful applications, that translates to four types of request: GET, POST, DELETE, PUT/PATCH.
+
+For the scope of this app, I'm going to simplify things a bit. For `User`, we just want a `POST` request (registering new users) and a GET request (for login). For `Contact`, we want a GET, POST, and DELETE. 
+
+For `User`: 
+
+{: file="backend/src/controllers/userController.ts"}
+{: .nolineno }
+
+```typescript 
+import User from "../models/user";
+import { Request, Response, NextFunction } from "express";
+
+export const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const users = await User.find({}).populate("contacts", { name: 1, number: 1 });
+    res.json(users);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export const getById = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = await User.findById(req.params.id).populate("contacts", { name: 1, number: 1 });
+    if (!user) {
+      return void res.status(404).send({ error: "User not found" });
+    }
+    res.json(user);
+  } catch (err) {
+    next(err);
+  }
+}
+```
+
+`Request, Response, NextFunction` are types required for our `req, res, next` arguments. In TypeScript, to declare type of a variable, we do `variableName: Type`, as opposed to say `Type variableName` as in C++, Java, or other statically typed language. 
+
+This file only consists of GET-ing users. For adding users, we will handle that in a different file, `registerController`:
+
+{: file="backend/src/controllers/registerController.ts"}
+{: .nolineno }
+
+```typescript
+import User from '../models/user';
+import bcrypt from 'bcrypt';
+import { Request, Response, NextFunction } from 'express';
+
+export const register = async (req: Request, res: Response, next: NextFunction) => {
+  const {username, name, email, password} = req.body;
+
+  if (username.length <= 6)
+    return void res.status(400).send({
+      error: "Username must be at least 6 characters"
+    });
+
+  if (password.length <= 8) {
+    return void res.status(400).send({
+      error: "Password must be at least 8 characters"
+    })
+  }
+
+  const emailRegex = /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
+  if (!emailRegex.test(email)) {
+    return void res.status(400).send({
+      error: "Invalid email address"
+    })
+  };
+
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  const user = new User({
+    username, 
+    name, 
+    email, 
+    passwordHash
+  });
+
+  try {
+    const savedUser = await user.save();
+    res.status(201).json(savedUser);
+  } catch (err) {
+    next(err);
+  }
+}
+```
+
+The email address is validated using regex (similar to username in our `User` model). Read more [here](https://uibakery.io/regex-library/email). Also, before we save the password to our database, we hash them using an algorithm called [bcrypt](https://codahale.com/how-to-safely-store-a-password/). 
+
 ### Creating the Express Application
 
-Next, let's create our main Express application in `app.ts`:
+You are not supposed to write everything at once (maybe except for models, those are the first thing you should think about before you do any coding, and should be the first thing you ever set up in a backend application). Now we have written some controllers for our `User` entity, let's test them out. 
+
+#### Main setup
+
+First we have to establish our database connection and configure our environment variables.
+
+We will use MongoDB for our database. Setup your database according to this [short video](https://www.youtube.com/shorts/pIHvoXkwmq4). Then, create a .env file in your backend directory:
+
+{: file="backend/.env" }
+{: .nolineno }
+
+```bash
+MONGODB_URI={your_mongodb_url}
+PORT=3001
+```
+
+> **Important**: Never commit your `.env` file to version control! Add it to your `.gitignore` file.
+{: .prompt-warning }
+
+Next, create a configuration file to handle environment variables:
+
+{: file="backend/src/config.ts" }
+{: .nolineno }
+
+```typescript
+import dotenv from 'dotenv';
+dotenv.config();
+
+const PORT = process.env.PORT || 3001;
+const MONGODB_URI = process.env.MONGODB_URI || '';
+const SECRET_KEY = process.env.SECRET_KEY || '';
+
+export default {
+  PORT,
+  MONGODB_URI,
+  SECRET_KEY
+};
+```
+
+Next, set up the routers for our endpoints. It makes the function we defined in the controller to be accessible in certain endpoints. For example: 
+
+{: file="backend/src/routers/userRouter.ts" }
+{: .nolineno }
 
 ```typescript
 import express from 'express';
+import { getAllUsers, getById } from '../controllers/userController';
+
+const userRouter = express.Router();
+
+userRouter.get('/', getAllUsers);
+userRouter.get('/:id', getById);
+
+export default userRouter;
+```
+
+Similarly, let's create a router for user registration:
+
+{: file="backend/src/routers/registerRouter.ts" }
+{: .nolineno }
+
+```typescript
+import express from 'express';
+import { register } from '../controllers/registerController';
+
+const registerRouter = express.Router();
+
+registerRouter.post('/', register);
+
+export default registerRouter;
+```
+
+Next, create the main Express application file:
+
+{: file="backend/src/app.ts" }
+{: .nolineno }
+
+```typescript
+import express, { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import config from './config';
+import cors from 'cors';
 
-import loginRouter from './routers/loginRouter';
 import registerRouter from './routers/registerRouter';
-import unknownEndpoint from './middlewares/unknownEndpoint';
-import errorHandler from './middlewares/errorHandler';
-import contactRouter from './routers/contactRouter';
 import userRouter from './routers/userRouter';
-import modifyToken from './middlewares/modifyToken';
-import { jwtAuth } from './middlewares/jwtAuth';
 
 const app = express();
 
+// Enable CORS for frontend communication
+app.use(cors());
+
+// Connect to MongoDB
 console.log("connecting to ", config.MONGODB_URI);
 mongoose
   .connect(config.MONGODB_URI)
@@ -190,54 +473,38 @@ mongoose
     console.log("error connecting to MongoDB: ", error.message)
   );
 
-app.use(express.static("dist"));
+// Middleware for parsing JSON
 app.use(express.json());
 
-app.use(modifyToken);
-
-// Public routes (no authentication required)
-app.use("/api/login", loginRouter);
+// Routes
 app.use("/api/register", registerRouter);
+app.use("/api/users", userRouter);
 
-// Apply JWT authentication for protected routes
-app.use("/api/users", jwtAuth, userRouter);
-app.use("/api/contacts", jwtAuth, contactRouter);
-
-// Error handling middlewares
-app.use(unknownEndpoint);
-app.use(errorHandler);
+// Basic error handling for unknown endpoints
+app.use((req: Request, res: Response) => {
+  res.status(404).send({ error: "unknown endpoint" });
+});
 
 export default app;
 ```
+
+These two lines 
+
 {: file="backend/src/app.ts" }
 {: .nolineno }
 
-This sets up our Express application with routes for authentication, user management, and contact management. Note how we separate public routes from protected routes that require JWT authentication.
-
-### Configuration
-
-Let's create a configuration file to handle environment variables:
-
 ```typescript
-import dotenv from 'dotenv';
-dotenv.config();
-
-const PORT = process.env.PORT || 3001;
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/contactApp';
-const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key';
-
-export default {
-  PORT,
-  MONGODB_URI,
-  JWT_SECRET
-};
+app.use("/api/register", registerRouter);
+app.use("/api/users", userRouter);
 ```
-{: file="backend/src/config.ts" }
-{: .nolineno }
 
-### Entry Point
+are used to connect your routers. Think of it this way: you connect to the `userRouter` via the top 
+domain `/api/users`. Then, to ask it to perform `getById` (refer to router setup part), we send a GET request to `/api/users/{id}`. 
 
 Finally, let's create the entry point for our application:
+
+{: file="backend/src/index.ts" }
+{: .nolineno }
 
 ```typescript
 import app from './app';
@@ -247,86 +514,89 @@ app.listen(config.PORT, () => {
   console.log(`Server running on port ${config.PORT}`);
 });
 ```
-{: file="backend/src/index.ts" }
-{: .nolineno }
 
-### Setting Up Models
+Now our basic backend application should be done. First, start your server:
 
-Now, let's create our MongoDB models for User and Contact:
-
-```typescript
-import mongoose from 'mongoose';
-import { User } from '../../../shared/types';
-
-const userSchema = new mongoose.Schema<User>({
-  username: {
-    type: String,
-    required: true,
-    minlength: 3,
-    unique: true
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  passwordHash: {
-    type: String,
-    required: true
-  },
-});
-
-userSchema.set('toJSON', {
-  transform: (_document, returnedObject) => {
-    returnedObject.id = returnedObject._id.toString();
-    delete returnedObject._id;
-    delete returnedObject.__v;
-    // Don't reveal the hash
-    delete returnedObject.passwordHash;
-  }
-});
-
-export default mongoose.model<User>('User', userSchema);
+```bash
+cd backend
+npm run dev
 ```
-{: file="backend/src/models/user.ts" }
-{: .nolineno }
 
-And for our Contact model:
+You should see the message "Server running on port 3001" and "connected to MongoDB".
 
-```typescript
-import mongoose from 'mongoose';
-import { Contact } from '../../../shared/types';
+#### Testing
 
-const contactSchema = new mongoose.Schema<Contact>({
-  name: {
-    type: String,
-    required: true,
-    minlength: 3
-  },
-  phone: {
-    type: String,
-    required: true
-  },
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }
-});
+That was a lot of code. In order to check if our controllers are working properly, we have to test our controllers to see it is working as we expected. To do that we will use Postman. Watch this [video](https://www.youtube.com/watch?v=CLG0ha_a0q8) for an introduction to Postman. After that, you should be able to test all of the methods below.
+##### 1. Register a New User
 
-contactSchema.set('toJSON', {
-  transform: (_document, returnedObject) => {
-    returnedObject.id = returnedObject._id.toString();
-    delete returnedObject._id;
-    delete returnedObject.__v;
-  }
-});
+**POST** `http://localhost:3001/api/register`
 
-export default mongoose.model<Contact>('Contact', contactSchema);
+Body (JSON):
+```json
+{
+  "username": "johndoe",
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "password123"
+}
 ```
-{: file="backend/src/models/contact.ts" }
-{: .nolineno }
+
+Expected Response (201 Created):
+```json
+{
+  "username": "johndoe",
+  "name": "John Doe",
+  "email": "john@example.com",
+  "contacts": [],
+  "id": "60f7b3b3b3b3b3b3b3b3b3b3"
+}
+```
+
+##### 2. Get All Users
+
+**GET** `http://localhost:3001/api/users`
+
+Expected Response (200 OK):
+```json
+[
+  {
+    "username": "johndoe",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "contacts": [],
+    "id": "60f7b3b3b3b3b3b3b3b3b3b3"
+  }
+]
+```
+
+##### 3. Get User by ID
+
+**GET** `http://localhost:3001/api/users/{id}`
+
+(Replace the ID with the actual ID from your database)
+
+Expected Response (200 OK):
+```json
+{
+  "username": "johndoe",
+  "name": "John Doe",
+  "email": "john@example.com",
+  "contacts": [],
+  "id": "60f7b3b3b3b3b3b3b3b3b3b3"
+}
+```
+
+> **Note**: Notice that the `passwordHash` field is not included in the response. This is because of our `toJSON` transformation in the User model that removes sensitive data.
+{: .prompt-info }
 
 ### Authentication Middleware
+
+Next, let's implement authentication with JWT (Json Web Token). Watch [this](https://www.youtube.com/watch?v=7Q17ubqLfaM) first in order to understand what is JWT and how does JWT work. 
+
+> In practice, JWT is often implemented with a *refresh-access token model*, in which both the access token - the actual JWT that is used for authentication - have a short-lived time (typically about 15 minutes), and a refresh token that have a longer lifecycle (about a few days) are utilized. When a user connects to a server, if the access token has expired, their refresh token will be used instead, and if the refresh token is still valid, it will generate another access token, allowing the user to continuously use the service without having to log in repeatedly. 
+>
+> In this guide I will only do the basic access token method, and left the refresh token as an exercise. 
+{: .prompt-info}
 
 Let's implement JWT authentication middleware:
 
@@ -362,6 +632,7 @@ export const jwtAuth = (req: Request, res: Response, next: NextFunction) => {
 
 And a middleware to extract the token from the request:
 
+
 ```typescript
 import { Request, Response, NextFunction } from 'express';
 
@@ -378,168 +649,6 @@ const modifyToken = (req: Request, _res: Response, next: NextFunction) => {
 export default modifyToken;
 ```
 {: file="backend/src/middlewares/modifyToken.ts" }
-{: .nolineno }
-
-### Router Implementation
-
-Let's implement our login router:
-
-```typescript
-import express from 'express';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import User from '../models/user';
-import config from '../config';
-import { LoginCredentials } from '../../../shared/types';
-
-const loginRouter = express.Router();
-
-loginRouter.post('/', async (req, res) => {
-  const { username, password } = req.body as LoginCredentials;
-
-  const user = await User.findOne({ username });
-  
-  const passwordCorrect = user === null
-    ? false
-    : await bcrypt.compare(password, user.passwordHash);
-
-  if (!(user && passwordCorrect)) {
-    return res.status(401).json({
-      error: 'invalid username or password'
-    });
-  }
-
-  const userForToken = {
-    username: user.username,
-    id: user._id,
-  };
-
-  const token = jwt.sign(
-    userForToken, 
-    config.JWT_SECRET,
-    { expiresIn: 60*60 }
-  );
-
-  res
-    .status(200)
-    .send({ token, username: user.username, email: user.email });
-});
-
-export default loginRouter;
-```
-{: file="backend/src/routers/loginRouter.ts" }
-{: .nolineno }
-
-And our registration router:
-
-```typescript
-import express from 'express';
-import bcrypt from 'bcrypt';
-import User from '../models/user';
-import { RegisterCredentials } from '../../../shared/types';
-
-const registerRouter = express.Router();
-
-registerRouter.post('/', async (req, res) => {
-  const { username, email, password } = req.body as RegisterCredentials;
-
-  if (!username || !email || !password) {
-    return res.status(400).json({
-      error: 'username, email, and password are required'
-    });
-  }
-
-  if (username.length < 3) {
-    return res.status(400).json({
-      error: 'username must be at least 3 characters long'
-    });
-  }
-
-  if (password.length < 5) {
-    return res.status(400).json({
-      error: 'password must be at least 5 characters long'
-    });
-  }
-
-  const existingUser = await User.findOne({ username });
-  if (existingUser) {
-    return res.status(400).json({
-      error: 'username must be unique'
-    });
-  }
-
-  const existingEmail = await User.findOne({ email });
-  if (existingEmail) {
-    return res.status(400).json({
-      error: 'email must be unique'
-    });
-  }
-
-  const saltRounds = 10;
-  const passwordHash = await bcrypt.hash(password, saltRounds);
-
-  const user = new User({
-    username,
-    email,
-    passwordHash,
-  });
-
-  const savedUser = await user.save();
-
-  res.status(201).json(savedUser);
-});
-
-export default registerRouter;
-```
-{: file="backend/src/routers/registerRouter.ts" }
-{: .nolineno }
-
-Let's also implement our contact router:
-
-```typescript
-import express from 'express';
-import Contact from '../models/contact';
-import User from '../models/user';
-import { ContactInput } from '../../../shared/types';
-
-const contactRouter = express.Router();
-
-// Get all contacts for the authenticated user
-contactRouter.get('/', async (req, res) => {
-  const userId = req.user?.id;
-  
-  const contacts = await Contact.find({ user: userId });
-  res.json(contacts);
-});
-
-// Create a new contact
-contactRouter.post('/', async (req, res) => {
-  const body = req.body as ContactInput;
-  const userId = req.user?.id;
-  
-  const user = await User.findById(userId);
-  
-  if (!user) {
-    return res.status(404).json({ error: 'user not found' });
-  }
-  
-  if (!body.name || !body.phone) {
-    return res.status(400).json({ error: 'name and phone are required' });
-  }
-  
-  const contact = new Contact({
-    name: body.name,
-    phone: body.phone,
-    user: user._id
-  });
-  
-  const savedContact = await contact.save();
-  res.status(201).json(savedContact);
-});
-
-export default contactRouter;
-```
-{: file="backend/src/routers/contactRouter.ts" }
 {: .nolineno }
 
 ## Part 2: Building the Frontend Foundation
