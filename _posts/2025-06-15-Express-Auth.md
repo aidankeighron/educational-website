@@ -11,6 +11,7 @@ media_subpath: /assets/tutorials/express-auth
 image: /auth-header.png
 ---
 
+
 ## About the project
 
 Welcome to the Express Authentication tutorial! In this project, you will learn how to build a complete full-stack contact management application with secure user authentication.
@@ -166,16 +167,13 @@ backend/
 
 Now we will create our models. 
 
-A *model* or *schema* is basically how our data is stored inside the database. It is a blueprint to tell us how should the data look like (e.g. which fields should the data have, the restrictions to each field, etc). The two main types of database are *SQL* and *NoSQL*. Basically, a *SQL* database require the data to follow the schema as strictly as possible, and invalid data (which does not follow the schema) will generally not allowed to be persisted. On the other hand, *NoSQL* database are database that are more flexible, allowing users to store data that have wildly different schemas. 
+A *model* or *schema* is basically how our data is stored inside the database. It is a blueprint to tell us how should the data look like (e.g. which fields should the data have, the restrictions to each field, etc). The two main types of database are *SQL* and *NoSQL*. Basically, a *SQL* database require the data to follow the schema as strictly as possible, and invalid data (which does not follow the schema) will not allowed to be persisted. On the other hand, *NoSQL* database are database that are more flexible, allowing users to store data that have wildly different schemas. 
 
-In this guide we will use MongoDB - a NoSQL database. You might notice that the data in our application follows a strict schema - that's more fit for a traditional SQL database. However, for the purpose of the MERN stack, and for the sake of simplicity, let's just use MongoDB. 
+In this guide we will use MongoDB - a NoSQL database. 
 
 Now think about what your models need. In this application, we need two entities: `User` and `Contact`. User will have name, username, email, password, and a list of contact. Contact will have name, number, and belongsTo (which user). 
 
 First, for our `User`: 
-
-{: file="backend/src/models/user.ts" }
-{: .nolineno }
 
 ```typescript
 import mongoose from "mongoose";
@@ -228,6 +226,8 @@ userSchema.set("toJSON", {
 export default mongoose.model("User", userSchema);
 
 ```
+{: file="backend/src/models/user.ts" }
+{: .nolineno }
 
 The `validate` part above is to validate our name against regex - and if it doesn't match, the database will refuse to save the user to the database. For the `contacts` part, we're using `mongoose.Schema.Types.ObjectId` as type. When we store objects into MongoDb, each object will have its own id. Think of this as an array of id of `Contact`s, so that we can convert them back to actual `Contact` later. 
 
@@ -235,8 +235,10 @@ Also, the "toJSON" part at the end of our file is defining what will the object 
 
 Next, for our `Contact`: 
 
-{: file="backend/src/models/contact.ts" }
-{: .nolineno}
+> Task: Create our `Contact` model inside `backend/src/models`. It should have name, number, and a belongsTo field that reference back to an user. When referring to other objects, use its ObjectId. You should also add some validation of your choice - looking up some public regex can be a good idea.
+{: .prompt-tip}
+
+**Answer (click to unblur):**
 
 ```typescript
 import mongoose from "mongoose";
@@ -276,6 +278,9 @@ contactSchema.set("toJSON", {
 
 export default mongoose.model("Contact", contactSchema);
 ```
+{: file="backend/src/models/contact.ts" }
+{: .nolineno}
+{: .blur }
 
 If you were able to understand the `User` file above, this file should be pretty similar. One difference is that the `belongsTo` field is not an array but instead one object - which make sense, because contacts can only be created when a user is logged in, which means that the contact can only belong to one user only.
 
@@ -318,12 +323,20 @@ export const getById = async (req: Request, res: Response, next: NextFunction) =
 }
 ```
 
-`Request, Response, NextFunction` are types required for our `req, res, next` arguments. In TypeScript, to declare type of a variable, we do `variableName: Type`, as opposed to say `Type variableName` as in C++, Java, or other statically typed language. 
+`Request, Response, NextFunction` are types required for our `req, res, next` arguments. `User.find({})` is used to get all users from the database. 
 
-This file only consists of GET-ing users. For adding users, we will handle that in a different file, `registerController`:
+Remember about the `Contact`s we said earlier that are stored as ObjectId? `populate` here is used to actually display the content of the `Contact` - instead of just as an `ObjectId` (this is the "convert back to `Contact` part we discussed earlier when we were writing model for `User`). First, we have `populate("contacts")` to tell MongoDB to populate the `contacts` field in the `User` object. Then, the `{name: 1, number: 1}` is to include name and number in a `Contact` entity. If you don't want to include name for example, you can leave the field out. 
 
-{: file="backend/src/controllers/registerController.ts"}
-{: .nolineno }
+This file only consists of GET-ing users. For adding users, we will handle that in a different file, `registerController`. But I'll handle that to you. 
+
+> Task: Write a controller that supports adding users. The request contains username, name, email, and password. You should try to validate your username, email, and password (just simple `if`s are sufficient). For email validation, you might want to see [this](https://uibakery.io/regex-library/email). And you will also want to hash our password before saving to our database, using [bcrypt](https://nordvpn.com/blog/what-is-bcrypt/).  Basically, just use this in your code
+> ```typescript
+> const passwordHash = await bcrypt.hash(password, 10); 
+> ```
+> and store the password hash along with the other details into your database. You would also want to look up how to store an object to the database, if you don't already know that. 
+{: .prompt-tip}
+
+**Answer (click to unblur):**
 
 ```typescript
 import User from '../models/user';
@@ -368,26 +381,25 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
   }
 }
 ```
-
-The email address is validated using regex (similar to username in our `User` model). Read more [here](https://uibakery.io/regex-library/email). Also, before we save the password to our database, we hash them using an algorithm called [bcrypt](https://codahale.com/how-to-safely-store-a-password/). 
+{: file="backend/src/controllers/registerController.ts"}
+{: .nolineno }
+{: .blur }
 
 ### Creating the Express Application
 
-You are not supposed to write everything at once (maybe except for models, those are the first thing you should think about before you do any coding, and should be the first thing you ever set up in a backend application). Now we have written some controllers for our `User` entity, let's test them out. 
-
+You are not supposed to write everything at once (maybe except for models, those are the first thing you should think about before you do any coding, and should be the first thing you ever set up in a backend application). Now we have written some controllers for our `User` entity, let's test them out by building a test application. 
 #### Main setup
 
 First we have to establish our database connection and configure our environment variables.
 
 We will use MongoDB for our database. Setup your database according to this [short video](https://www.youtube.com/shorts/pIHvoXkwmq4). Then, create a .env file in your backend directory:
 
-{: file="backend/.env" }
-{: .nolineno }
-
 ```bash
 MONGODB_URI={your_mongodb_url}
 PORT=3001
 ```
+{: file="backend/.env" }
+{: .nolineno }
 
 > **Important**: Never commit your `.env` file to version control! Add it to your `.gitignore` file.
 {: .prompt-warning }
@@ -403,7 +415,6 @@ dotenv.config();
 
 const PORT = process.env.PORT || 3001;
 const MONGODB_URI = process.env.MONGODB_URI || '';
-const SECRET_KEY = process.env.SECRET_KEY || '';
 
 export default {
   PORT,
@@ -413,9 +424,6 @@ export default {
 ```
 
 Next, set up the routers for our endpoints. It makes the function we defined in the controller to be accessible in certain endpoints. For example: 
-
-{: file="backend/src/routers/userRouter.ts" }
-{: .nolineno }
 
 ```typescript
 import express from 'express';
@@ -428,11 +436,10 @@ userRouter.get('/:id', getById);
 
 export default userRouter;
 ```
+{: file="backend/src/routers/userRouter.ts" }
+{: .nolineno }
 
 Similarly, let's create a router for user registration:
-
-{: file="backend/src/routers/registerRouter.ts" }
-{: .nolineno }
 
 ```typescript
 import express from 'express';
@@ -444,6 +451,15 @@ registerRouter.post('/', register);
 
 export default registerRouter;
 ```
+{: file="backend/src/routers/registerRouter.ts" }
+{: .nolineno }
+
+> Technically speaking you can do 
+> ```typescript
+> userRouter.get("/", async(...) => {})
+> ```
+> directly inside your controller file. This boils down to personal preference for the most part. 
+{: .prompt-info}
 
 Next, create the main Express application file:
 
@@ -490,21 +506,17 @@ export default app;
 
 These two lines 
 
-{: file="backend/src/app.ts" }
-{: .nolineno }
-
 ```typescript
 app.use("/api/register", registerRouter);
 app.use("/api/users", userRouter);
 ```
+{: file="backend/src/app.ts" }
+{: .nolineno }
 
 are used to connect your routers. Think of it this way: you connect to the `userRouter` via the top 
 domain `/api/users`. Then, to ask it to perform `getById` (refer to router setup part), we send a GET request to `/api/users/{id}`. 
 
 Finally, let's create the entry point for our application:
-
-{: file="backend/src/index.ts" }
-{: .nolineno }
 
 ```typescript
 import app from './app';
@@ -514,6 +526,8 @@ app.listen(config.PORT, () => {
   console.log(`Server running on port ${config.PORT}`);
 });
 ```
+{: file="backend/src/index.ts" }
+{: .nolineno }
 
 Now our basic backend application should be done. First, start your server:
 
@@ -589,68 +603,62 @@ Expected Response (200 OK):
 > **Note**: Notice that the `passwordHash` field is not included in the response. This is because of our `toJSON` transformation in the User model that removes sensitive data.
 {: .prompt-info }
 
-### Authentication Middleware
+### Authentication
 
 Next, let's implement authentication with JWT (Json Web Token). Watch [this](https://www.youtube.com/watch?v=7Q17ubqLfaM) first in order to understand what is JWT and how does JWT work. 
 
-> In practice, JWT is often implemented with a *refresh-access token model*, in which both the access token - the actual JWT that is used for authentication - have a short-lived time (typically about 15 minutes), and a refresh token that have a longer lifecycle (about a few days) are utilized. When a user connects to a server, if the access token has expired, their refresh token will be used instead, and if the refresh token is still valid, it will generate another access token, allowing the user to continuously use the service without having to log in repeatedly. 
+> In practice, JWT is often implemented with a *refresh-access token model*, in which both the access token - the actual JWT that is used for authentication - have a short-lived lifecycle (typically about 15 minutes), and a refresh token that have a longer lifecycle (about a few days) are utilized. When a user connects to a server, if the access token has expired, their refresh token will be used instead, and if the refresh token is still valid, it will generate another access token, allowing the user to continuously use the service without having to log in repeatedly. 
 >
-> In this guide I will only do the basic access token method, and left the refresh token as an exercise. 
+> In this project I will only do the basic access token method. You can do your own research on the refresh token. Practically speaking, in a real project, unless you're working in cybersecurity, you would end up using a library for authentication anyway. 
 {: .prompt-info}
 
-Let's implement JWT authentication middleware:
+After that you can play around on [jwt.io](https://jwt.io/). Notice it has three parts: headers, payload, and signature. The signature part is done using a private key. However, we don't have a private key yet.
+
+>Task: Create a SECRET_KEY field in your `.env` file and also set it up in the `config` file. It should not just be a random string. Use [this](https://jwt-keys.21no.de/) to generate a secure key.  
+{: .prompt-tip}
+
+> You might notice that a typical JWT application involves both public key and private key (assymmetric cryptography). In the scope of this project, however, we will only use a simple shared secret key (symmetric cryptography). 
+{: .prompt-info}
+
+Before actually think about authentication, let's think thoroughly about how everything works. First, a user attempts to log in. The credentials is then matched against the database, and if they match, the JWT is generated for the user to use for various different operations, e.g adding contacts. You wouldn't want unauthorized users to have access and edit your contacts. 
+
+Write a `loginController` to handle that logic: 
 
 ```typescript
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 import { Request, Response, NextFunction } from 'express';
+import User from '../models/user';
 import config from '../config';
-import { JwtPayload } from '../../../shared/types';
 
-export const jwtAuth = (req: Request, res: Response, next: NextFunction) => {
-  const token = req.token;
-  
-  if (!token) {
-    return res.status(401).json({ error: 'token missing' });
+export const login = async (req: Request, res: Response, next: NextFunction) => {
+  const { username, password } = req.body;
+
+  const user = await User.findOne({ username });
+
+  if (!user || !(await bcrypt.compare(password, String(user!.passwordHash))))
+    return void res.status(401).send({ err: "Invalid credentials "});
+
+  const payload = {
+    username: user.username,
+    id: user._id
+  };
+ 
+  if (!config.SECRET_KEY) {
+    throw new Error("SECRET_KEY is not defined in config");
   }
-  
-  try {
-    const decodedToken = jwt.verify(token, config.JWT_SECRET) as JwtPayload;
-    
-    if (!decodedToken.id) {
-      return res.status(401).json({ error: 'invalid token' });
-    }
-    
-    req.user = decodedToken;
-    next();
-  } catch (error) {
-    return res.status(401).json({ error: 'invalid token' });
-  }
-};
+
+  const token = jwt.sign(payload, config.SECRET_KEY, { expiresIn: 60*60 });
+
+  res.status(200).send({ token, username: username, name: user.name});
+} 
 ```
-{: file="backend/src/middlewares/jwtAuth.ts" }
+{: file="backend/src/controllers/loginController.ts }
 {: .nolineno }
 
-And a middleware to extract the token from the request:
+Basically what we're doing is that, first we get a user from the username from the database, and then compare their password hashes. If it match, return the token. Test it by yourself with Postman. The result should look like this: 
 
-
-```typescript
-import { Request, Response, NextFunction } from 'express';
-
-const modifyToken = (req: Request, _res: Response, next: NextFunction) => {
-  const authorization = req.get('authorization');
-  
-  if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
-    req.token = authorization.substring(7);
-  }
-  
-  next();
-};
-
-export default modifyToken;
-```
-{: file="backend/src/middlewares/modifyToken.ts" }
-{: .nolineno }
-
+![[Pasted image 20250623234755.png]] 
 ## Part 2: Building the Frontend Foundation
 
 Now that our backend is set up, let's move on to creating the frontend of our application. We'll use React with TypeScript and Vite for fast development.
