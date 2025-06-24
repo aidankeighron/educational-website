@@ -620,9 +620,27 @@ After that you can play around on [jwt.io](https://jwt.io/). Notice it has three
 > You might notice that a typical JWT application involves both public key and private key (assymmetric cryptography). In the scope of this project, however, we will only use a simple shared secret key (symmetric cryptography). 
 {: .prompt-info}
 
-Before actually think about authentication, let's think thoroughly about how everything works. First, a user attempts to log in. The credentials is then matched against the database, and if they match, the JWT is generated for the user to use for various different operations, e.g adding contacts. You wouldn't want unauthorized users to have access and edit your contacts. 
+#### Which endpoints need protection?
 
-Write a `loginController` to handle that logic: 
+First let's think about it for a second: which endpoints need to be protected? In our contact management app, we want to protect endpoints that deal with user-specific data:
+
+- **Public endpoints** (no authentication needed):
+  - `POST /api/register` - Anyone can register
+  - `POST /api/login` - Anyone can attempt to login
+  
+- **Protected endpoints** (authentication required):
+  - `GET /api/users` - View user information
+  - `GET /api/users/:id` - View specific user
+  - `GET /api/contacts` - View user's contacts
+  - `POST /api/contacts` - Create new contacts
+
+#### Application Flow
+
+Now we will understand how JWT is used. 
+
+First, the user log in with credentials. If the credentials match, JWT is generated. The user can then use the JWT to perform authorized-only operations (e.g. adding a contact to an user's contact list). 
+
+First, let's create the login controller that generates JWT tokens:
 
 ```typescript
 import jwt from 'jsonwebtoken';
@@ -651,14 +669,396 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
   const token = jwt.sign(payload, config.SECRET_KEY, { expiresIn: 60*60 });
 
   res.status(200).send({ token, username: username, name: user.name});
-} 
+}
 ```
-{: file="backend/src/controllers/loginController.ts }
+{: file="backend/src/controllers/loginController.ts" }
 {: .nolineno }
 
-Basically what we're doing is that, first we get a user from the username from the database, and then compare their password hashes. If it match, return the token. Test it by yourself with Postman. The result should look like this: 
+The login process works by first finding an user with the same username as provided by the request. Then, it hashes the password received from the request and compare it against the one queried from the database. If the username is not valid or the password is incorrect, it sends back a `401 unauthorized`. Otherwise, a JWT is signed along with the payload and returned.
 
-![[Pasted image 20250623234755.png]] 
+#### Creating JWT Middleware
+
+Now that we have a way to generate JWTs. What about storing them and using them for authorization, e.g. to create contacts? In the frontend, the code used to send requests may look like this:
+
+```typescript
+const someFunction = async () => {
+  const config = {
+    headers: { Authorization: `Bearer ${token}` },
+  };
+
+  const response = await axios.get(baseUrl, config);
+  return response.data;
+};
+```
+
+Typically, the JWT token will be sent through the `Authorized` header, as we seen above. For now, just use Postman to login first, get the token, and then send the token manually in the `Authorization` header when we want authorized access. We will persist and automatically use the JWT when we develop the frontend. 
+
+##### 1. Token Extraction Middleware
+
+This middleware extracts the token from the `Authorization` header:
+
+```typescript
+import { Request, Response, NextFunction } from 'express';
+import '../../../shared/types'; // Import our type extensions
+
+const modifyToken = (req: Request, res: Response, next: NextFunction) => {
+  const authorization = req.get('authorization');
+  
+  if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
+    req.token = authorization.substring(7);
+  }
+  
+  next();
+};
+
+export default modifyToken;
+```
+{: file="backend/src/middlewares/modifyToken.ts" }
+{: .nolineno }
+
+This middleware:
+
+- Checks for the `Authorization` header
+- Extracts the token part from `Bearer <token>` format
+- Attaches the token to the request object for later use
+
+> **TypeScript Magic**: Notice how we can assign `req.token = authorization.substring(7)` without TypeScript throwing an error, even though the Express `Request` object doesn't normally have a `token` property. This works because we've extended the Express Request interface in our `shared/types.ts` file. TypeScript ensures we only attach fields that we've explicitly declared, preventing accidental property assignments and giving us better type safety and IntelliSense support.
+{: .prompt-info}
+
+##### 2. JWT Authentication Middleware
+
+This middleware validates the JWT token and extracts user information:
+
+```typescript
+import jwt from 'jsonwebtoken';
+import { Request, Response, NextFunction } from 'express';
+import config from '../config';
+import '../../../shared/types'; // Import our type extensions
+
+interface JwtPayload {
+  id: string;
+  username: string;
+  iat?: number;
+  exp?: number;
+}
+
+export const jwtAuth = (req: Request, res: Response, next: NextFunction) => {
+  const token = req.token;
+  
+  if (!token) {
+    return res.status(401).json({ error: 'token missing' });
+  }
+  
+  try {
+    const decodedToken = jwt.verify(token, config.SECRET_KEY!) as JwtPayload;
+    
+    if (!decodedToken.id) {
+      return res.status(401).json({ error: 'invalid token' });
+    }
+    
+    req.user = decodedToken;
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: 'invalid token' });
+  }
+};
+```
+{: file="backend/src/middlewares/jwtAuth.ts" }
+{: .nolineno }
+
+This middleware:
+
+- Checks if token exists on the request
+- Verifies the token using our secret key
+- Extracts user information from the token payload
+- Attaches user info to the request object
+- Handles token verification errors
+
+> **TypeScript Type Safety**: Here we're adding `req.user = decodedToken` to attach the authenticated user's information to the request object. Again, this works seamlessly because of our type extensions in `shared/types.ts`. TypeScript gives us:
+>
+> - **Autocomplete**: When we type `req.user.`, we get IntelliSense suggestions for `id` and `username`
+> - **Type Checking**: If we try to access `req.user.nonexistentField`, TypeScript will catch this error
+> - **Clear Data Types**: We know exactly what data structure we're working with across our entire application
+{: .prompt-info}
+
+#### Creating Contact Controller
+
+Now let's create a controller for handling contacts that uses the authenticated user information:
+
+```typescript
+import { Request, Response, NextFunction } from 'express';
+import Contact from '../models/contact';
+import User from '../models/user';
+
+export const getAllContacts = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user?.id;
+    const contacts = await Contact.find({ belongsTo: userId });
+    res.json(contacts);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const addNewContact = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { name, number } = req.body;
+    const userId = req.user?.id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (!name || !number) {
+      return res.status(400).json({ error: 'Name and number are required' });
+    }
+
+    const contact = new Contact({
+      name,
+      number,
+      belongsTo: userId
+    });
+
+    const savedContact = await contact.save();
+    
+    // Add contact to user's contacts array
+    user.contacts = user.contacts.concat(savedContact._id);
+    await user.save();
+
+    res.status(201).json(savedContact);
+  } catch (err) {
+    next(err);
+  }
+};
+```
+{: file="backend/src/controllers/contactController.ts" }
+{: .nolineno }
+
+Notice how we use `req.user?.id` to get the authenticated user's ID, which was set by our JWT middleware.
+
+#### Updating Routers
+
+Let's create routers for our new endpoints:
+
+```typescript
+import express from 'express';
+import { login } from '../controllers/loginController';
+
+const loginRouter = express.Router();
+
+loginRouter.post('/', login);
+
+export default loginRouter;
+```
+{: file="backend/src/routers/loginRouter.ts" }
+{: .nolineno }
+
+```typescript
+import express from 'express';
+import { getAllContacts, addNewContact } from '../controllers/contactController';
+
+const contactRouter = express.Router();
+
+contactRouter.get('/', getAllContacts);
+contactRouter.post('/', addNewContact);
+
+export default contactRouter;
+```
+{: file="backend/src/routers/contactRouter.ts" }
+{: .nolineno }
+
+#### Adding Middleware Support to Express Types
+
+We need to extend the Express Request interface to include our custom properties:
+
+```typescript
+// Add this to your shared/types.ts file
+
+declare global {
+  namespace Express {
+    interface Request {
+      token?: string;
+      user?: {
+        id: string;
+        username: string;
+      };
+    }
+  }
+}
+```
+{: file="shared/types.ts" }
+{: .nolineno }
+
+#### Updating the Main App
+
+Now let's update our main app to use the new middleware and routes:
+
+```typescript
+import express from 'express';
+import mongoose from 'mongoose';
+import config from './config';
+import cors from 'cors';
+
+import loginRouter from './routers/loginRouter';
+import registerRouter from './routers/registerRouter';
+import userRouter from './routers/userRouter';
+import contactRouter from './routers/contactRouter';
+import modifyToken from './middlewares/modifyToken';
+import { jwtAuth } from './middlewares/jwtAuth';
+
+const app = express();
+
+// Enable CORS for frontend communication
+app.use(cors());
+
+// Connect to MongoDB
+console.log("connecting to ", config.MONGODB_URI);
+mongoose
+  .connect(config.MONGODB_URI)
+  .then(() => console.log("connected to MongoDB"))
+  .catch((error) =>
+    console.log("error connecting to MongoDB: ", error.message)
+  );
+
+// Middleware for parsing JSON
+app.use(express.json());
+
+// Extract token from all requests
+app.use(modifyToken);
+
+// Public routes (no authentication required)
+app.use("/api/login", loginRouter);
+app.use("/api/register", registerRouter);
+
+// Protected routes (authentication required)
+app.use("/api/users", jwtAuth, userRouter);
+app.use("/api/contacts", jwtAuth, contactRouter);
+
+// Basic error handling for unknown endpoints
+app.use((req, res) => {
+  res.status(404).send({ error: "unknown endpoint" });
+});
+
+export default app;
+```
+{: file="backend/src/app.ts" }
+{: .nolineno }
+
+#### Testing Authentication with Postman
+
+Now let's test our authentication system:
+
+##### 1. First, Login to Get a Token
+
+**POST** `http://localhost:3001/api/login`
+
+Body (JSON):
+```json
+{
+  "username": "johndoe",
+  "password": "password123"
+}
+```
+
+Expected Response (200 OK):
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "username": "johndoe",
+  "name": "John Doe"
+}
+```
+
+![[Pasted image 20250623234755.png]]
+
+##### 2. Test Protected Route Without Token
+
+**GET** `http://localhost:3001/api/contacts`
+
+No Authorization header
+
+Expected Response (401 Unauthorized):
+```json
+{
+  "error": "token missing"
+}
+```
+
+##### 3. Test Protected Route With Token
+
+**GET** `http://localhost:3001/api/contacts`
+
+Headers:
+```json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+Expected Response (200 OK):
+```json
+[]
+```
+
+##### 4. Create a New Contact
+
+**POST** `http://localhost:3001/api/contacts`
+
+Headers:
+```json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Content-Type: application/json
+```
+
+Body (JSON):
+```json
+{
+  "name": "Jane Smith",
+  "number": "123-4567890"
+}
+```
+
+Expected Response (201 Created):
+```json
+{
+  "name": "Jane Smith",
+  "number": "123-4567890",
+  "belongsTo": "60f7b3b3b3b3b3b3b3b3b3b3",
+  "id": "60f7b3b3b3b3b3b3b3b3b3b4"
+}
+```
+
+##### 5. Get Contacts Again
+
+**GET** `http://localhost:3001/api/contacts`
+
+Headers:
+```json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+Expected Response (200 OK):
+```json
+[
+  {
+    "name": "Jane Smith",
+    "number": "123-4567890",
+    "belongsTo": "60f7b3b3b3b3b3b3b3b3b3b3",
+    "id": "60f7b3b3b3b3b3b3b3b3b3b4"
+  }
+]
+```
+
+#### Common Authentication Errors
+
+1. **401 - token missing**: No Authorization header provided
+2. **401 - invalid token**: Token is malformed, expired, or signed with wrong secret
+3. **403 - forbidden**: Token is valid but user doesn't have permission (not implemented in our simple app)
+
+> **Important**: Always include the word "Bearer" before your token in the Authorization header. The format should be: `Bearer <your-jwt-token>`
+{: .prompt-warning }
+
+Now you have a fully functional authentication system! Users must log in to get a token, and that token is required to access protected resources like contacts. Each user can only see and manage their own contacts.
+
 ## Part 2: Building the Frontend Foundation
 
 Now that our backend is set up, let's move on to creating the frontend of our application. We'll use React with TypeScript and Vite for fast development.
@@ -1314,13 +1714,5 @@ You can extend this application in several ways:
 - Implement pagination for large contact lists
 - Add profile management for users
 - Improve the UI with more sophisticated styling
-
-The project structure we've created is scalable and can be used as a foundation for more complex applications.
-
-**Answer (click to unblur):**
-Building a full-stack application with proper authentication and data management can be accomplished in a relatively short time by following good architectural patterns and leveraging TypeScript for type safety across the entire stack.
-{: .prompt-info }
-
-By following the commit history of this project, you can see how it evolved from a simple backend to a complete application with authentication, data management, and a user-friendly interface. This incremental approach is a great way to build complex applications without getting overwhelmed.
 
 Happy coding!
