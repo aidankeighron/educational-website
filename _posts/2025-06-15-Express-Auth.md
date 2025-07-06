@@ -653,10 +653,6 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     username: user.username,
     id: user._id
   };
- 
-  if (!config.SECRET_KEY) {
-    throw new Error("SECRET_KEY is not defined in config");
-  }
 
   const token = jwt.sign(payload, config.SECRET_KEY, { expiresIn: 60*60 });
 
@@ -802,7 +798,7 @@ You will need to declare a `JwtPayload` type in order to stop TypeScript from th
 To summarize: the first middleware extracts the JWT and attaches it to the request. The second one validates the token, and if the token is valid, it attaches the username and id of the user to the request. 
 
 > You might be wondering why we attaches the username and id to the request after decoding the JWT - would that expose the username and id? Well, the thing is that the JWT payload is not securely encrypted in the first place. JWT use base64 encoding, which is easily reversible, and pretty much everybody can decrypt a JWT once they obtain it. The core part of JWT is to prevent tampering - since only a slight alternation of the content will create a completely different JWT. Read more [here](https://softwareengineering.stackexchange.com/questions/280257/json-web-token-why-is-the-payload-public). 
-{. :prompt-info}
+{: .prompt-info}
 
 ##### 3. Adding middleware to protected endpoints 
 
@@ -838,281 +834,171 @@ When the user login/register, there is no JWT, so the `modifyToken` middleware w
 
 ### Creating Contact Controller
 
-Now let's create a controller for handling contacts that uses the authenticated user information:
+The final part of our backend is setting up contact controllers. 
+
+> Task: set up `getAllContacts`, `addNewContact` and `deleteById` in `contactController`. Then create a `contactRouter`, and add it to the `app.ts` file and protect with `jwtAuth`. 
+{: .prompt-tip}
+
+**Answer (click to unblur):**
 
 ```typescript
-import { Request, Response, NextFunction } from 'express';
 import Contact from '../models/contact';
-import User from '../models/user';
+import User from "../models/user";
+import { Request, Response, NextFunction } from 'express';
 
 export const getAllContacts = async (req: Request, res: Response, next: NextFunction) => {
+  const contacts = await Contact.find({}).populate("belongsTo", { username: 1, name: 1 });
+  res.json(contacts);
+}
+
+export const getById = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = req.user?.id;
-    const contacts = await Contact.find({ belongsTo: userId });
-    res.json(contacts);
+    const contact = await Contact.findById(req.params.id);
+    res.json(contact);
   } catch (err) {
     next(err);
   }
 };
 
-export const addNewContact = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteById = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.user.id;
+
+  if (!userId) return void res.status(401).send({ error: "Authentication required" });
+
+  const user = await User.findById(userId);
+  if (!user) return void res.status(400).send({ error: "User not found" });
+
   try {
-    const { name, number } = req.body;
-    const userId = req.user?.id;
+    await Contact.findByIdAndDelete(req.params.id);
+    user.contacts = user.contacts.filter(c => c.toString() != req.params.id);
+    res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+}
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+export const addNewContacts = async (req: Request, res: Response, next: NextFunction) => { 
+  const { name, number } = req.body;
+  const userId = req.user.id;
 
-    if (!name || !number) {
-      return res.status(400).json({ error: 'Name and number are required' });
-    }
+  if (!userId) return void res.status(401).send({ error: "invalid token" });
+  
+  if (!name) {
+    return void res.status(400).send({ error: "Name is required" });
+  }
+  if (!number) {
+    return void res.status(400).send({ error: "Number is required "});
+  }
 
-    const contact = new Contact({
-      name,
-      number,
-      belongsTo: userId
-    });
+  const user = await User.findById(userId);
+  if (!user) return void res.status(400).send({ error: "missing userId/invalid" });
+  
+  const contact = new Contact({
+    name,
+    number,
+    belongsTo: userId
+  });
 
-    const savedContact = await contact.save();
-    
-    // Add contact to user's contacts array
-    user.contacts = user.contacts.concat(savedContact._id);
+  console.log("ok");
+
+  try {
+    const newContact = await contact.save();
+    user.contacts = user.contacts.concat(newContact._id);
+
+    res.status(201).json(newContact);
     await user.save();
-
-    res.status(201).json(savedContact);
   } catch (err) {
     next(err);
   }
-};
+}
 ```
 {: file="backend/src/controllers/contactController.ts" }
 {: .nolineno }
+{: .blur}
 
-Notice how we use `req.user?.id` to get the authenticated user's ID, which was set by our JWT middleware.
+> Note that `req.params.id` is different than `req.users.id`. `req.params.id` is used to access the `/:id` inside our endpoint, not from the request payload.
+{: .prompt-info }
 
-#### Updating Routers
+After that you should verify your code with Postman. It is always good practice to verify your code before moving on. This is very important later on if you work on projects with multiple people on a CI/CD system - you don't want your app to break apart because your code went wrong. 
+### Error handling
 
-Let's create routers for our new endpoints:
+Currently we write our error handling code inside our backend code. However, controllers should only be used to receive requests, not to handle errors. If in the future we have multiple controllers, then we will have to repeat our error handling code across multiple controllers, which not only is not good practice, but also a pain to maintain and update. 
 
-```typescript
-import express from 'express';
-import { login } from '../controllers/loginController';
-
-const loginRouter = express.Router();
-
-loginRouter.post('/', login);
-
-export default loginRouter;
-```
-{: file="backend/src/routers/loginRouter.ts" }
-{: .nolineno }
+First, for a basic error scenario: if an user try to access the wrong endpoint, we want to return a basic unknown endpoint error. 
 
 ```typescript
-import express from 'express';
-import { getAllContacts, addNewContact } from '../controllers/contactController';
+import { Request, Response } from 'express';
 
-const contactRouter = express.Router();
+const unknownEndpoint = (req: Request, res: Response) => {
+  return void res.status(404).send({ error: "unknown endpoint" });
+};
 
-contactRouter.get('/', getAllContacts);
-contactRouter.post('/', addNewContact);
-
-export default contactRouter;
+export default unknownEndpoint;
 ```
-{: file="backend/src/routers/contactRouter.ts" }
-{: .nolineno }
 
-#### Adding Middleware Support to Express Types
+Then we want to tackle more specific errors. For example, we only want our database to only contain unique email and username. If we send an invalid register request (duplicate username), the error will look like this (in the console): 
 
-We need to extend the Express Request interface to include our custom properties:
+```
+MongoServerError: E11000 duplicate key error collection: 2weekproj.users index: username_1 dup key: { username: "root_user" }
+[0]     at InsertOneOperation.execute (/home/cuongdang/projects/Imagine/2weekproject/backend/node_modules/mongodb/src/operations/insert.ts:88:13)
+[0]     at processTicksAndRejections (node:internal/process/task_queues:95:5)
+[0]     at async tryOperation (/home/cuongdang/projects/Imagine/2weekproject/backend/node_modules/mongodb/src/operations/execute_operation.ts:283:14)
+[0]     at async executeOperation (/home/cuongdang/projects/Imagine/2weekproject/backend/node_modules/mongodb/src/operations/execute_operation.ts:115:12)
+[0]     at async Collection.insertOne (/home/cuongdang/projects/Imagine/2weekproject/backend/node_modules/mongodb/src/collection.ts:285:12) {
+[0]   errorLabelSet: Set(0) {},
+[0]   errorResponse: {
+[0]     index: 0,
+[0]     code: 11000,
+[0]     errmsg: 'E11000 duplicate key error collection: 2weekproj.users index: username_1 dup key: { username: "root_user" }',
+[0]     keyPattern: { username: 1 },
+[0]     keyValue: { username: 'root_user' }
+[0]   },
+[0]   index: 0,
+[0]   code: 11000,
+[0]   keyPattern: { username: 1 },
+[0]   keyValue: { username: 'root_user' }
+[0] }
+```
+{: .nolineno}
+
+We will handle it in our `errorHandler` file: 
 
 ```typescript
-// Add this to your shared/types.ts file
+import { Request, Response, NextFunction } from 'express';
 
-declare global {
-  namespace Express {
-    interface Request {
-      token?: string;
-      user?: {
-        id: string;
-        username: string;
-      };
-    }
-  }
-}
+const errorHandler = (error: Error, req: Request, res: Response, next: NextFunction) => {
+  console.log("ErrorHandler intercepted: ", error);
+
+  if (error.name === "MongoServerError" && error.message.includes("E11000 duplicate key error")) {
+    const duplicate = error.message.includes("email")
+      ? "Email"
+      : "Username"
+    return void res.status(400).json({ error: `${duplicate} has already existed` });
+
+  next(error);
+};
+
+export default errorHandler;
 ```
-{: file="shared/types.ts" }
+{: file="backend/middleware/errorHandler.ts"}
+{: .nolineno}
+
+Reading from the logs above, we can see the error name is `MongoServerError` and the message includes `E11000 duplicate key error`. We will use that to specifically target this error. Next, we check if the duplicated value is an email or username, then returning a message based on that error. 
+
+The next error we will tackle is `CastError`. This is thrown when an user try to access an endpoint with `/:id` but then the id is invalid (only for Mongoose). Try it out yourself with Postman and see the error, then add the error handling part. 
+
+**Answer (click to unblur):**
+
+```typescript 
+	//
+	if (error.name === "CastError") {
+    return void res.status(400).send({ error: "Invalid id" });
+```
+{: file="backend/middleware/errorHandler.ts }
 {: .nolineno }
+{: .blur }
 
-#### Updating the Main App
-
-Now let's update our main app to use the new middleware and routes:
-
-```typescript
-import express from 'express';
-import mongoose from 'mongoose';
-import config from './config';
-import cors from 'cors';
-
-import loginRouter from './routers/loginRouter';
-import registerRouter from './routers/registerRouter';
-import userRouter from './routers/userRouter';
-import contactRouter from './routers/contactRouter';
-import modifyToken from './middlewares/modifyToken';
-import { jwtAuth } from './middlewares/jwtAuth';
-
-const app = express();
-
-// Enable CORS for frontend communication
-app.use(cors());
-
-// Connect to MongoDB
-console.log("connecting to ", config.MONGODB_URI);
-mongoose
-  .connect(config.MONGODB_URI)
-  .then(() => console.log("connected to MongoDB"))
-  .catch((error) =>
-    console.log("error connecting to MongoDB: ", error.message)
-  );
-
-// Middleware for parsing JSON
-app.use(express.json());
-
-// Extract token from all requests
-app.use(modifyToken);
-
-// Public routes (no authentication required)
-app.use("/api/login", loginRouter);
-app.use("/api/register", registerRouter);
-
-// Protected routes (authentication required)
-app.use("/api/users", jwtAuth, userRouter);
-app.use("/api/contacts", jwtAuth, contactRouter);
-
-// Basic error handling for unknown endpoints
-app.use((req, res) => {
-  res.status(404).send({ error: "unknown endpoint" });
-});
-
-export default app;
-```
-{: file="backend/src/app.ts" }
-{: .nolineno }
-
-#### Testing Authentication with Postman
-
-Now let's test our authentication system:
-
-##### 1. First, Login to Get a Token
-
-**POST** `http://localhost:3001/api/login`
-
-Body (JSON):
-```json
-{
-  "username": "johndoe",
-  "password": "password123"
-}
-```
-
-Expected Response (200 OK):
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "username": "johndoe",
-  "name": "John Doe"
-}
-```
-
-![[Pasted image 20250623234755.png]]
-
-##### 2. Test Protected Route Without Token
-
-**GET** `http://localhost:3001/api/contacts`
-
-No Authorization header
-
-Expected Response (401 Unauthorized):
-```json
-{
-  "error": "token missing"
-}
-```
-
-##### 3. Test Protected Route With Token
-
-**GET** `http://localhost:3001/api/contacts`
-
-Headers:
-```json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
-Expected Response (200 OK):
-```json
-[]
-```
-
-##### 4. Create a New Contact
-
-**POST** `http://localhost:3001/api/contacts`
-
-Headers:
-```json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-Content-Type: application/json
-```
-
-Body (JSON):
-```json
-{
-  "name": "Jane Smith",
-  "number": "123-4567890"
-}
-```
-
-Expected Response (201 Created):
-```json
-{
-  "name": "Jane Smith",
-  "number": "123-4567890",
-  "belongsTo": "60f7b3b3b3b3b3b3b3b3b3b3",
-  "id": "60f7b3b3b3b3b3b3b3b3b3b4"
-}
-```
-
-##### 5. Get Contacts Again
-
-**GET** `http://localhost:3001/api/contacts`
-
-Headers:
-```json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
-Expected Response (200 OK):
-```json
-[
-  {
-    "name": "Jane Smith",
-    "number": "123-4567890",
-    "belongsTo": "60f7b3b3b3b3b3b3b3b3b3b3",
-    "id": "60f7b3b3b3b3b3b3b3b3b3b4"
-  }
-]
-```
-
-#### Common Authentication Errors
-
-1. **401 - token missing**: No Authorization header provided
-2. **401 - invalid token**: Token is malformed, expired, or signed with wrong secret
-3. **403 - forbidden**: Token is valid but user doesn't have permission (not implemented in our simple app)
-
-> **Important**: Always include the word "Bearer" before your token in the Authorization header. The format should be: `Bearer <your-jwt-token>`
-{: .prompt-warning }
-
-Now you have a fully functional authentication system! Users must log in to get a token, and that token is required to access protected resources like contacts. Each user can only see and manage their own contacts.
+There are a lot more errors that I have not included. As you test your functionalities against different scenarios, you will eventually find more errors. Add them to `errorHandler` accordingly. 
 
 ## Part 2: Building the Frontend Foundation
 
