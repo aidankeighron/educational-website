@@ -69,7 +69,6 @@ The application will allow users to:
 - Log in with secure authentication
 - View their contacts
 - Add new contacts
-- Filter contacts by name
 
 Let's get started!
 
@@ -167,7 +166,7 @@ backend/
 
 Now we will create our models. 
 
-A *model* or *schema* is basically how our data is stored inside the database. It is a blueprint to tell us how should the data look like (e.g. which fields should the data have, the restrictions to each field, etc). The two main types of database are *SQL* and *NoSQL*. Basically, a *SQL* database require the data to follow the schema as strictly as possible, and invalid data (which does not follow the schema) will not allowed to be persisted. On the other hand, *NoSQL* database are database that are more flexible, allowing users to store data that have wildly different schemas. 
+A *model* or *schema* is basically how our data is stored inside the database. It is a blueprint to tell us how should the data look like (e.g. which fields should the data have, the restrictions to each field, etc). The two main types of database are *SQL* and *NoSQL*. Basically, a *SQL* database require the data to follow the schema as strictly as possible, and invalid data (which does not follow the schema) will not allowed to be persisted. On the other hand, *NoSQL* database are database that are more flexible, allowing users to store data that does not have a fixed schema. 
 
 In this guide we will use MongoDB - a NoSQL database. 
 
@@ -327,7 +326,7 @@ export const getById = async (req: Request, res: Response, next: NextFunction) =
 
 Remember about the `Contact`s we said earlier that are stored as ObjectId? `populate` here is used to actually display the content of the `Contact` - instead of just as an `ObjectId` (this is the "convert back to `Contact` part we discussed earlier when we were writing model for `User`). First, we have `populate("contacts")` to tell MongoDB to populate the `contacts` field in the `User` object. Then, the `{name: 1, number: 1}` is to include name and number in a `Contact` entity. If you don't want to include name for example, you can leave the field out. 
 
-This file only consists of GET-ing users. For adding users, we will handle that in a different file, `registerController`. But I'll handle that to you. 
+This file only consists of GET-ing users. For adding users, we will handle that in a different file, `registerController`. But I'll hand that to you. 
 
 > Task: Write a controller that supports adding users. The request contains username, name, email, and password. You should try to validate your username, email, and password (just simple `if`s are sufficient). For email validation, you might want to see [this](https://uibakery.io/regex-library/email). And you will also want to hash our password before saving to our database, using [bcrypt](https://nordvpn.com/blog/what-is-bcrypt/).  Basically, just use this in your code
 > ```typescript
@@ -399,7 +398,6 @@ MONGODB_URI={your_mongodb_url}
 PORT=3001
 ```
 {: file="backend/.env" }
-{: .nolineno }
 
 > **Important**: Never commit your `.env` file to version control! Add it to your `.gitignore` file.
 {: .prompt-warning }
@@ -463,9 +461,6 @@ export default registerRouter;
 
 Next, create the main Express application file:
 
-{: file="backend/src/app.ts" }
-{: .nolineno }
-
 ```typescript
 import express, { Request, Response } from 'express';
 import mongoose from 'mongoose';
@@ -496,13 +491,10 @@ app.use(express.json());
 app.use("/api/register", registerRouter);
 app.use("/api/users", userRouter);
 
-// Basic error handling for unknown endpoints
-app.use((req: Request, res: Response) => {
-  res.status(404).send({ error: "unknown endpoint" });
-});
-
 export default app;
 ```
+{: file="backend/src/app.ts" }
+{: .nolineno }
 
 These two lines 
 
@@ -638,7 +630,7 @@ First let's think about it for a second: which endpoints need to be protected? I
 
 Now we will understand how JWT is used. 
 
-First, the user log in with credentials. If the credentials match, JWT is generated. The user can then use the JWT to perform authorized-only operations (e.g. adding a contact to an user's contact list). 
+First, the user log in with credentials. If the credentials match, JWT is generated. The user can then use the JWT to perform authorized-only operations (e.g. adding a contact to an user's contact list). So we need an endpoint to perform just that.  
 
 First, let's create the login controller that generates JWT tokens:
 
@@ -676,7 +668,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 
 The login process works by first finding an user with the same username as provided by the request. Then, it hashes the password received from the request and compare it against the one queried from the database. If the username is not valid or the password is incorrect, it sends back a `401 unauthorized`. Otherwise, a JWT is signed along with the payload and returned.
 
-#### Creating JWT Middleware
+#### Handling JWT 
 
 Now that we have a way to generate JWTs. What about storing them and using them for authorization, e.g. to create contacts? In the frontend, the code used to send requests may look like this:
 
@@ -690,26 +682,35 @@ const someFunction = async () => {
   return response.data;
 };
 ```
+{: .nolineno }
 
 Typically, the JWT token will be sent through the `Authorized` header, as we seen above. For now, just use Postman to login first, get the token, and then send the token manually in the `Authorization` header when we want authorized access. We will persist and automatically use the JWT when we develop the frontend. 
 
-##### 1. Token Extraction Middleware
+> Also, it is the standard to send the `Authorization` header with the format `Bearer {token}` instead of just your token. Just send it like that. 
+{: .prompt-info}
 
-This middleware extracts the token from the `Authorization` header:
+This part will cover how the JWT is used. 
+
+##### 1. Token extraction middleware
+
+When the user is logged in and attempts to perform restricted operations, the JWT will be extracted from the request to validate it. This middleware will extracts the token from the `Authorization` header:
 
 ```typescript
 import { Request, Response, NextFunction } from 'express';
-import '../../../shared/types'; // Import our type extensions
+import '@shared/types';
 
 const modifyToken = (req: Request, res: Response, next: NextFunction) => {
-  const authorization = req.get('authorization');
-  
-  if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
+  const authorization = req.get("authorization");
+  if (authorization != null) console.log("modifyToken " + authorization);
+
+  if (authorization && authorization.startsWith("Bearer ")) {
+    // delete 'Bearer' and add new field 'token'
     req.token = authorization.substring(7);
   }
-  
+
+  console.log(req.token);
   next();
-};
+}
 
 export default modifyToken;
 ```
@@ -722,46 +723,68 @@ This middleware:
 - Extracts the token part from `Bearer <token>` format
 - Attaches the token to the request object for later use
 
-> **TypeScript Magic**: Notice how we can assign `req.token = authorization.substring(7)` without TypeScript throwing an error, even though the Express `Request` object doesn't normally have a `token` property. This works because we've extended the Express Request interface in our `shared/types.ts` file. TypeScript ensures we only attach fields that we've explicitly declared, preventing accidental property assignments and giving us better type safety and IntelliSense support.
-{: .prompt-info}
-
-##### 2. JWT Authentication Middleware
-
-This middleware validates the JWT token and extracts user information:
+You will probably notice TypeScript throwing an error: type `Request` does not have field `token`. This is correct - the `Request` type typically does not have that field, we're adding it into the request. So how can we fix this? This is when we use the `types.ts` file. Go to the `shared` folder (outside of `backend`) and add this to `types.ts`: 
 
 ```typescript
-import jwt from 'jsonwebtoken';
-import { Request, Response, NextFunction } from 'express';
-import config from '../config';
-import '../../../shared/types'; // Import our type extensions
+// extend express.Request
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id: string;
+        username: string;
+      }
+      token?: string;
+    }
+  }
+}
+```
+{: file="@shared/types.ts" }
+{: .nolineno }
+
+This will extend the `Request` type to also contain the field `user` and `token`. Note that you will have to import `@shared/types.ts` every time you want to extend the `Request`. 
+
+##### 2. JWT Authentication middleware
+
+Now that the JWT is extracted, the next step is to validate it. This middleware validates the JWT token and extracts user information:
+
+```typescript
+import jwt from "jsonwebtoken";
+import { Request, Response, NextFunction } from "express";
+import config from "../config";
+import "@shared/types";
 
 interface JwtPayload {
   id: string;
   username: string;
-  iat?: number;
-  exp?: number;
+  iat: number;
+  exp: number;
 }
 
 export const jwtAuth = (req: Request, res: Response, next: NextFunction) => {
   const token = req.token;
-  
-  if (!token) {
-    return res.status(401).json({ error: 'token missing' });
-  }
-  
+
   try {
-    const decodedToken = jwt.verify(token, config.SECRET_KEY!) as JwtPayload;
-    
-    if (!decodedToken.id) {
-      return res.status(401).json({ error: 'invalid token' });
+    if (!token) {
+      return void res.status(401).json({ error: "No token provided" });
     }
-    
-    req.user = decodedToken;
+
+    const payload = jwt.verify(token, config.SECRET_KEY) as JwtPayload;
+    if (!payload) {
+      return void res.status(401).json({ error: "Invalid token" });
+    }
+
+    req.user = {
+      id: payload.id,
+      username: payload.username,
+    };
+
     next();
   } catch (error) {
-    return res.status(401).json({ error: 'invalid token' });
+    return void res.status(401).json({ error: "Token invalid or expired" });
   }
 };
+
 ```
 {: file="backend/src/middlewares/jwtAuth.ts" }
 {: .nolineno }
@@ -774,14 +797,46 @@ This middleware:
 - Attaches user info to the request object
 - Handles token verification errors
 
-> **TypeScript Type Safety**: Here we're adding `req.user = decodedToken` to attach the authenticated user's information to the request object. Again, this works seamlessly because of our type extensions in `shared/types.ts`. TypeScript gives us:
->
-> - **Autocomplete**: When we type `req.user.`, we get IntelliSense suggestions for `id` and `username`
-> - **Type Checking**: If we try to access `req.user.nonexistentField`, TypeScript will catch this error
-> - **Clear Data Types**: We know exactly what data structure we're working with across our entire application
-{: .prompt-info}
+You will need to declare a `JwtPayload` type in order to stop TypeScript from throwing the error. Aside from `username` and `id`, the `iat` and `exp` means issued time and expire time of a JWT in Unix epoch, respectively. These two are pretty standard fields inside a JWT. 
 
-#### Creating Contact Controller
+To summarize: the first middleware extracts the JWT and attaches it to the request. The second one validates the token, and if the token is valid, it attaches the username and id of the user to the request. 
+
+> You might be wondering why we attaches the username and id to the request after decoding the JWT - would that expose the username and id? Well, the thing is that the JWT payload is not securely encrypted in the first place. JWT use base64 encoding, which is easily reversible, and pretty much everybody can decrypt a JWT once they obtain it. The core part of JWT is to prevent tampering - since only a slight alternation of the content will create a completely different JWT. Read more [here](https://softwareengineering.stackexchange.com/questions/280257/json-web-token-why-is-the-payload-public). 
+{. :prompt-info}
+
+##### 3. Adding middleware to protected endpoints 
+
+Finally, we need to configure the middleware in our `app.ts` file. 
+
+> Task: Add the login endpoint and the two middlewares above to our `app.ts` file. The login and register endpoints should still be public, but the users endpoint should be protected by `jwtAuth`. 
+{: .prompt-tip}
+
+**Answer (click to unblur):**
+
+```typescript
+
+	// ...
+
+app.use(express.json());
+
+app.use(modifyToken); // add the jwtToken to request
+
+// Public routes (no authentication required)
+app.use("/api/login", loginRouter);
+app.use("/api/register", registerRouter);
+
+// Apply JWT authentication for protected routes
+app.use("/api/users", jwtAuth, userRouter);
+
+export default app;
+```
+{: file="backend/app.ts"}
+{: .nolineno}
+{: .blur}
+
+When the user login/register, there is no JWT, so the `modifyToken` middleware will do nothing. After that, when the user is logged in, they are assigned with a JWT. When they attempts to perform authorized-only operations, requests will be sent to `userRouter` with a JWT. The request will then go through the `modifyToken` middleware, then the `jwtAuth` middleware, then finally arriving at `userRouter` if the JWT is valid. 
+
+### Creating Contact Controller
 
 Now let's create a controller for handling contacts that uses the authenticated user information:
 
