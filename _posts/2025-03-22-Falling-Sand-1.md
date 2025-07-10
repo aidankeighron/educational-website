@@ -2,8 +2,8 @@
 title: Falling Sand 1
 author: aidan
 date: 2025-03-22 12:00:00 +0800
-categories: [JavaScript, FallingSand]
-tags: [JavaScript, Easy]
+tags: [FallingSand]
+categories: [JavaScript, Easy]
 description: Part 1 of the Falling Sand Project. In this project, you will learn the fundamentals of programming by building a fun and interactive simulation of different particles.
 comments: false
 pin: true
