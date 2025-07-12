@@ -76,7 +76,7 @@ Let's get started!
 
 We'll begin by setting up our TypeScript configuration and creating the basic structure of our backend. 
 
-### Initial Project Setup
+### Basic setup
 
 First we create our backend:
 
@@ -983,9 +983,9 @@ export default errorHandler;
 {: file="backend/middleware/errorHandler.ts"}
 {: .nolineno}
 
-Reading from the logs above, we can see the error name is `MongoServerError` and the message includes `E11000 duplicate key error`. We will use that to specifically target this error. Next, we check if the duplicated value is an email or username, then returning a message based on that error. 
+Reading from the logs above, we can see the error name is `MongoServerError` and the message includes `E11000 duplicate key error`. We use that to specifically target this error. Next, we check if the duplicated value is an email or username, then returning a message based on that error. 
 
-The next error we will tackle is `CastError`. This is thrown when an user try to access an endpoint with `/:id` but then the id is invalid (only for Mongoose). Try it out yourself with Postman and see the error, then add the error handling part. 
+The next error we will tackle is `CastError`. This is thrown when an user try to access an endpoint with `/:id` but then the id is invalid (only for Mongoose; since this error is thrown if the id is an invalid MongoDb ObjectId). Try it out yourself with Postman and see the error, then add the error handling part. 
 
 **Answer (click to unblur):**
 
@@ -1000,59 +1000,134 @@ The next error we will tackle is `CastError`. This is thrown when an user try to
 
 There are a lot more errors that I have not included. As you test your functionalities against different scenarios, you will eventually find more errors. Add them to `errorHandler` accordingly. 
 
-## Part 2: Building the Frontend Foundation
+## Part 2: Frontend setup 
 
-Now that our backend is set up, let's move on to creating the frontend of our application. We'll use React with TypeScript and Vite for fast development.
+Now that our backend is set up, let's move on to creating the frontend of our application. We will use Vite as frontend template.
 
-### Setting Up the Frontend
+### Basic setup 
 
-Let's start by creating our main React component:
+First, outside the backend folder, run 
 
-```tsx
-import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import LoginPage from './components/LoginPage';
-import RegisterPage from './components/RegisterPage';
-import ContactsPage from './components/ContactsPage';
-import NotificationProvider from './contexts/NotificationContext';
-import Notification from './components/Notification';
-import NavBar from './components/NavBar';
-import { useLogin } from './hooks/useLogin';
-import './styles/App.css';
+```
+npm create vite@latest
+```
+{: .nolineno}
 
-const App = () => {
-  const { token, login, logout } = useLogin();
-  
+Then, enter your project name, choose React and TypeScript. After that, you can run 
+
+```
+cd frontend 
+npm install 
+npm run dev
+```
+{: .nolineno}
+
+Now your app should run. However, we won't need the app template file. You can delete the css import in `main.tsx`, and edit the `App.tsx` file into 
+
+```typescript
+import { useState, useEffect } from "react";
+import axios from "axios";
+
+function App() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [user, setUser] = useState(null);
+
+  interface Credentials {
+    username: string;
+    password: string;
+  }
+
+  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const credentials: Credentials = {
+      username,
+      password,
+    };
+
+    await handleLoginBackend(credentials);
+  };
+
   return (
-    <Router>
-      <NotificationProvider>
-        <div className="app-container">
-          <NavBar token={token} onLogout={logout} />
-          <Notification />
-          
-          <Routes>
-            <Route path="/login" element={
-              !token ? <LoginPage onLogin={login} /> : <Navigate to="/contacts" />
-            } />
-            <Route path="/register" element={
-              !token ? <RegisterPage /> : <Navigate to="/contacts" />
-            } />
-            <Route path="/contacts" element={
-              token ? <ContactsPage token={token} /> : <Navigate to="/login" />
-            } />
-            <Route path="/" element={<Navigate to={token ? "/contacts" : "/login"} />} />
-          </Routes>
+    <>
+      <h1>login</h1>
+      <form onSubmit={handleLogin}>
+        <div>
+          username
+          <input
+            type="text"
+            value={username}
+            name="Username"
+            onChange={(e) => setUsername(e.target.value)}
+          />
         </div>
-      </NotificationProvider>
-    </Router>
+
+        <div>
+          password
+          <input
+            type="password"
+            value={password}
+            name="Password"
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+
+        <button type="submit">Login</button>
+      </form>
+    </>
   );
-};
+}
 
 export default App;
 ```
-{: file="frontend/src/App.tsx" }
-{: .nolineno }
+{: file="frontend/App.tsx"}
+{: .nolineno}
 
+After this we can have a simple login form that look like this (the `register` button is not presented here, but overall the login should look like this):
+
+![[Pasted image 20250708233009.png]]
+
+First the form have two states: `username` and `password`, contained within a form, and set up to change as the user edit the text fields. Then, the submit button is named `login` and linked to `handleLogin`. You can notice that `handleLogin` is currently missing `handleLoginBackend`. That will be your task. 
+
+> Task: Create function `handleLoginBackend` that will send the request (username and password) from the frontend from the backend we set up above. If the credentials is valid, the backend will return the user and you should persist it with a state. 
+> You will need to look up how to send request from frontend. I used [Axios](https://github.com/axios/axios). 
+{: .prompt-tip}
+
+**Answers (click to unblur):**
+
+```typescript 
+function App() {
+  // ...
+  const [user, setUser] = useState(null);
+
+  // ...
+
+  const handleLoginBackend = async (credentials: Credentials) => {
+    const baseUrl = "/api/login";
+
+    try {
+      const response = await axios.post(baseUrl, credentials);
+      const user = response.data;
+
+      setUser(user);
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
+  };
+
+  // ...
+}
+
+export default App;
+```
+{: file="frontend/app.tsx"}
+{: .nolineno}
+{: .blur}
+
+Then, after the user is logged in, we should display the contacts. Do it using conditional rendering. 
+
+> Task: Implement displaying the list of contacts after the user is logged in. It should also persist between changes.
 ### Creating Shared Types
 
 Let's define our shared types that will be used by both frontend and backend:
