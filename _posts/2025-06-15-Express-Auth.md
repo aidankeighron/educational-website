@@ -1024,7 +1024,7 @@ npm run dev
 
 Now your app should run. However, we won't need the app template file. You can delete the css import in `main.tsx`, and edit the `App.tsx` file into 
 
-```typescript
+```tsx
 import { useState, useEffect } from "react";
 import axios from "axios";
 
@@ -1081,22 +1081,22 @@ function App() {
 
 export default App;
 ```
-{: file="frontend/App.tsx"}
+{: file="frontend/src/App.tsx"}
 {: .nolineno}
 
 After this we can have a simple login form that look like this (the `register` button is not presented here, but overall the login should look like this):
 
 ![[Pasted image 20250708233009.png]]
 
-First the form have two states: `username` and `password`, contained within a form, and set up to change as the user edit the text fields. Then, the submit button is named `login` and linked to `handleLogin`. You can notice that `handleLogin` is currently missing `handleLoginBackend`. That will be your task. 
+First the form have two states: `username` and `password`, contained within a form, and set up to change as the user edit the text fields. Then, the submit button is named `login` and linked to `handleLogin`. `event.preventDefault()` is to prevent the page from reloading. Notice that `handleLogin` is currently missing `handleLoginBackend`. 
 
-> Task: Create function `handleLoginBackend` that will send the request (username and password) from the frontend from the backend we set up above. If the credentials is valid, the backend will return the user and you should persist it with a state. 
+> Task: Create function `handleLoginBackend` that will send the request (username and password) from the frontend from the backend we set up above. If the credentials is valid, the backend will return the user and you should persist it within a state. 
 > You will need to look up how to send request from frontend. I used [Axios](https://github.com/axios/axios). 
 {: .prompt-tip}
 
-**Answers (click to unblur):**
+**Answer (click to unblur):**
 
-```typescript 
+```tsx
 function App() {
   // ...
   const [user, setUser] = useState(null);
@@ -1121,13 +1121,187 @@ function App() {
 
 export default App;
 ```
-{: file="frontend/app.tsx"}
+{: file="frontend/src/App.tsx"}
 {: .nolineno}
 {: .blur}
 
-Then, after the user is logged in, we should display the contacts. Do it using conditional rendering. 
+Then, after the user is logged in, we should display the contacts. 
 
-> Task: Implement displaying the list of contacts after the user is logged in. It should also persist between changes.
+> Task: Implement displaying the list of contacts after the user is logged in. To do it, you can check if the user is not null. 
+
+**Answer (click to unblur):**
+
+```tsx
+function App() {
+  // ...
+  const [contacts, setContacts] = useState([]);
+
+  useEffect(() => {
+    if (user !== null) {
+      console.log(user);
+      const contactUrl = "/api/contacts";
+      const token = user.token;
+
+      const config = {
+        headers: { Authorization: `Bearer ${token}` },
+      };
+
+      axios.get(contactUrl, config).then((response) => setContacts(response.data));
+    }
+  }, [user]); // Add dependency array to prevent infinite re-renders
+
+  return (
+    <>
+      // ... 
+      {user !== null && (
+        <div>
+          <h2>Your Contacts</h2>
+          {contacts.map((contact) => (
+            <div>
+              {contact!.name} {contact!.number}
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+export default App;
+```
+{: file="frontend/src/App.tsx"}
+{: .nolineno}
+{: .blur}
+
+If you didn't know `useEffect` already you should look it up *immediately*. Also, here we add another variable `config` after `contactUrl` in order to send the JWT with the request.
+
+However, If you test this code right now, you'll notice a problem: **all contacts in the database are being displayed**, regardless of which user is logged in. This is a security issue! Each user should only see their own contacts.
+
+> Task: Fix so that only contacts belong to the authenticated user are displayed.
+{: .prompt-tip}
+
+**Answer (click to unblur):**
+
+```tsx
+	useEffect(() => {
+		if (user !== null) {
+		  console.log(user);
+		  const contactUrl = "/api/contacts";
+		  const token = user.token;
+	
+		  const config = {
+			headers: { Authorization: `Bearer ${token}` },
+		  };
+	
+		  axios.get(contactUrl, config).then((response) => {
+			setContacts(response.data.filter(
+			  contact => contact.belongsTo.username === user.username
+			))
+		  }) 
+		}
+    }, [user]); 
+```
+{: file="frontend/src/App.tsx"}
+{: .nolineno }
+{: .blur }
+
+> ...or maybe you can change it in the backend? :) That approach is better but I'll let you figure out that yourself. 
+{: .prompt-tip}
+
+### Refactoring and shared types 
+
+As our application grows, you might notice that our `App.tsx` is becoming quite large and doing many things at once. Let's refactor our application to be more maintainable and scalable. 
+
+First move the login form into its own component: 
+
+```tsx 
+import React, { useState } from "react";
+
+interface LoginFormProps {
+  handleLogin: (username: string, password: string) => void;
+}
+
+const LoginForm = ({ handleLogin }: LoginFormProps ) => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
+  const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    handleLogin(username, password);
+  };
+
+  return (
+    <>
+      <form onSubmit={onSubmit}>
+        <div>
+          username
+          <input
+            type="text"
+            value={username}
+            name="Username"
+            onChange={(e) => setUsername(e.target.value)}
+          />
+        </div>
+        <div>
+          password
+          <input
+            type="password"
+            value={password}
+            name="Password"
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+        <button type="submit">Login</button>
+      </form>
+      <button onClick={registerRedirect}>Register</button>
+    </>
+  );
+};
+
+export default LoginForm;
+
+```
+{: file="frontend/src/components/LoginForm.tsx}
+{: .nolineno}
+
+But then how about the backend handling part? We are also going to refactor it into another file, `useLogin`: 
+
+```tsx
+import { useState, useEffect } from "react";
+import axios from "axios";
+import type { LoginRequest, Contact, JwtAccessToken } from '@shared/types';
+
+export function useAuth() {
+  const [user, setUser] = useState<JwtAccessToken | null>(null);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+
+  useEffect(() => {
+    // ...
+  }, [user]);
+
+  const handleLogin = async (username: string, password: string) => {
+    const credentials: LoginRequest = {
+      username,
+      password,
+    };
+
+    return await handleLoginBackend(credentials);
+  };
+
+  const handleLoginBackend = async (credentials: LoginRequest) => {
+    // ... 
+  };
+
+  return {
+    user,
+    contacts,
+    handleLogin
+  };
+}
+```
+{: file="frontend/src/hooks/useLogin.tsx"}
+{: .nolineno}
+
 ### Creating Shared Types
 
 Let's define our shared types that will be used by both frontend and backend:
