@@ -753,6 +753,7 @@ import "@shared/types";
 interface JwtPayload {
   id: string;
   username: string;
+  name: string;
   iat: number;
   exp: number;
 }
@@ -793,7 +794,7 @@ This middleware:
 - Attaches user info to the request object
 - Handles token verification errors
 
-You will need to declare a `JwtPayload` type in order to stop TypeScript from throwing the error. Aside from `username` and `id`, the `iat` and `exp` means issued time and expire time of a JWT in Unix epoch, respectively. These two are pretty standard fields inside a JWT. 
+You will need to declare a `JwtPayload` type in order to stop TypeScript from throwing errors. Aside from `username` and `id`, the `iat` and `exp` means issued time and expire time of a JWT in Unix epoch, respectively. These two are pretty standard fields inside a JWT. 
 
 To summarize: the first middleware extracts the JWT and attaches it to the request. The second one validates the token, and if the token is valid, it attaches the username and id of the user to the request. 
 
@@ -811,8 +812,7 @@ Finally, we need to configure the middleware in our `app.ts` file.
 
 ```typescript
 
-	// ...
-
+// ...
 app.use(express.json());
 
 app.use(modifyToken); // add the jwtToken to request
@@ -1022,6 +1022,37 @@ npm run dev
 ```
 {: .nolineno}
 
+#### Backend proxy
+
+Before we start, if you attempts to send requests from frontend to backend without any configuration, nothing will happen. If you open the console, it would probably all errors and read something about `Cross-Origin Resource Policy`, or CORS for short. To explain shortly, it's a security feature: your frontend is running default on port 5173 (Vite default), and backend on port 3000, so they cannot communicate since they're not on the same origin. 
+
+To mitigate this, you can install `cors` directly on backend, or edit this to your `vites.config.ts`:
+
+```ts
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@shared': path.resolve(__dirname, '../shared')
+    }
+  },
+  server: {
+    proxy: {
+      "/api": {
+        target: "http://localhost:3000", 
+        changeOrigin: true,
+      },
+    }
+  }
+})
+```
+
+With this, you can communicate directly with the server. If you want to test your frontend code in real-time, first run your backend, then run your frontend, then test directly on your frontend port (in this case 5173) and your requests will go through. 
+
+Also, the `alias` part is to make sure your files recognizes the `@shared/types.ts` syntax. 
+
+#### Login page
+
 Now your app should run. However, we won't need the app template file. You can delete the css import in `main.tsx`, and edit the `App.tsx` file into 
 
 ```tsx
@@ -1031,7 +1062,6 @@ import axios from "axios";
 function App() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [user, setUser] = useState(null);
 
   interface Credentials {
     username: string;
@@ -1084,13 +1114,13 @@ export default App;
 {: file="frontend/src/App.tsx"}
 {: .nolineno}
 
-After this we can have a simple login form that look like this (the `register` button is not presented here, but overall the login should look like this):
+After this we can have a simple login form that look like this (the `register` button is not present here, but overall the login should look like this):
 
 ![[Pasted image 20250708233009.png]]
 
 First the form have two states: `username` and `password`, contained within a form, and set up to change as the user edit the text fields. Then, the submit button is named `login` and linked to `handleLogin`. `event.preventDefault()` is to prevent the page from reloading. Notice that `handleLogin` is currently missing `handleLoginBackend`. 
 
-> Task: Create function `handleLoginBackend` that will send the request (username and password) from the frontend from the backend we set up above. If the credentials is valid, the backend will return the user and you should persist it within a state. 
+> Task: Create function `handleLoginBackend` that will send the request (username and password) from the frontend from the backend we set up above. If the credentials is valid, the backend will return the JWT and you should persist it within a state. 
 > You will need to look up how to send request from frontend. I used [Axios](https://github.com/axios/axios). 
 {: .prompt-tip}
 
@@ -1099,7 +1129,7 @@ First the form have two states: `username` and `password`, contained within a fo
 ```tsx
 function App() {
   // ...
-  const [user, setUser] = useState(null);
+  const [jwt, setJwt] = useState(null);
 
   // ...
 
@@ -1108,9 +1138,9 @@ function App() {
 
     try {
       const response = await axios.post(baseUrl, credentials);
-      const user = response.data;
+      const jwt = response.data;
 
-      setUser(user);
+      setJwt(jwt);
     } catch (error) {
       console.error("Login failed:", error);
     }
@@ -1125,9 +1155,11 @@ export default App;
 {: .nolineno}
 {: .blur}
 
+#### Displaying contacts
+
 Then, after the user is logged in, we should display the contacts. 
 
-> Task: Implement displaying the list of contacts after the user is logged in. To do it, you can check if the user is not null. 
+> Task: Implement displaying the list of contacts after the user is logged in. To do it, you can check if the JWT is not null. 
 
 **Answer (click to unblur):**
 
@@ -1137,10 +1169,10 @@ function App() {
   const [contacts, setContacts] = useState([]);
 
   useEffect(() => {
-    if (user !== null) {
-      console.log(user);
+    if (jwt !== null) {
+      console.log(jwt);
       const contactUrl = "/api/contacts";
-      const token = user.token;
+      const token = jwt.token;
 
       const config = {
         headers: { Authorization: `Bearer ${token}` },
@@ -1153,7 +1185,7 @@ function App() {
   return (
     <>
       // ... 
-      {user !== null && (
+      {jwt !== null && (
         <div>
           <h2>Your Contacts</h2>
           {contacts.map((contact) => (
@@ -1177,17 +1209,24 @@ If you didn't know `useEffect` already you should look it up *immediately*. Also
 
 However, If you test this code right now, you'll notice a problem: **all contacts in the database are being displayed**, regardless of which user is logged in. This is a security issue! Each user should only see their own contacts.
 
-> Task: Fix so that only contacts belong to the authenticated user are displayed.
+> Task: Fix so that only contacts belong to the authenticated user are displayed. To do that you'll first need to decode your JWT in order to get the username. Use [jwt-decode](https://www.npmjs.com/package/jwt-decode).
 {: .prompt-tip}
 
 **Answer (click to unblur):**
 
 ```tsx
+function App() {
+	const [jwt, setJwt] = useState(null);
+	const [contacts, setContacts] = useState([]);
+
+	const payload = jwt !== null 
+    ? jwtDecode<JwtPayload>(jwt)
+    : null;
+
 	useEffect(() => {
-		if (user !== null) {
-		  console.log(user);
+		if (payload !== null) {
 		  const contactUrl = "/api/contacts";
-		  const token = user.token;
+		  const token = jwt.token;
 	
 		  const config = {
 			headers: { Authorization: `Bearer ${token}` },
@@ -1195,22 +1234,31 @@ However, If you test this code right now, you'll notice a problem: **all contact
 	
 		  axios.get(contactUrl, config).then((response) => {
 			setContacts(response.data.filter(
-			  contact => contact.belongsTo.username === user.username
+			  contact => contact.belongsTo.username === payload.username
 			))
 		  }) 
 		}
-    }, [user]); 
+    }, [payload]); 
+
+	// ...
+}
 ```
 {: file="frontend/src/App.tsx"}
 {: .nolineno }
 {: .blur }
 
-> ...or maybe you can change it in the backend? :) That approach is better but I'll let you figure out that yourself. 
+The approach works like this: When jwt is `null`, nothing happens. But then if `jwt` is not null, then the entire function runs again, and then `payload` will run first before `useEffect` runs. After that, when `useEffect` runs, it will get the token, send it, and filter the response by payload data. 
+
+> ...or maybe you can change it in the backend so that the resposne already contains the filtered data? :) That approach is better but I'll let you figure out that yourself. 
 {: .prompt-tip}
+
+Also notice `JwtPayload`. It is yet another defined custom types in `types.ts`. We will cover it right in the next part. 
 
 ### Refactoring and shared types 
 
 As our application grows, you might notice that our `App.tsx` is becoming quite large and doing many things at once. Let's refactor our application to be more maintainable and scalable. 
+
+#### Component refactoring
 
 First move the login form into its own component: 
 
@@ -1233,24 +1281,7 @@ const LoginForm = ({ handleLogin }: LoginFormProps ) => {
   return (
     <>
       <form onSubmit={onSubmit}>
-        <div>
-          username
-          <input
-            type="text"
-            value={username}
-            name="Username"
-            onChange={(e) => setUsername(e.target.value)}
-          />
-        </div>
-        <div>
-          password
-          <input
-            type="password"
-            value={password}
-            name="Password"
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
+        {/* input */}
         <button type="submit">Login</button>
       </form>
       <button onClick={registerRedirect}>Register</button>
@@ -1264,366 +1295,349 @@ export default LoginForm;
 {: file="frontend/src/components/LoginForm.tsx}
 {: .nolineno}
 
-But then how about the backend handling part? We are also going to refactor it into another file, `useLogin`: 
+But then how about the backend handling part (`handleLogin`)? We are also going to refactor it into another file, `useLogin`: 
 
 ```tsx
 import { useState, useEffect } from "react";
+import type { LoginRequest, Contact, JwtPayload } from "@shared/types";
 import axios from "axios";
-import type { LoginRequest, Contact, JwtAccessToken } from '@shared/types';
+import { jwtDecode } from "jwt-decode";
 
-export function useAuth() {
-  const [user, setUser] = useState<JwtAccessToken | null>(null);
+export function useLogin() {
+  const [jwt, setJwt] = useState(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
 
+  const payload = jwt !== null 
+    ? jwtDecode<JwtPayload>(jwt)
+    : null;
+
   useEffect(() => {
-    // ...
-  }, [user]);
+    if (payload !== null) {
+	  console.log(jwt);
+	  const contactUrl = "/api/contacts";
+	  const token = jwt.token;
+
+	  const config = {
+		headers: { Authorization: `Bearer ${token}` },
+	  };
+
+	  axios.get(contactUrl, config).then((response) => {
+		setContacts(response.data.filter(
+		  contact => contact.belongsTo.username === payload.username
+		))
+	  }) 
+	}
+   }, [payload]); 
 
   const handleLogin = async (username: string, password: string) => {
-    const credentials: LoginRequest = {
-      username,
-      password,
-    };
-
-    return await handleLoginBackend(credentials);
+    // ...
   };
 
-  const handleLoginBackend = async (credentials: LoginRequest) => {
-    // ... 
-  };
 
   return {
-    user,
+    payload,
     contacts,
-    handleLogin
+    handleLogin,
   };
 }
+
 ```
 {: file="frontend/src/hooks/useLogin.tsx"}
 {: .nolineno}
 
-### Creating Shared Types
+Now, the imports
 
-Let's define our shared types that will be used by both frontend and backend:
+```tsx
+import type { LoginRequest, Contact, JwtPayload } from "@shared/types";
+```
+{: .nolineno}
 
-```typescript
-import { Document } from 'mongoose';
+which means that we're going to use `types.ts` again. For `Contact`, you can do it yourself - it should look exactly like our contact model (except that it's not Mongoose, of course). For `JwtPayload`:
 
-// User related types
-export interface User extends Document {
-  username: string;
-  email: string;
-  passwordHash: string;
-}
-
-export interface UserResponse {
-  id: string;
-  username: string;
-  email: string;
-}
-
-export interface LoginCredentials {
-  username: string;
-  password: string;
-}
-
-export interface RegisterCredentials {
-  username: string;
-  email: string;
-  password: string;
-}
-
-export interface LoginResponse {
-  token: string;
-  username: string;
-  email: string;
-}
-
-// Contact related types
-export interface Contact extends Document {
-  name: string;
-  phone: string;
-  user: User['_id'];
-}
-
-export interface ContactInput {
-  name: string;
-  phone: string;
-}
-
-export interface ContactResponse {
-  id: string;
-  name: string;
-  phone: string;
-}
-
-// JWT related types
+```tsx
 export interface JwtPayload {
   id: string;
   username: string;
-  iat?: number;
+  name: string;
   exp?: number;
-}
-
-// For Express request augmentation
-declare global {
-  namespace Express {
-    interface Request {
-      token?: string;
-      user?: JwtPayload;
-    }
-  }
+  iat?: number;
 }
 ```
-{: file="shared/types.ts" }
+{: file="@shared/types.ts"}
+{: .nolineno}
+
+You might notice this is the same as the `JwtPayload` used earlier in the backend. Yes it is indeed the same, and you should go and replace all of them with this, so that they share the same type. For `LoginRequest`: replace the `Credentials` type above with this for better naming, and import it from `types.ts` instead of defining it locally. Although not specifying `LoginRequest` for the credentials does not result in warning, it is good practice to do so. Imagine having a hundreds of request: `ContactRequest`, `DeleteRequest`, `UpdateRequest`, etc. you will quickly be overwhelmed and lose track of what are which if the types are not concrete.
+
+**Answer (click to unblur):**
+
+```tsx
+export interface LoginRequest {
+  username: string, 
+  password: string 
+};
+
+export interface Contact {
+  id: string,
+  name: string, 
+  number: string,
+  belongsTo: {
+    username: string
+  }
+};
+
+```
+{: file="@shared/types.ts}
+{: .nolineno}
+{: .blur}
+
+Next, refactor the contact displaying part into its own component: 
+
+```tsx
+import React from 'react';
+import type { Contact } from '@shared/types';
+
+interface ContactDisplayProps {
+  contacts: Contact[];
+  username: string;
+}
+
+const ContactDisplay = ({ contacts }: ContactDisplayProps) => {
+  return (
+    <div>
+      <h2>Your Contacts</h2>
+      {contacts.map((contact, index) => (
+        <div key={index}>
+          {contact.name} {contact.number}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default ContactDisplay;
+```
+{: file="frontend/src/components/ContactDisplay.tsx"}
 {: .nolineno }
 
-### Creating API Services
+Here notice that `ContactDisplayProps` is directly defined inside the file. We certainly know that this interface is only needed inside this function and this file (where else in the code we need to display contacts like this?), so we can declare the interface straight in the file. This is mostly up to personal taste. 
 
-Let's create services to handle API requests:
+Finally, after refactoring, our `App.tsx` will be much cleaner:
 
-```typescript
-import axios from 'axios';
-import { LoginCredentials, LoginResponse } from '../../shared/types';
+```tsx
+import LoginForm from "./components/LoginForm";
+import ContactDisplay from "./components/ContactDisplay";
+import { useLogin } from "./hooks/useLogin";
 
-const baseUrl = '/api/login';
+function App() {
+  const {payload, contacts, handleLogin} = useLogin();
 
-export const login = async (credentials: LoginCredentials): Promise<LoginResponse> => {
-  const response = await axios.post<LoginResponse>(baseUrl, credentials);
+  return (
+    <>
+      <h1>login</h1>
+      <LoginForm handleLogin={handleLogin} />
+      {payload !== null && (
+        <ContactDisplay contacts={contacts} username={payload.username} />
+      )}
+    </>
+  );
+}
+
+export default App;
+
+```
+{: file="frontend/src/App.tsx"}
+{: .nolineno}
+
+#### API refactoring 
+
+Before we move on to the next part, let's refactor our service code for better organization. The main idea is to separate all Axios-related API calls into dedicated *service* modules. This creates a clean separation between our UI logic and API communication.
+
+For example, instead of handling API calls directly in our components like this:
+
+```tsx
+const handleLoginBackend = async (credentials: Credentials) => {
+    const baseUrl = "/api/login";
+
+    try {
+      const response = await axios.post(baseUrl, credentials);
+      const jwt = response.data;
+
+      setJwt(jwt);
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
+};
+```
+{: .nolineno}
+
+We can refactor it to use a dedicated service like this:
+
+```tsx
+const handleLoginBackend = async (credentials: LoginRequest) => {
+    try {
+      const response = await loginService.login(credentials);
+      setJwt(response);
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
+};
+```
+{: .nolineno}
+
+The refactored code is much cleaner and more descriptive. Instead of having to parse through implementation details to understand what a function does, we can immediately understand its purpose from the service method name. This follows a key principle in app design: **keep specific implementation details separate from general business logic**.
+
+Let's create a new `loginService` file under `frontend/src/services`:
+
+```tsx
+import axios from "axios";
+import type { LoginRequest, LoginResponse } from '@shared/types';
+
+const baseUrl = "/api/login";
+
+export const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
+  const response = await axios.post(baseUrl, credentials);
   return response.data;
 };
 ```
 {: file="frontend/src/services/loginService.ts" }
 {: .nolineno }
 
-And a service for contact operations:
+Notice the `Promise<LoginResponse>` return type annotation. This is a best practice - you should always define strict data types for your function inputs and outputs. You may want to refer back to your `loginController` to define the appropriate data type structure for `LoginResponse`. After that you should refactor the whole application before moving on. 
 
-```typescript
-import axios from 'axios';
-import { ContactInput, ContactResponse } from '../../shared/types';
+> **Task**: Refactor your `Contact` API calls using the same service pattern, and create a dedicated service file for any place where you're making direct API calls in your current code.
+{: .prompt-tip}
 
-const baseUrl = '/api/contacts';
+### Register page. Routers
 
-export const getAll = async (token: string): Promise<ContactResponse[]> => {
-  const config = {
-    headers: { Authorization: `Bearer ${token}` },
-  };
+Now we can create a register page for new users to sign up.
+
+Let's start with a basic register form component:
+
+```tsx
+import type { RegisterRequest } from "@shared/types";
+import React, { useState } from 'react';
+import * as registerService from '../services/registerService';
+
+const RegisterForm = () => { 
+  // ... states
   
-  const response = await axios.get<ContactResponse[]>(baseUrl, config);
-  return response.data;
-};
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
-export const create = async (token: string, newContact: ContactInput): Promise<ContactResponse> => {
-  const config = {
-    headers: { Authorization: `Bearer ${token}` },
-  };
-  
-  const response = await axios.post<ContactResponse>(baseUrl, newContact, config);
-  return response.data;
-};
-```
-{: file="frontend/src/services/contactService.ts" }
-{: .nolineno }
-
-## Part 3: Adding Authentication
-
-Now, let's implement the login functionality with a custom hook and components.
-
-### Creating the Login Hook
-
-```typescript
-import { useState, useEffect } from 'react';
-import { LoginCredentials } from '../../shared/types';
-import * as loginService from '../services/loginService';
-
-export const useLogin = () => {
-  const [token, setToken] = useState<string | null>(null);
-  const [username, setUsername] = useState<string | null>(null);
-  
-  useEffect(() => {
-    const savedToken = localStorage.getItem('userToken');
-    const savedUsername = localStorage.getItem('username');
-    
-    if (savedToken && savedUsername) {
-      setToken(savedToken);
-      setUsername(savedUsername);
-    }
-  }, []);
-  
-  const login = async (credentials: LoginCredentials) => {
     try {
-      const response = await loginService.login(credentials);
-      
-      localStorage.setItem('userToken', response.token);
-      localStorage.setItem('username', response.username);
-      
-      setToken(response.token);
-      setUsername(response.username);
-      
-      return { success: true };
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        return { 
-          success: false, 
-          error: error.response.data.error || 'Login failed' 
-        };
+      const registerData: RegisterRequest = {
+        username, 
+        password,
+        name, 
+        email
       }
-      return { success: false, error: 'Login failed' };
+
+      await registerService.register(registerData);
+    } catch (err) {
+      console.error(err);
     }
-  };
-  
-  const logout = () => {
-    localStorage.removeItem('userToken');
-    localStorage.removeItem('username');
-    setToken(null);
-    setUsername(null);
-  };
-  
-  return { token, username, login, logout };
-};
-```
-{: file="frontend/src/hooks/useLogin.ts" }
-{: .nolineno }
-
-### Creating the Login Component
-
-```tsx
-import { useState } from 'react';
-import { LoginCredentials } from '../../shared/types';
-import { useNotification } from '../hooks/useNotification';
-import { Link } from 'react-router-dom';
-import '../styles/LoginPage.css';
-
-interface LoginPageProps {
-  onLogin: (credentials: LoginCredentials) => Promise<{ success: boolean; error?: string }>;
-}
-
-const LoginPage = ({ onLogin }: LoginPageProps) => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const { showNotification } = useNotification();
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const result = await onLogin({ username, password });
-    
-    if (result.success) {
-      showNotification('Login successful!', 'success');
-    } else {
-      showNotification(result.error || 'Login failed', 'error');
-    }
-  };
+  }
   
   return (
-    <div className="login-container">
-      <h2>Login</h2>
+    <>
+      <h1>Register</h1>
       <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="username">Username</label>
-          <input
-            type="text"
-            id="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        <button type="submit" className="login-button">Login</button>
+        {/* name, email, username, password */}
+        <button>Register</button>
       </form>
-      <div className="register-link">
-        <p>Don't have an account? <Link to="/register">Register here</Link></p>
-      </div>
-    </div>
-  );
-};
+    </>
+  )
+}
 
-export default LoginPage;
+export default RegisterForm;
 ```
-{: file="frontend/src/components/LoginPage.tsx" }
-{: .nolineno }
+{: file="frontend/src/components/RegisterForm.tsx}
+{: .nolineno}
 
-### Creating a Notification System
+The question now is: where do we put this page? Using conditional rendering for multiple pages becomes very complicated as our app grows. Instead, we're going to develop our app to use multiple endpoints in the frontend: `/login` for login page, `/register` for register page, and `/home` for the main page (after logged in). 
 
-Let's implement a notification context and hook for user feedback:
+> Note that in an old school web app this means sending a request to the server, refresh the page, and then we arrive at our destination. In our app, we are in fact still on the same page. We're just simply utilizing Javascript to perform conditional rendering based on endpoints. And by the way, those endpoints are also completely unrelated to the backend. 
+{: .prompt-info}
+
+In order to achieve this we will use React Router. First, install the dependencies:
+
+```
+npm install react-router-dom
+```
+
+Then make the following changes to `RegisterForm`: 
 
 ```tsx
-import { createContext, useState, ReactNode } from 'react';
+// ...
+import { useNavigate } from 'react-router-dom';
 
-type NotificationType = 'success' | 'error' | 'info';
+const RegisterForm = () => { 
+  // ... states
+  const navigate = useNavigate();
 
-interface Notification {
-  message: string;
-  type: NotificationType;
-}
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
-interface NotificationContextType {
-  notification: Notification | null;
-  showNotification: (message: string, type: NotificationType) => void;
-  clearNotification: () => void;
-}
+    try {
+      // ...
 
-export const NotificationContext = createContext<NotificationContextType>({
-  notification: null,
-  showNotification: () => {},
-  clearNotification: () => {},
-});
-
-interface NotificationProviderProps {
-  children: ReactNode;
-}
-
-const NotificationProvider = ({ children }: NotificationProviderProps) => {
-  const [notification, setNotification] = useState<Notification | null>(null);
-  
-  const showNotification = (message: string, type: NotificationType) => {
-    setNotification({ message, type });
-    
-    // Auto clear after 5 seconds
-    setTimeout(() => {
-      setNotification(null);
-    }, 5000);
-  };
-  
-  const clearNotification = () => {
-    setNotification(null);
-  };
+      await registerService.register(registerData);
+      navigate("/");
+    } catch (err) {
+      console.error(err);
+    }
+  }
   
   return (
-    <NotificationContext.Provider value=\{\{ notification, showNotification, clearNotification \}\}>
-      {children}
-    </NotificationContext.Provider>
+    <>
+      {/* ... */}
+      <button onClick={() => navigate("/")}>Cancel</button>
+    </>
+  )
+}
+```
+{: file="frontend/src/components/RegisterForm.tsx}
+{: .nolineno}
+
+First, we create a `useNavigate` hook. This is use to navigate to a different page. In our logic, after the registration success, we will be redirected to the default page `/` (which is currently where our login page is located). We also added another cancel button at the end for users to return to homepage.
+
+> Task: Do the same thing in `LoginForm`: Create a `Register` button that navigates to `/register`. 
+{: .prompt-tip}
+
+After that, in `App.tsx`: 
+
+```tsx
+// ... 
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+
+
+function App() {
+  const { payload, contacts, handleLogin } = useLogin();
+
+  return (
+    <>
+      <Router>
+      <Routes>
+        <Route path="/" element={
+          <>
+            <h1>Login</h1>
+            <LoginForm handleLogin={handleLogin} />
+            {payload !== null && (
+              <ContactDisplay contacts={contacts} username={user.username} />
+            )}
+          </>
+        } />
+        <Route path="/register" element={<RegisterForm />} />
+      </Routes>
+    </Router>
+    </>
   );
-};
-
-export default NotificationProvider;
+}
 ```
-{: file="frontend/src/contexts/NotificationContext.tsx" }
-{: .nolineno }
+{: file="frontend/src/App.tsx"}
+{: .nolineno}
 
-And the corresponding hook:
-
-```typescript
-import { useContext } from 'react';
-import { NotificationContext } from '../contexts/NotificationContext';
-
-export const useNotification = () => {
-  return useContext(NotificationContext);
-};
-```
-{: file="frontend/src/hooks/useNotification.ts" }
-{: .nolineno }
-
+Now we have three new keywords here: `Router`, `Routes`, and `Route`. `Router` (or actually `BrowserRouter`) wraps our entire application and enables routing, as well as managing the current endpoint and navigation history. The `Routes` is a container that group different `Route` into a collection, and ensure only one `Route` in the group will render at one time. Finally, `Route` should be pretty self-explanatory. 
 ## Part 4: Contact Management Features
 
 Now let's implement the contacts page and related functionality:
