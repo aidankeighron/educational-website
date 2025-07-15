@@ -11,12 +11,16 @@ media_subpath: /assets/tutorials/express-auth
 image: /auth-header.png
 ---
 
-
 ## About the project
 
 Welcome to the Express Authentication tutorial! In this project, you will learn how to build a complete full-stack contact management application with secure user authentication.
 
 ![Authentication Demo](/auth-demo.gif)
+
+**Prerequisites**:
+
+- Basic understanding of how the web works, APIs, sending and receiving requests
+- Basic coding skills in JS. React skills is preferrable
 
 **What you will learn:**
 
@@ -26,7 +30,6 @@ Welcome to the Express Authentication tutorial! In this project, you will learn 
 - Building a React frontend with TypeScript, hooks, and context
 - Proper error handling and user feedback with notifications
 - Creating protected routes that require authentication
-- Type safety across the entire stack with TypeScript
 
 **What you will make:**
 
@@ -45,16 +48,8 @@ You can add more to this project:
 - Implement refresh/access token
 - Add "forget password" field and send email to user to verify
 - Add edit/delete functionalities for your contact
-
-## Table of Contents
-
-- [Project Overview](#project-overview)
-- [Part 1: Setting Up the Backend](#part-1-setting-up-the-backend)
-- [Part 2: Building the Frontend Foundation](#part-2-building-the-frontend-foundation)
-- [Part 3: Adding Authentication](#part-3-adding-authentication)
-- [Part 4: Contact Management Features](#part-4-contact-management-features)
-- [Part 5: Final Touches and Improvements](#part-5-final-touches-and-improvements)
-- [Conclusion](#conclusion)
+- Improve styling
+- Use a different database
 
 ## Project Overview
 
@@ -183,7 +178,7 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true, 
     minLength: 3, 
-    maxLength: 10, 
+    maxLength: 15, 
     validate: {
       validator: function (v: string) {
         return /^[a-zA-Z][a-zA-Z0-9_]{2,15}$/.test(v);
@@ -452,13 +447,6 @@ export default registerRouter;
 {: file="backend/src/routers/registerRouter.ts" }
 {: .nolineno }
 
-> Technically speaking you can do 
-> ```typescript
-> userRouter.get("/", async(...) => {})
-> ```
-> directly inside your controller file. This boils down to personal preference for the most part. 
-{: .prompt-info}
-
 Next, create the main Express application file:
 
 ```typescript
@@ -521,7 +509,19 @@ app.listen(config.PORT, () => {
 {: file="backend/src/index.ts" }
 {: .nolineno }
 
-Now our basic backend application should be done. First, start your server:
+Now our basic backend application should be done. First, configure your `package.json` file:
+
+```json
+"scripts": {
+    "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node -r tsconfig-paths/register' src/index.ts",
+  }
+```
+{: file="backend/package.json"}
+{: .nolineno}
+
+The important part here is the `-r tsconfig-paths/register` part. This will enable path mapping support (like `@shared/types`) and without this your `@shared/*` imports won't work. You can look up the rest if you don' understand.
+
+Then start your server:
 
 ```bash
 cd backend
@@ -651,13 +651,14 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 
   const payload = {
     username: user.username,
+    name: user.name,
     id: user._id
   };
 
   const token = jwt.sign(payload, config.SECRET_KEY, { expiresIn: 60*60 });
 
-  res.status(200).send({ token, username: username, name: user.name});
-}
+  return void res.status(200).send({ token });
+} 
 ```
 {: file="backend/src/controllers/loginController.ts" }
 {: .nolineno }
@@ -685,7 +686,7 @@ Typically, the JWT token will be sent through the `Authorized` header, as we see
 > Also, it is the standard to send the `Authorization` header with the format `Bearer {token}` instead of just your token. Just send it like that. 
 {: .prompt-info}
 
-This part will cover how the JWT is used. 
+Next we will cover how the JWT is used. 
 
 ##### 1. Token extraction middleware
 
@@ -697,7 +698,6 @@ import '@shared/types';
 
 const modifyToken = (req: Request, res: Response, next: NextFunction) => {
   const authorization = req.get("authorization");
-  if (authorization != null) console.log("modifyToken " + authorization);
 
   if (authorization && authorization.startsWith("Bearer ")) {
     // delete 'Bearer' and add new field 'token'
@@ -726,9 +726,10 @@ You will probably notice TypeScript throwing an error: type `Request` does not h
 declare global {
   namespace Express {
     interface Request {
-      user?: {
+      user: {
         id: string;
         username: string;
+        name: string;
       }
       token?: string;
     }
@@ -748,15 +749,8 @@ Now that the JWT is extracted, the next step is to validate it. This middleware 
 import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
 import config from "../config";
-import "@shared/types";
+import type { JwtPayload } from "@shared/types";
 
-interface JwtPayload {
-  id: string;
-  username: string;
-  name: string;
-  iat: number;
-  exp: number;
-}
 
 export const jwtAuth = (req: Request, res: Response, next: NextFunction) => {
   const token = req.token;
@@ -774,6 +768,7 @@ export const jwtAuth = (req: Request, res: Response, next: NextFunction) => {
     req.user = {
       id: payload.id,
       username: payload.username,
+      name: payload.name
     };
 
     next();
@@ -794,11 +789,25 @@ This middleware:
 - Attaches user info to the request object
 - Handles token verification errors
 
-You will need to declare a `JwtPayload` type in order to stop TypeScript from throwing errors. Aside from `username` and `id`, the `iat` and `exp` means issued time and expire time of a JWT in Unix epoch, respectively. These two are pretty standard fields inside a JWT. 
+You will need to declare a `JwtPayload` type in order to stop TypeScript from throwing errors:
+
+```ts
+export interface JwtPayload {
+  id: string;
+  username: string;
+  name: string;
+  exp?: number;
+  iat?: number;
+}
+```
+{: file="@shared/types.ts" }
+{: .nolineno }
+
+Aside from `username`, `name` and `id`, the `iat` and `exp` means issued time and expire time of a JWT in Unix epoch, respectively. These two are pretty standard fields inside a JWT. 
 
 To summarize: the first middleware extracts the JWT and attaches it to the request. The second one validates the token, and if the token is valid, it attaches the username and id of the user to the request. 
 
-> You might be wondering why we attaches the username and id to the request after decoding the JWT - would that expose the username and id? Well, the thing is that the JWT payload is not securely encrypted in the first place. JWT use base64 encoding, which is easily reversible, and pretty much everybody can decrypt a JWT once they obtain it. The core part of JWT is to prevent tampering - since only a slight alternation of the content will create a completely different JWT. Read more [here](https://softwareengineering.stackexchange.com/questions/280257/json-web-token-why-is-the-payload-public). 
+> You might be wondering why we attaches the username, name and id to the request after decoding the JWT - would that expose the username and id? Well, the thing is that the JWT payload is not securely encrypted in the first place. JWT use base64 encoding, which is easily reversible, and pretty much everybody can decrypt a JWT once they obtain it. The core part of JWT is to prevent tampering - since only a slight alternation of the content will create a completely different JWT. Read more [here](https://softwareengineering.stackexchange.com/questions/280257/json-web-token-why-is-the-payload-public). 
 {: .prompt-info}
 
 ##### 3. Adding middleware to protected endpoints 
@@ -845,6 +854,7 @@ The final part of our backend is setting up contact controllers.
 import Contact from '../models/contact';
 import User from "../models/user";
 import { Request, Response, NextFunction } from 'express';
+import '@shared/types';
 
 export const getAllContacts = async (req: Request, res: Response, next: NextFunction) => {
   const contacts = await Contact.find({}).populate("belongsTo", { username: 1, name: 1 });
@@ -916,10 +926,11 @@ export const addNewContacts = async (req: Request, res: Response, next: NextFunc
 {: .nolineno }
 {: .blur}
 
-> Note that `req.params.id` is different than `req.users.id`. `req.params.id` is used to access the `/:id` inside our endpoint, not from the request payload.
+> You might want to look up `req.params` and `req.body` if you don't already know it. 
 {: .prompt-info }
 
 After that you should verify your code with Postman. It is always good practice to verify your code before moving on. This is very important later on if you work on projects with multiple people on a CI/CD system - you don't want your app to break apart because your code went wrong. 
+
 ### Error handling
 
 Currently we write our error handling code inside our backend code. However, controllers should only be used to receive requests, not to handle errors. If in the future we have multiple controllers, then we will have to repeat our error handling code across multiple controllers, which not only is not good practice, but also a pain to maintain and update. 
@@ -1346,28 +1357,8 @@ export function useLogin() {
 {: file="frontend/src/hooks/useLogin.tsx"}
 {: .nolineno}
 
-Now, the imports
-
-```tsx
-import type { LoginRequest, Contact, JwtPayload } from "@shared/types";
-```
-{: .nolineno}
-
-which means that we're going to use `types.ts` again. For `Contact`, you can do it yourself - it should look exactly like our contact model (except that it's not Mongoose, of course). For `JwtPayload`:
-
-```tsx
-export interface JwtPayload {
-  id: string;
-  username: string;
-  name: string;
-  exp?: number;
-  iat?: number;
-}
-```
-{: file="@shared/types.ts"}
-{: .nolineno}
-
-You might notice this is the same as the `JwtPayload` used earlier in the backend. Yes it is indeed the same, and you should go and replace all of them with this, so that they share the same type. For `LoginRequest`: replace the `Credentials` type above with this for better naming, and import it from `types.ts` instead of defining it locally. Although not specifying `LoginRequest` for the credentials does not result in warning, it is good practice to do so. Imagine having hundreds of types of request: `ContactRequest`, `DeleteRequest`, `UpdateRequest`, etc. you will quickly be overwhelmed and lose track of what are which if the types are not concrete.
+> Task: Define the types used in this file that you have not defined in `types.ts`.
+{: .prompt-tip}
 
 **Answer (click to unblur):**
 
@@ -1390,6 +1381,8 @@ export interface Contact {
 {: file="@shared/types.ts}
 {: .nolineno}
 {: .blur}
+
+Although not specifying `LoginRequest` for the credentials does not result in warning, it is good practice to do so. Imagine having hundreds of types of request: `ContactRequest`, `DeleteRequest`, `UpdateRequest`, etc., you will quickly be overwhelmed and lose track of what are which if the types are not concrete. You should also do another `LoginResponse`. 
 
 Next, refactor the contact displaying part into its own component: 
 
@@ -1508,7 +1501,7 @@ Notice the `Promise<LoginResponse>` return type annotation. This is a best pract
 > **Task**: Refactor your `Contact` API calls using the same service pattern, and create a dedicated service file for any place where you're making direct API calls in your current code.
 {: .prompt-tip}
 
-### Register page. Routers
+### Register page and React Router
 
 Now we can create a register page for new users to sign up.
 
@@ -1640,7 +1633,7 @@ function App() {
 
 Now we have three new keywords here: `Router`, `Routes`, and `Route`. `Router` (or actually `BrowserRouter`) wraps our entire application and enables routing, as well as managing the current endpoint and navigation history. The `Routes` is a container that group different `Route` into a collection, and ensure only one `Route` in the group will render at one time. Finally, `Route` should be pretty self-explanatory. 
 
-### Persist login session between refreshes and logout
+### Persist login between refreshes
 
 If you refresh the page (hard-refresh by F5) in the current state, you will be immediately logged out. The reason is that we have not stored our token in the browser to use, so it can only persist until the page is reloaded. To solve that we will use [`window.localStorage`](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) in order to store our token on our browser. 
 
@@ -1721,6 +1714,7 @@ This will persist the token directly inside `contactService` and eliminates any 
 After you're done we can continue working on the logout part. 
 
 > Task: Implement logout function. You should put it inside `useLogin`. The logic is pretty simple: since the contact will not render without `jwt`, you can just clear up all of them. 
+{: .prompt-tip}
 
 **Answer (click to unblur):**
 
@@ -1738,269 +1732,373 @@ After you're done we can continue working on the logout part.
 
 `payload` will also be cleared after this since we call `setJwt` and `setContacts`.
 
-## Part 4: Contact Management Features
+### Better routes handling
 
-Now let's implement the contacts page and related functionality:
+Currently we have `/register` for the register page. However, we want a better separation: `/login` for login page, `/home` for home page. We also want some logic handling: for example, when user logged in successfully, we want to immediately go to `/home`. To do that we will be upgrading our `App.tsx` file with more routes and logic. 
+
+> Task: Upgrade your `App.tsx` so that it has three routes: `/login`, `/register`, and `/home`. The `/login` endpoint should only contain `LoginForm`, `/home` should only contain `Homepage` (rename `ContactDisplay` into this), and `/register` to only contain the `RegisterForm`. When the user attempts to go to the default endpoint `/`, you should check if the user is logged in or not and then redirect correspondingly (same goes for `/login` and `/home`).  Use `<Navigate>` to redirect. 
+{: .prompt-tip}
+
+**Hint 1 (login endpoint)**
 
 ```tsx
-import { useState, useEffect } from 'react';
-import * as contactService from '../services/contactService';
-import { ContactResponse, ContactInput } from '../../shared/types';
-import { useNotification } from '../hooks/useNotification';
-import ContactForm from './ContactForm';
-import ContactList from './ContactList';
-import '../styles/ContactsPage.css';
+function App() {
+  // useLogin()
 
-interface ContactsPageProps {
-  token: string;
+  return (
+    <Router>
+      <Routes>
+        {/* login route: go to /home if logged in*/}
+        <Route
+          path="/login"
+          element={
+            payload ? (
+              <Navigate to="/home" replace />
+            ) : (
+              <>
+                <h1>Login</h1>
+                <LoginForm handleLogin={handleLogin} />
+              </>
+            )
+          }
+        />
+
+	// ...
+  );
 }
+```
+{: file="frontend/src/App.tsx"}
+{: .nolineno}
+{: .blur}
 
-const ContactsPage = ({ token }: ContactsPageProps) => {
-  const [contacts, setContacts] = useState<ContactResponse[]>([]);
-  const [filter, setFilter] = useState('');
-  const { showNotification } = useNotification();
-  
-  useEffect(() => {
-    const fetchContacts = async () => {
-      try {
-        const contactsData = await contactService.getAll(token);
-        setContacts(contactsData);
-      } catch (error) {
-        showNotification('Failed to fetch contacts', 'error');
-      }
-    };
-    
-    fetchContacts();
-  }, [token, showNotification]);
-  
-  const addContact = async (contactData: ContactInput) => {
-    try {
-      const newContact = await contactService.create(token, contactData);
-      setContacts(contacts.concat(newContact));
-      showNotification(`Added ${newContact.name}`, 'success');
-      return true;
-    } catch (error) {
-      showNotification('Failed to add contact', 'error');
-      return false;
-    }
-  };
-  
-  const filteredContacts = filter
-    ? contacts.filter(contact => 
-        contact.name.toLowerCase().includes(filter.toLowerCase())
-      )
-    : contacts;
+**Answer (click to unblur):**
+```tsx
+	// ... login endpoint in above hint
+	{/* home route: stay if logged in, else redirect to /login */}
+        <Route
+          path="/home"
+          element={
+            payload ? (
+              <Homepage
+                contacts={contacts}
+                username={payload.username}
+                handleLogout={handleLogout}
+              />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        {/* register: always open, only accessible via /login */}
+        <Route path="/register" element={<RegisterForm />} />
+
+        {/* default route "/": redirect */}
+        <Route
+          path="/"
+          element={
+            payload ? (
+              <Navigate to="/home" replace />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        {/* 404 not found: create your own NotFoundPage */}
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </Router>
+```
+{: file="frontend/src/App.tsx"}
+{: .nolineno}
+{: .blur}
+
+The `replace` part in `<Navigate>` is for the new endpoint to replace the old endpoint in your browser history. Without `replace`, you could click the backwards button in your browser and you would go back to `/login` when you are at `/home`, while we don't really want that. 
+
+#### NotFoundPage on backend
+
+Looking back at our `unknownEndpoint`: 
+
+```ts
+const unknownEndpoint = (req: Request, res: Response) => {
+  return void res.status(404).send({ error: "unknown endpoint" });
+};
+```
+{: file="backend/src/middlewares/unknownEndpoint.ts"}
+{: .nolineno}
+
+We have a conflict between the frontend and backend: When we go to an unknown endpoint, for example `/abcde`, the `unknownEndpoint` middleware in backend will override the frontend, which means that our `NotFoundPage` will not be displayed. 
+
+One way to fix it is to separate the API calls with frontend calls:
+
+```tsx
+import path from "path";
+
+const unknownEndpoint = (req: Request, res: Response) => {
+  if (req.path.startsWith("/api/")) {
+    return void res.status(404).send({ error: "unknown endpoint" });
+  }
+
+  return void res.sendFile(path.resolve(__dirname, "../../dist/index.html"));
+};
+```
+{: file="backend/src/middlewares/unknownEndpoint.ts"}
+{: .nolineno}
+
+But what the heck is the last line? 
+#### Frontend production build
+
+So far we've been developing our frontend in *development* mode. However when we actually ship the product, we should use the *production* build, as it is more optimized for deployment. 
+
+To build your frontend for production, run:
+
+```bash
+cd frontend
+npm run build
+```
+
+This creates a `dist` folder containing optimized static files (HTML, CSS, JavaScript) that can be served by your Express server. 
+
+Now, to use the frontend production build with the backend, one option is to copy the `dist` folder directly from the frontend to the backend. You can automate this with a script in the backend `package.json`: 
+
+```json
+"scripts": {
+    "build:fe": "rm -rf dist && cd ../frontend && npm run build && cp -r dist ../backend"
+  }
+```
+{: file="backend/package.json"}
+{: .nolineno}
+
+This will delete the current `dist` folder (if present), go to frontend and build, then copy the entire folder back to the backend folder. (hence the path `"../../dist/index.html"` in `unknownEndpoint` above  - it tries to load `dist/index.html`).
+
+Next, go back to backend `app.ts`, and add one line:
+
+```ts
+app.use(express.static("dist")); // add it right here
+app.use(express.json());
+
+app.use(modifyToken); 
+
+// ...
+
+```
+{: file="backend/src/app.ts"}
+{: .nolineno}
+
+This will allow the backend to serve the static`dist` folder.
+
+### Notification and React Context
+
+As our application grows, we want to provide user feedback for various actions - success messages when contacts are added, error messages when operations fail, login confirmations, etc. We want notifications that can appear from anywhere in our application: login forms, contact management, registration, and more.
+
+#### Prop drilling
+
+If we tried to implement notifications the traditional way, we'd face a problem called **prop drilling**. Here's what it would look like:
+
+```tsx
+// App.tsx - top level component
+function App() {
+  const [notification, setNotification] = useState(null);
   
   return (
-    <div className="contacts-container">
-      <h2>Contacts</h2>
-      
-      <ContactForm onAddContact={addContact} />
-      
-      <div className="filter-container">
-        <input
-          type="text"
-          placeholder="Filter contacts..."
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="filter-input"
-        />
-      </div>
-      
-      <ContactList contacts={filteredContacts} />
-    </div>
+    <LoginForm 
+      handleLogin={handleLogin} 
+      setNotification={setNotification}  // Pass down
+    />
   );
-};
+}
 
-export default ContactsPage;
+// LoginForm.tsx - needs to pass it further down
+const LoginForm = ({ handleLogin, setNotification }) => {
+  return (
+    <SomeChildComponent 
+      setNotification={setNotification}  // Pass down again
+    />
+  );
+}
+
+// And this continues for every component that needs notifications...
 ```
-{: file="frontend/src/components/ContactsPage.tsx" }
-{: .nolineno }
 
-Let's create the contact form component:
+This becomes messy quickly. Every component in the chain needs to accept and pass down notification props, even if they don't use them themselves. 
+
+#### React Context
+
+React Context provides a way to share data across components without prop drilling. It's like creating a "global" state that any component can access directly. It consists of three main parts: 
+
+1. **Context**: A "container" that holds the data you want to share
+2. **Provider**: A component that supplies the data to its children
+3. **Consumer**: Components that use the shared data (via hooks like `useContext`)
+
+Here's how the pattern works:
+
+```tsx
+// 1. Create the Context 
+const MyContext = createContext();
+
+// 2. Create a Provider 
+function MyProvider({ children }) {
+  const [data, setData] = useState("some data");
+  
+  return (
+    <MyContext.Provider value={{ data, setData }}>
+      {children}  {/* All children can now access this data */}
+    </MyContext.Provider>
+  );
+}
+
+// 3. Use the Context in any child component 
+function SomeChildComponent() {
+  // need this line to access data even if component is wrapped inside provider
+  const { data, setData } = useContext(MyContext);
+  return <div>{data}</div>;
+}
+```
+
+The key insight is that **any component wrapped by the Provider can access the context data**, no matter how deeply nested it is. You should also look up the `{children}` property if you don't know what it is - this is valid code. 
+
+Now let's implement our notification context:
+
+```tsx
+import { createContext } from 'react';
+import type { NotificationType } from '@shared/types';
+
+interface NotificationContextType {
+  notification: NotificationType | null;
+  setNotification: React.Dispatch<React.SetStateAction<NotificationType | null>>;
+}
+
+export const NotificationContext = createContext<NotificationContextType>({
+  notification: null,
+  setNotification: () => {}
+});
+```
+{: file="frontend/src/contexts/NotificationContext.tsx"}
+{: .nolineno}
+
+Don't be bothered by the long types - those are just boilerplates to avoid warnings. And by the way, for `NotificationType`: 
+
+```ts
+export interface NotificationType {
+  msg: string,
+  type: string
+}
+```
+{: file="@shared/types.ts"}
+{: .nolineno}
+
+Next, create a provider component that manages the notification state and renders notifications:
 
 ```tsx
 import { useState } from 'react';
-import { ContactInput } from '../../shared/types';
-import '../styles/ContactForm.css';
+import type { NotificationType } from '@shared/types';
+import { NotificationContext } from '../contexts/NotificationContext';
+import '../styles/index.css';
 
-interface ContactFormProps {
-  onAddContact: (contact: ContactInput) => Promise<boolean>;
-}
+export const NotificationContextProvider = ({ children }: { children: React.ReactNode }) => {
+  const [notification, setNotification] = useState<NotificationType | null>(null);
 
-const ContactForm = ({ onAddContact }: ContactFormProps) => {
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [isFormVisible, setIsFormVisible] = useState(false);
+  return (
+    <NotificationContext.Provider value={{ notification, setNotification }}>
+      {notification && (
+        <div className={notification.type}>
+          {notification.msg}
+        </div>
+      )}
+      {children}
+    </NotificationContext.Provider>
+  );
+};
+```
+{: file="frontend/src/components/Notification.tsx"}
+{: .nolineno}
+
+In order to utilize this provider, we need to wrap components inside `NotificationContextProvider`. In our simple app, everywhere needs notification. So the easiest way can be wrap it around our `App` in `main.tsx`: 
+
+```tsx
+// ...
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <NotificationContextProvider>
+      <App />
+    </NotificationContextProvider>
+  </StrictMode>,
+)
+```
+{: file="frontend/src/main.tsx"}
+{: .nolineno}
+
+By wrapping our entire app with `NotificationContextProvider`, we create this component hierarchy:
+
+```
+NotificationContextProvider (provides notification state)
+└── App
+    ├── Router
+    │   ├── LoginForm (can use notifications)
+    │   ├── RegisterForm (can use notifications)
+    │   └── Homepage
+    │       ├── ContactForm (can use notifications)
+    │       └── ContactList (can use notifications)
+    └── Any other components (all can use notifications)
+```
+
+Next, create a custom hook to make using notifications easier:
+
+```tsx
+import { useContext } from "react";
+import { NotificationContext } from "../contexts/NotificationContext";
+
+export const useNotification = () => {
+  // this extracts [notification, setNotification] from NotificationContext
+  const { notification, setNotification } = useContext(NotificationContext);
   
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const success = await onAddContact({ name, phone });
-    
-    if (success) {
-      // Reset form
-      setName('');
-      setPhone('');
-      setIsFormVisible(false);
-    }
+  const showNotification = (msg: string, type: string) => {
+      setNotification({ msg, type });
+      setTimeout(() => setNotification(null), 5000);
   };
   
-  if (!isFormVisible) {
-    return (
-      <button 
-        className="show-form-button"
-        onClick={() => setIsFormVisible(true)}
-      >
-        Add New Contact
-      </button>
-    );
-  }
-  
-  return (
-    <div className="contact-form-container">
-      <h3>Add New Contact</h3>
-      <form onSubmit={handleSubmit} className="contact-form">
-        <div className="form-group">
-          <label htmlFor="name">Name</label>
-          <input
-            type="text"
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            minLength={3}
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="phone">Phone</label>
-          <input
-            type="tel"
-            id="phone"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            required
-          />
-        </div>
-        <div className="form-buttons">
-          <button type="submit" className="submit-button">Add Contact</button>
-          <button 
-            type="button" 
-            className="cancel-button"
-            onClick={() => setIsFormVisible(false)}
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
-    </div>
-  );
-};
-
-export default ContactForm;
-```
-{: file="frontend/src/components/ContactForm.tsx" }
-{: .nolineno }
-
-And finally, the contact list component:
-
-```tsx
-import { ContactResponse } from '../../shared/types';
-import '../styles/ContactList.css';
-
-interface ContactListProps {
-  contacts: ContactResponse[];
+  return { notification, setNotification, showNotification };
 }
-
-const ContactList = ({ contacts }: ContactListProps) => {
-  if (contacts.length === 0) {
-    return <p className="no-contacts">No contacts found</p>;
-  }
-  
-  return (
-    <div className="contact-list">
-      {contacts.map(contact => (
-        <div key={contact.id} className="contact-card">
-          <h3>{contact.name}</h3>
-          <p>{contact.phone}</p>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-export default ContactList;
 ```
-{: file="frontend/src/components/ContactList.tsx" }
-{: .nolineno }
+{: file="frontend/src/hooks/useNotification.ts"}
+{: .nolineno}
 
-## Part 5: Final Touches and Improvements
-
-Let's add a navigation bar component to improve user experience:
-
-```tsx
-import { Link } from 'react-router-dom';
-import '../styles/NavBar.css';
-
-interface NavBarProps {
-  token: string | null;
-  onLogout: () => void;
-}
-
-const NavBar = ({ token, onLogout }: NavBarProps) => {
-  return (
-    <nav className="navbar">
-      <div className="navbar-logo">
-        <Link to="/">Contact Manager</Link>
-      </div>
-      
-      <div className="navbar-links">
-        {token ? (
-          <>
-            <Link to="/contacts" className="nav-link">Contacts</Link>
-            <button onClick={onLogout} className="logout-button">Logout</button>
-          </>
-        ) : (
-          <>
-            <Link to="/login" className="nav-link">Login</Link>
-            <Link to="/register" className="nav-link">Register</Link>
-          </>
-        )}
-      </div>
-    </nav>
-  );
-};
-
-export default NavBar;
-```
-{: file="frontend/src/components/NavBar.tsx" }
-{: .nolineno }
-
-And a notification component to display messages to the user:
+Now any component can show notifications without prop drilling:
 
 ```tsx
 import { useNotification } from '../hooks/useNotification';
-import '../styles/Notification.css';
 
-const Notification = () => {
-  const { notification, clearNotification } = useNotification();
+const LoginForm = ({ handleLogin }) => {
+  const { showNotification } = useNotification();
   
-  if (!notification) {
-    return null;
-  }
+  const onSubmit = async (event) => {
+    try {
+      await handleLogin(username, password);
+      showNotification('Login successful!', 'success');
+    } catch (error) {
+      showNotification('Login failed', 'error');
+    }
+  };
   
-  return (
-    <div className={`notification ${notification.type}`}>
-      <p>{notification.message}</p>
-      <button onClick={clearNotification} className="close-button">×</button>
-    </div>
-  );
+  // ... rest of component
 };
-
-export default Notification;
 ```
-{: file="frontend/src/components/Notification.tsx" }
-{: .nolineno }
+
+#### Styling notifications (optional)
+
+The notifications has two types: `success` and `error`. You can try to style them with a `.css` file, or with Tailwind. To start, you will want to look back to `Notification.tsx`, where the notification is rendered. It can look like this 
+
+![[Pasted image 20250716003240.png]]
+
+### Adding new contacts
+
+The final part is to add a small field to add new contacts to an user like this:
+
+![[Pasted image 20250716002227.png]]
+
+This is no different from the login form so you should do it yourself :)
 
 ## Conclusion
 
@@ -2011,12 +2109,5 @@ Congratulations! You've built a complete full-stack contact management applicati
 - **Type Safety**: Using TypeScript for type checking across the stack
 - **User Experience**: Notifications, form validation, and proper navigation
 - **Code Organization**: Clean separation of concerns with components, hooks, and services
-
-You can extend this application in several ways:
-
-- Add contact editing and deletion functionality
-- Implement pagination for large contact lists
-- Add profile management for users
-- Improve the UI with more sophisticated styling
 
 Happy coding!
