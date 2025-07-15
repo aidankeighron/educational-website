@@ -1022,35 +1022,6 @@ npm run dev
 ```
 {: .nolineno}
 
-#### Backend proxy
-
-Before we start, if you attempts to send requests from frontend to backend without any configuration, nothing will happen. If you open the console, it would probably all errors and read something about `Cross-Origin Resource Policy`, or CORS for short. To explain shortly, it's a security feature: your frontend is running default on port 5173 (Vite default), and backend on port 3000, so they cannot communicate since they're not on the same origin. 
-
-To mitigate this, you can install `cors` directly on backend, or edit this to your `vites.config.ts`:
-
-```ts
-export default defineConfig({
-  plugins: [react()],
-  resolve: {
-    alias: {
-      '@shared': path.resolve(__dirname, '../shared')
-    }
-  },
-  server: {
-    proxy: {
-      "/api": {
-        target: "http://localhost:3000", 
-        changeOrigin: true,
-      },
-    }
-  }
-})
-```
-
-With this, you can communicate directly with the server. If you want to test your frontend code in real-time, first run your backend, then run your frontend, then test directly on your frontend port (in this case 5173) and your requests will go through. 
-
-Also, the `alias` part is to make sure your files recognizes the `@shared/types.ts` syntax. 
-
 #### Login page
 
 Now your app should run. However, we won't need the app template file. You can delete the css import in `main.tsx`, and edit the `App.tsx` file into 
@@ -1155,11 +1126,41 @@ export default App;
 {: .nolineno}
 {: .blur}
 
+#### Backend proxy
+
+Before we move on, if you just send requests from frontend to backend like right now, chances are it will not work. If you open the console, it would be filled with errors. This is because of something called the same origin policy. To explain shortly, it's a security feature: your frontend is running default on port 5173 (Vite default), and backend on port 3000, so they cannot communicate since they're not on the same origin. 
+
+To mitigate this, you can install `cors` directly on backend and enable it, or add this to your `vites.config.ts` (assuming your backend is running on port 3000):
+
+```ts
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@shared': path.resolve(__dirname, '../shared')
+    }
+  },
+  server: {
+    proxy: {
+      "/api": {
+        target: "http://localhost:3000", 
+        changeOrigin: true,
+      },
+    }
+  }
+})
+```
+
+With this, you can communicate directly with the server. If you want to test your frontend code in real-time, first run your backend, then run your frontend, then test directly on your frontend port (in this case 5173) and your requests will go through. 
+
+Also, the `alias` part is to make sure your files recognizes the `@shared/types.ts` syntax. 
+
 #### Displaying contacts
 
 Then, after the user is logged in, we should display the contacts. 
 
 > Task: Implement displaying the list of contacts after the user is logged in. To do it, you can check if the JWT is not null. 
+{: .prompt-tip}
 
 **Answer (click to unblur):**
 
