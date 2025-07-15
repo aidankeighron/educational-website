@@ -1098,7 +1098,7 @@ export default App;
 
 After this we can have a simple login form that look like this (the `register` button is not present here, but overall the login should look like this):
 
-![[Pasted image 20250708233009.png]]
+![](Pasted image 20250708233009.png)
 
 First the form have two states: `username` and `password`, contained within a form, and set up to change as the user edit the text fields. Then, the submit button is named `login` and linked to `handleLogin`. `event.preventDefault()` is to prevent the page from reloading. Notice that `handleLogin` is currently missing `handleLoginBackend`. 
 
@@ -2090,13 +2090,13 @@ const LoginForm = ({ handleLogin }) => {
 
 The notifications has two types: `success` and `error`. You can try to style them with a `.css` file, or with Tailwind. To start, you will want to look back to `Notification.tsx`, where the notification is rendered. It can look like this 
 
-![[Pasted image 20250716003240.png]]
+![](Pasted image 20250716003240.png)
 
 ### Adding new contacts
 
 The final part is to add a small field to add new contacts to an user like this:
 
-![[Pasted image 20250716002227.png]]
+![](Pasted image 20250716002227.png)
 
 This is no different from the login form so you should do it yourself :)
 
