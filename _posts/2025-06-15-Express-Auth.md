@@ -1233,9 +1233,9 @@ function App() {
 		  };
 	
 		  axios.get(contactUrl, config).then((response) => {
-			setContacts(response.data.filter(
-			  contact => contact.belongsTo.username === payload.username
-			))
+        setContacts(response.data.filter(
+          contact => contact.belongsTo.username === payload.username
+        ))
 		  }) 
 		}
     }, [payload]); 
@@ -1313,18 +1313,18 @@ export function useLogin() {
 
   useEffect(() => {
     if (payload !== null) {
-	  console.log(jwt);
-	  const contactUrl = "/api/contacts";
-	  const token = jwt.token;
+      console.log(jwt);
+      const contactUrl = "/api/contacts";
+      const token = jwt.token;
 
-	  const config = {
-		headers: { Authorization: `Bearer ${token}` },
-	  };
+      const config = {
+      headers: { Authorization: `Bearer ${token}` },
+      };
 
-	  axios.get(contactUrl, config).then((response) => {
-		setContacts(response.data.filter(
-		  contact => contact.belongsTo.username === payload.username
-		))
+      axios.get(contactUrl, config).then((response) => {
+      setContacts(response.data.filter(
+        contact => contact.belongsTo.username === payload.username
+      ))
 	  }) 
 	}
    }, [payload]); 
@@ -1366,7 +1366,7 @@ export interface JwtPayload {
 {: file="@shared/types.ts"}
 {: .nolineno}
 
-You might notice this is the same as the `JwtPayload` used earlier in the backend. Yes it is indeed the same, and you should go and replace all of them with this, so that they share the same type. For `LoginRequest`: replace the `Credentials` type above with this for better naming, and import it from `types.ts` instead of defining it locally. Although not specifying `LoginRequest` for the credentials does not result in warning, it is good practice to do so. Imagine having a hundreds of request: `ContactRequest`, `DeleteRequest`, `UpdateRequest`, etc. you will quickly be overwhelmed and lose track of what are which if the types are not concrete.
+You might notice this is the same as the `JwtPayload` used earlier in the backend. Yes it is indeed the same, and you should go and replace all of them with this, so that they share the same type. For `LoginRequest`: replace the `Credentials` type above with this for better naming, and import it from `types.ts` instead of defining it locally. Although not specifying `LoginRequest` for the credentials does not result in warning, it is good practice to do so. Imagine having hundreds of types of request: `ContactRequest`, `DeleteRequest`, `UpdateRequest`, etc. you will quickly be overwhelmed and lose track of what are which if the types are not concrete.
 
 **Answer (click to unblur):**
 
@@ -1599,7 +1599,7 @@ const RegisterForm = () => {
 {: file="frontend/src/components/RegisterForm.tsx}
 {: .nolineno}
 
-First, we create a `useNavigate` hook. This is use to navigate to a different page. In our logic, after the registration success, we will be redirected to the default page `/` (which is currently where our login page is located). We also added another cancel button at the end for users to return to homepage.
+The `useNavigate` hook is used to navigate to a different page. In our logic, after the registration success, we will be redirected to the default page `/` (which is currently where our login page is located). We also added another cancel button at the end for users to return to homepage.
 
 > Task: Do the same thing in `LoginForm`: Create a `Register` button that navigates to `/register`. 
 {: .prompt-tip}
@@ -1638,6 +1638,105 @@ function App() {
 {: .nolineno}
 
 Now we have three new keywords here: `Router`, `Routes`, and `Route`. `Router` (or actually `BrowserRouter`) wraps our entire application and enables routing, as well as managing the current endpoint and navigation history. The `Routes` is a container that group different `Route` into a collection, and ensure only one `Route` in the group will render at one time. Finally, `Route` should be pretty self-explanatory. 
+
+### Persist login session between refreshes and logout
+
+If you refresh the page (hard-refresh by F5) in the current state, you will be immediately logged out. The reason is that we have not stored our token in the browser to use, so it can only persist until the page is reloaded. To solve that we will use [`window.localStorage`](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) in order to store our token on our browser. 
+
+First, right after we're logged in, we're going to store the token inside a field named `JwtAccessToken` directly inside the browser: 
+
+```tsx
+export function useLogin() {
+  // ...
+
+  const handleLogin = async (username: string, password: string) => {
+    // ... 
+
+    try {
+      const response = await loginService.login(credentials);
+      setJwt(response.token);
+      window.localStorage.setItem("JwtAccessToken", response.token);
+    } catch (error) {
+      console.error("Login failed:", error);
+      return false;
+    }
+  };
+```
+{: file="frontend/src/hooks/useLogin.ts"}
+{: .nolineno}
+
+Then add another `useEffect` to handle the case when the page is refreshed: 
+
+```tsx
+export function useLogin() {
+  const [jwt, setJwt] = useState<string | null>(null);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const { showNotification } = useNotification();
+
+  const payload = jwt !== null 
+    ? jwtDecode<JwtPayload>(jwt)
+    : null;
+
+
+  useEffect(() => {
+    const jwtAccessToken = window.localStorage.getItem("JwtAccessToken");
+
+    if (jwtAccessToken) {
+      setJwt(jwtAccessToken);
+      contactService.setToken(jwtAccessToken);
+    }
+  }, []);
+
+  useEffect(() => {
+    //..
+  })
+
+  // ...
+```
+{: file="frontend/src/hooks/useLogin.ts"}
+{: .nolineno}
+
+> Note that *refresh* and *rerender* means two different things. *Rerender* is just React updating some parts of the UI, and the local variables stays the same (unless you changed them, of course). For *refreshing*, however, we are making an entirely new request to the server, and all state stored in memory will be lost unless stored elsewhere.
+{: .prompt-info}
+
+It works like this: First the user is logged in, then the JWT is stored inside `localStorage` (see `handleLogin`). Then, after we refresh, all the state will be refreshed (so our `jwt` variable would be null), but then `useEffect` is called, and it retrieves the JWT we stored earlier in the browser, call `setJwt`, and then set the token locally inside `contactService` (more on that later). Since we call `setJwt`, the page is rerendered again, but now we have our `jwt` variable set up, so our app should be able to run smoothly. 
+
+For `contactService`, just use 
+
+```ts
+let token: string;
+export const setToken = (newToken: string) => {
+  token = newToken;
+};
+```
+{: file="frontend/src/services/contactService.ts"}
+{: .nolineno}
+
+This will persist the token directly inside `contactService` and eliminates any necessity to pass the token from outside. 
+
+> Task: In the above part we did not validate if the JWT extracted from localStorage is valid or not (in particular, its expiry time). Try to validate the JWT after it is retrieved from the browser. If it's not valid, do not continue, but rather delete the token from `localStorage`. You can definitely look up on how to do this - I did the same. To test, go back to backend and change `expiresIn` to a small number and try to refresh the website after.
+{: .prompt-tip}
+
+After you're done we can continue working on the logout part. 
+
+> Task: Implement logout function. You should put it inside `useLogin`. The logic is pretty simple: since the contact will not render without `jwt`, you can just clear up all of them. 
+
+**Answer (click to unblur):**
+
+```tsx
+  const handleLogout = () => {
+    window.localStorage.removeItem("JwtAccessToken");
+    setJwt(null);
+    setContacts([]);
+    contactService.setToken("");
+  };
+```
+{: file="frontend/src/hooks/useLogin.ts"}
+{: .nolineno}
+{: .blur}
+
+`payload` will also be cleared after this since we call `setJwt` and `setContacts`.
+
 ## Part 4: Contact Management Features
 
 Now let's implement the contacts page and related functionality:
