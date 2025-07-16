@@ -1,6 +1,6 @@
 ---
 title: Express Authentication App
-author: Cuong Dang
+author: cuong
 date: 2025-06-15 12:00:00 +0700
 categories: [TypeScript, ExpressAuth]
 tags: [TypeScript, Intermediate, Authentication, JWT, Express, MongoDB, React]
@@ -8,14 +8,14 @@ description: Learn how to build a secure authentication system using Express, Mo
 comments: false
 pin: true
 media_subpath: /assets/tutorials/express-auth
-image: /auth-header.png
+image: /thumb-1920-1358310.png
 ---
 
 ## About the project
 
 Welcome to the Express Authentication tutorial! In this project, you will learn how to build a complete full-stack contact management application with secure user authentication.
 
-![Authentication Demo](/auth-demo.gif)
+![Authentication Demo](/Animation.gif)
 
 **Prerequisites**:
 
@@ -2086,12 +2086,6 @@ const LoginForm = ({ handleLogin }) => {
 };
 ```
 
-#### Styling notifications (optional)
-
-The notifications has two types: `success` and `error`. You can try to style them with a `.css` file, or with Tailwind. To start, you will want to look back to `Notification.tsx`, where the notification is rendered. It can look like this 
-
-![](Pasted image 20250716003240.png)
-
 ### Adding new contacts
 
 The final part is to add a small field to add new contacts to an user like this:
@@ -2099,6 +2093,89 @@ The final part is to add a small field to add new contacts to an user like this:
 ![](Pasted image 20250716002227.png)
 
 This is no different from the login form so you should do it yourself :)
+
+### Add styling 
+
+Currently our app have no styling at all. You can improve it by adding more CSS/Tailwind/MUI/ etc. in order to improve the appearance of the app. 
+
+There is no right answer to this. But for example, mine look like this:
+
+```css
+/* Homepage Styles */
+.homepage-container {
+  max-width: 600px;
+  margin: 40px auto;
+  background: #fff;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-light);
+  padding: 32px 24px;
+}
+.homepage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.homepage-user {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+.homepage-logout {
+  background: var(--error-color);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.homepage-logout:hover {
+  background: #b91c1c;
+}
+.homepage-title {
+  margin-top: 0;
+  color: var(--primary-color);
+}
+.contacts-list {
+  margin-bottom: 24px;
+}
+.contact-card {
+  display: flex;
+  justify-content: space-between;
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow-light);
+}
+.contact-name {
+  font-weight: 500;
+}
+.contact-number {
+  color: #6b7280;
+}
+.add-contact-form {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: var(--shadow-light);
+}
+.form-group {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+}
+.form-group label {
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+/* etc. */
+```
+{: file="frontend/src/styles/index.css"}
+{: .nolineno}
+
+Refer back to the gif at the beginning of the guide to see the full design.
 
 ## Conclusion
 
