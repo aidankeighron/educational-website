@@ -2,8 +2,8 @@
 title: Falling Sand 2
 author: aidan
 date: 2025-03-23 12:00:00 +0800
-tags: [FallingSand]
-categories: [JavaScript, Easy]
+categories: [FallingSand]
+tags: [JavaScript, Easy]
 description: Part 2 of the Falling Sand project. Creating new particles, and adding new interactions.
 comments: false
 pin: true
