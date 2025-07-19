@@ -2,8 +2,8 @@
 title: Syllabus To CSV
 author: arnav
 date: 2025-03-23 12:00:00 +0800
-tags: [Syllabus To CSV]
-categories: [JavaScript, Easy]
+categories: [Syllabus To CSV]
+tags: [JavaScript, Easy]
 description: Convert your class syllabus into a CSV of all your assignments
 comments: false
 pin: true

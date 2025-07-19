@@ -220,5 +220,5 @@ jekyll-archives:
     category: category
     tag: tag
   permalinks:
-    tag: /series/:name/
-    category: /topics/:name/
+    tag: /topics/:name/
+    category: /series/:name/

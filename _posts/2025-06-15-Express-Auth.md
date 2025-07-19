@@ -1,8 +1,8 @@
 ---
 title: Express Authentication App
 author: cuong
-date: 2025-06-15 12:00:00 +0700
-categories: [TypeScript, ExpressAuth]
+date: 2025-07-16 12:00:00 +0700
+categories: [ExpressAuth]
 tags: [TypeScript, Intermediate, Authentication, JWT, Express, MongoDB, React]
 description: Learn how to build a secure authentication system using Express, MongoDB, React, and TypeScript
 comments: false
