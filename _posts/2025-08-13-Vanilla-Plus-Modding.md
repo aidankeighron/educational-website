@@ -805,6 +805,27 @@ src/
                   └─ ruby_ore.png
 ```
 
+One intersting thing is that we need to add this ores blockstate
+
+**What is a blockstate?**
+
+> A block can have different appearances depending on its state, think copper how it changes color overtime. Things like Ores only have one state which make it rather easy thankfully.
+
+To add the blockstate we need a new folder in our `assets/tutorialcraft` folder titled `blockstates/`
+
+Creaate a new file called `ruby_ore.json` and add this in
+
+```json
+{
+  "variants": {
+    "": { "model": "tutorialcraft:block/ruby_ore" }
+  }
+}
+
+```
+
+Again, this just clarifies that we have **one variant** so no matter the state, display it like this
+
 Here is what the `block/ruby_ore.json` should look like:
 
 ```json
@@ -920,11 +941,13 @@ Create a new variable in the `resources/assets/tutorialcraft/lang/en_us.json` fi
 
 #### Make the json file for the items appearance
 
-This will look nearly **identical** to the ones you made for Ruby and Sapphire, there is only one key difference: *tools and weapons of handheld items, not generated ones* 
+This will look nearly **identical** to the ones you made for Ruby and Sapphire, there is only one key difference: *tools and weapons of handheld items, not flat generated ones* 
 
 If you do not understand what I said above, I suggest you try to Google for the answer.
 
 If you are struggling to find anything [read this](https://forums.minecraftforge.net/topic/40899-sword-json-file-help-1102/) but do give a good shot to find resources because there are many out there.
+
+> HINT: 
 
 #### Add the item and register it
 
@@ -937,15 +960,14 @@ Since we already have our `ModItems.java` class we can add it to that and reduce
 
 ```java
 // Add this into your ModItems.java
-public static final RegistryObject<Item> RUBY_SWORD   = ITEMS.register("ruby_sword",
-    () -> new SwordItem(
-        ModToolTiers.DIAMOND,   // Tier of the weapon (Netherite being the best and Wood being the worst)
+public static final RegistryObject RUBY_SWORD   = ITEMS.register("ruby_sword",
+    () -> new Sword(
+        DiamondTier,            // Tier of the weapon (Netherite being the best and Wood being the worst)
         3,                      // Attack Damage Modifier. (final damage = tier damage + this number)
-        -2.4F,                  // Attack speed modifier (lower = slower, -2.4F is standard for a sword)
-        new Item.Properties()
+        -2.4,                  // Attack speed modifier (lower = slower, -2.4F is standard for a sword)
+        new Item.properties
     )
 );
-
 
 // Add this in ModCreativeModeTabs.java to add it to the inventory
 pOutput.accept(ModItems.RUBY_SWORD.get());
@@ -953,17 +975,84 @@ pOutput.accept(ModItems.RUBY_SWORD.get());
 {: .nolineno }
 {: .blur }
 
+> TIP: If you go to .minecraft/versions/<version>/<version>.jar on your own system you can find all of these folders and assets, so you can see the json files of how certain items are made  
+{ .prompt-tip }
+
+### Create the rest of the set
+
+Now that you have created items, a sword, and have access to resources within your own systems and on google, **do your best to make the rest of the armor set**. Here is the art if you need it.
+- [Ruby Pickaxe](https://github.com/johnnystouffer/mod-tutorial/blob/main/src/main/resources/assets/tutorialcraft/textures/item/ruby_pickaxe.png)
+- [Ruby Axe](https://github.com/johnnystouffer/mod-tutorial/blob/main/src/main/resources/assets/tutorialcraft/textures/item/ruby_axe.png)
+- [Ruby Shovel](https://github.com/johnnystouffer/mod-tutorial/blob/main/src/main/resources/assets/tutorialcraft/textures/item/ruby_shovel.png)
+- [Ruby Hoe](https://github.com/johnnystouffer/mod-tutorial/blob/main/src/main/resources/assets/tutorialcraft/textures/item/ruby_hoe.png)
 
 ## Make your Own Armor 
 
+We are are the last part of the instruction section of this tutorial. Last step before we leave it up to you... **Lets make some armor!**
+
+I am going to go over the code in `ModItems` only, the rest you should be more than fine doing on your own through previous examples, documentation, google, etc.
+
+```java
+public static final RegistryObject<Item> RUBY_HELMET = ITEMS.register(
+    "ruby_leggings",
+    () -> new ArmorItem(
+        "ruby",                  // material used IMPORTANT FOR THE TEXTURES
+        ArmorItem.Type.HELMET,   // Type of armror
+        new Item.Properties()));
+
+```
+{: .nolineno }
+{: .blur }
+{: file="ModItems.java" }
+
+### Wearing the armor
+
+As you can see above putting the material used as **IMPORTANT**, here is why:
+
+> To find the texture for when you WEAR the armor it will take this material name then add "_layer_1.png" and "_layer_2.png" to find them. Therefore the material name matters as it **NEEDS TO LINE UP WITH YOUR TEXTURE PNG FILE NAMES**
+
+**Where do we put the files for the textures of what we are wearing?**
+
+In your `textures/` folder create a new folder called `models/` then inside of models make another folder called `armor/`. This is where forge will look for the textures / png of the armor you wear. Here is a [link to the two pngs](https://github.com/johnnystouffer/mod-tutorial/tree/main/src/main/resources/assets/tutorialcraft/textures/models/armor) for you to add.
+
+### Finish the armor set
+
+Now you should have more than enough resources to be able to make the rest of the armor set
+
+Feel free to finish it up or make a different one with Sapphire. The sky is the limit.
+
 ## Challenge Tasks
+
+### Congrats!
+
+You are officially done with the instruction part of this tutorial! 
+
+**Now that you are done you should confidently be able to:**
+- Set up the modding enviornment
+- Make new items within the game
+- create new blocks within the game
+- Create new armor and tools within the game
+
+Of course there is WAY more to do and to encapsulate all Vanilla modding into one tutorial is impossible and impractical. So now I encourage you to keep going without a tutorial. **Below are some first steps on what you can try next**
 
 ### Crafting Recipes
 
+- None of the armor or tools are craftable right now, but lookup how to make them craftable, there is plenty of information within the [documentation and forums](https://docs.minecraftforge.net/en/1.12.x/utilities/recipes/)
+
 ### Loot Tables
+
+- If you mine those blocks you made they will drop nothing. Create loot tables so that they drop what you want them to drop. 
 
 ### Armor Trims
 
+- Modern Minecraft has armror trims of all sorts. Right now they can't be used on your new armor. Make it so you can use it.
+
 ### Make your own Tiers for Weapons and Armor
 
+- Why make it so are your weapons and armor are Diamond or Netherite tier. Make your own tier 
+
 ### Add your own things
+
+- Most importantly, this is YOUR MOD add what YOU want to add. Make Minecraft how YOU want to play it.
+
+**Thank you so much for making it this far, and I hope this tutorial helped you in some way. Keep on modding!**
