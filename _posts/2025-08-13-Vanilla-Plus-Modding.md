@@ -778,6 +778,9 @@ public static final RegistryObject<Block> RUBY_ORE = registerBlock(
     () -> new Block(BlockBehaviour.Properties.copy(Blocks.DIAMOND_ORE)) // we want this to mock diamond ores properties
 );
 ```
+{: .nolineno }
+{: file="ModBlocks.java" }
+
 
 simple as that, next we need to update `en_us.json` to translate `ruby_ore`, additionally you will need to **make new folders in the `resources` folder for the Ruby Ore block json file, item json file, and texture**. Here is what your file tree for resources should look like now
 
@@ -812,6 +815,9 @@ Here is what the `block/ruby_ore.json` should look like:
   }
 }
 ```
+{: .nolineno }
+{: file="block/ruby_ore.json" }
+
 
 Since ores have the same texture around the entire block, we can take one image and apply it to every side, hence why the parent is `"minecraft:block/cube_all"`
 
@@ -822,6 +828,8 @@ Inside of `item/ruby_ore.json` should look like:
   "parent" : "tutorialcraft:block/ruby_ore"
 }
 ```
+{: .nolineno }
+{: file="item/ruby_ore.json" }
 
 Since we already have the block declared, we can reference then when declaring the item version.
 
@@ -830,6 +838,9 @@ Next in `en_us.json` and any other language you put down, make sure to put:
 ```json
 "block.tutorialcraft.ruby_ore" : "Ruby Ore"
 ```
+{: .nolineno }
+{: file="en_us.json" }
+
 
 Next [here is the png](https://github.com/johnnystouffer/mod-tutorial/blob/main/src/main/resources/assets/tutorialcraft/textures/block/ruby_ore.png) of the Ruby Ore. Put this in the `textures/block` folder
 
@@ -838,6 +849,8 @@ Lastly we can add the item of the Ruby Ore in CreativeTab by calling this inside
 ```java
 pOutput.accept(ModBlocks.RUBY_ORE.get());
 ```
+{: .nolineno }
+{: file="ModCreativeModeTabs.java" }
 
 ### Run the client
 
@@ -851,7 +864,7 @@ Just like items adding blocks usually follows this pattern with some variation i
 
 Now lets make **Sapphire Ore!**
 
-Complete the same steps above except for the sapphire ore, and of course here is the ore texture.
+Complete the same steps above except for the sapphire ore, and of course [here is the ore texture](https://github.com/johnnystouffer/mod-tutorial/blob/main/src/main/resources/assets/tutorialcraft/textures/block/sapphire_ore.png).
 
 **However there a couple things I want you to change to make this ore more interesting**
 - make this ore to have the friction of ice, so you walk around like you are sliding
@@ -861,18 +874,87 @@ Complete the same steps above except for the sapphire ore, and of course here is
     - Set explostion resistance to 6.5
 
 > I will NOT give a solution to this one, I will provide a hint underneath this dialog box, but you should able to comfortably figure out how to do this given this [documentation](https://docs.minecraftforge.net/en/latest/blocks/#creating-a-block), and using Google (try your best not to use AI right now)
+{: .prompt-danger }
 
 ```
-Remember the chaining you did for the item properties? Try then again, just typing a period should show you a list of functions you can use as well.
+Remember the chaining you did for the item properties? 
+Try that again, just typing a period should show you a list of functions you can use as well.
 ```
 {: .blur }
 {: .nolineno }
 
+
 ## Make your Own Tools
 
+Now lets make our own tools!
+
+We have made items before and as I said earlier **items are made for your inventory and creative mode tabs**, so tools / weapons are also items, but they are more than just in your inventory, so they have their **own subclasses**. It is rather simple but instead of calling say `Item.Properties()` you would call `SwordItem.Properties()`. 
+
+Additionally there are different ways to customize these items that I will show as well.
+
+I am going to make a sword item and show you what you need to know from it, you will then be able to make the rest of the toolset
+
+### Creating a sword
+
+**We need to add these for every new item**
+- Add the png for the item texture
+- add the item ID to its language value in `en_us.json`
+- make a json file for the items appearance
+- add the item + register it
+- add it to the creative mode menu
+
+I will go through a small overview of each step again going more in detail on new / different stuff, but you should be getting pretty comfortable with creating your own items now
+
+#### Add the png for the item texture
+
+[Here is the link](https://github.com/johnnystouffer/mod-tutorial/blob/main/src/main/resources/assets/tutorialcraft/textures/item/ruby_sword.png) to the ruby sword png we are using. Download it then add it to `resources/assets/tutorialcraft/textures/item`
+
+#### Add the item ID to its language value
+
+Create a new variable in the `resources/assets/tutorialcraft/lang/en_us.json` file
+
+**For example:**
+```json
+"item.tutorialcraft.ruby_sword" : "Ruby Sword",
+```
+
+#### Make the json file for the items appearance
+
+This will look nearly **identical** to the ones you made for Ruby and Sapphire, there is only one key difference: *tools and weapons of handheld items, not generated ones* 
+
+If you do not understand what I said above, I suggest you try to Google for the answer.
+
+If you are struggling to find anything [read this](https://forums.minecraftforge.net/topic/40899-sword-json-file-help-1102/) but do give a good shot to find resources because there are many out there.
+
+#### Add the item and register it
+
+Alright now we are coding it in
+
+Since we already have our `ModItems.java` class we can add it to that and reduce creating new register functions and all that fun stuff.
+
+> TRY TO DO THIS YOURSELF: I have given enough hints I am confident you are able to figure out this code on your own using Google and the documentation. I will show what I have below still (WITH ERRORS), but please try it on your own. 
+{: .prompt-warning }
+
+```java
+// Add this into your ModItems.java
+public static final RegistryObject<Item> RUBY_SWORD   = ITEMS.register("ruby_sword",
+    () -> new SwordItem(
+        ModToolTiers.DIAMOND,   // Tier of the weapon (Netherite being the best and Wood being the worst)
+        3,                      // Attack Damage Modifier. (final damage = tier damage + this number)
+        -2.4F,                  // Attack speed modifier (lower = slower, -2.4F is standard for a sword)
+        new Item.Properties()
+    )
+);
 
 
-## Make your Own Armor       
+// Add this in ModCreativeModeTabs.java to add it to the inventory
+pOutput.accept(ModItems.RUBY_SWORD.get());
+```
+{: .nolineno }
+{: .blur }
+
+
+## Make your Own Armor 
 
 ## Challenge Tasks
 
@@ -881,5 +963,7 @@ Remember the chaining you did for the item properties? Try then again, just typi
 ### Loot Tables
 
 ### Armor Trims
+
+### Make your own Tiers for Weapons and Armor
 
 ### Add your own things
