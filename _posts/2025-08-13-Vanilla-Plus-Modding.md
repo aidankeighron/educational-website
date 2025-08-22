@@ -7,8 +7,8 @@ tags: [Minecraft, Modding, Java, Medium]
 description: Part 1 of Modding Minecraft series, this step will teach you the basics of modding when create your own custom items (ie. blocks, tools, weapons, materials, etc).
 comments: false
 pin: true
-media_subpath: /assets/tutorials/mcmodding
-image: /mctutorial1.png
+media_subpath: /assets/tutorials/minecraft-mod
+image: /minecraft-mod-1.png
 ---
 
 ## About the project
@@ -391,12 +391,9 @@ mapping_version=2023.09.03-1.20.1
 
 Feel free to change any of these in `gradle.properties` as well. This is wear you determine the author, version, description, etc. 
 
+Here is what I put for mine as an example 
+
 ```properties
-# The unique mod identifier for the mod. Must be lowercase in English locale. Must fit the regex [a-z][a-z0-9_]{1,63}
-# Must match the String constant located in the main mod class annotated with @Mod.
-mod_id=tutorialcraft
-# The human-readable display name for the mod.
-mod_name=Tutorial Craft
 # The license of the mod. Review your options at https://choosealicense.com/. All Rights Reserved is the default.
 mod_license=All Rights Reserved
 # The mod version. See https://semver.org/
@@ -404,7 +401,7 @@ mod_version=1.0.0
 # The group ID for the mod. It is only important when publishing as an artifact to a Maven repository.
 # This should match the base package used for the mod sources.
 # See https://maven.apache.org/guides/mini/guide-naming-conventions.html
-mod_group_id=net.twoweek.tutorialcraft
+mod_group_id=com.example.tutorialcraft
 # The authors of the mod. This is a simple text string that is used for display purposes in the mod list.
 mod_authors=JohnStouffer
 # The description of the mod. This is a simple multiline text string that is used for display purposes in the mod list.
@@ -437,7 +434,10 @@ I reccomend you make your own items that you want instead of copying my items, h
 
 First you need to make a new folder inside your mod folder
 
-ie. if you mod is `tutorialcraft` then put it in `net.twoweek.tutorialcraft` folder
+ie. if you mod is `tutorialcraft` then put it in `com.example.tutorialcraft` folder
+
+> NOTE: Feel free to change it the name of the com and example folders, I chose not to as it adds another way to get an error here and it changes nothing but the name.
+{: .prompt-info }
 
 name this folder `items`
 
@@ -517,13 +517,362 @@ public TutorialCraft(FMLJavaModLoadingContext context)
 {: .nolineno }
 {: file="TutorialCraft.java" }
 
+### Adding the texture
 
+First we need to put the actual png of the item texture in the correct spot. 
+
+You should have a `resources` folder in main / src 
+
+create sub directories so your file tree looks like this
+
+```
+src/
+└─ main/
+   └─ resources/
+      └─ assets/
+         └─ tutorialcraft/
+            ├─ lang/
+            │  └─ en_us.json
+            ├─ models/
+            │  └─ item/
+            │     └─ ruby.json
+            └─ textures/
+               └─ item/
+                  └─ ruby.png
+```
+
+> If you forgot to turn off flattening for your file tree I reccomend you do it here, I go over it in the beginning of the tutorial
+{: .prompt-tip }
+
+now navigate to `ruby.json` and paste this is
+
+```json
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "tutorialcraft:item/ruby"
+  }
+}
+```
+
+Here is what each part of this json is saying
+- `"parent" : "item/generated"` basically tells the game to use the built in **item/generated** model for this item. Which is Mojang’s default 2D flat item model (used for things like minerals, food, enchanted books, etc.) It tells Minecraft to render this as a flat texture that always faces the player, with optional multiple texture layers.
+- `"layer0": "tutorialcraft:item/ruby"` basically tells the game that the base texture layer is the **ruby item in our mod**
+
+Next step **add to the `en_us.json` file**
+
+This is what minecraft uses to translate the items within the mod to different languages.
+
+I am just going to make the English USA translation. Feel free to add more.
+
+```json
+{
+  "item.tutorialcraft.ruby": "Ruby"
+}
+```
+
+Now when look at the Ruby item in game it will be whatever you put as the value here.
+
+Lastly [here is a link to the ruby.png](https://github.com/johnnystouffer/mod-tutorial/blob/main/src/main/resources/assets/tutorialcraft/textures/item/ruby.png). Download this and move it to `resources/assets/tutorialcraft/textures/item/` 
+
+### Add the item to your menu
+
+Last but not least we need to add it to the **creative menu**
+
+We have a function called `addCreative` in `TutorialCraft.java` that does just that for us.
+
+```java
+private void addCreative(BuildCreativeModeTabContentsEvent event)
+{
+    // just adding this to the Ingredients tab in the creative menu
+    if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
+        event.accept(ModItems.RUBY); 
+    }
+}
+```
+{: .nolineno }
+{: file="TutorialCraft.java" }
+
+
+### Congrats! 
+
+You have now made your own item! 
+
+There is a lot of moving components, but thankfully, more additions from here on out this tutorial will follow a similar process but with everything already set up.
+
+## Challenge Item
+
+It is time to to make your own item without help!
+
+Here is the challenge:
+
+**Make a Sapphire item, [here is the png to it](https://github.com/johnnystouffer/mod-tutorial/blob/main/src/main/resources/assets/tutorialcraft/textures/item/sapphire.png), other than that here is some other things I want you to do**:
+- It needs to be fire resistant
+- stacks of Sapphires can only go up to 16
+- Make its durability 500
+
+**Try this on your own with some help from [documentation](https://docs.minecraftforge.net/en/latest/items/)**, if you can't feel free to look at the hint below, I will paste my solution for how to make the item have these traits below.
+
+**HINT:**
+
+```
+Remember the chaining method I talked about earlier when making our Ruby? This applies here, knowing that now look at the documentation and try to implement it.
+```
+{: .nolineno }
+{: .blur }
+
+**SOLUTION**
+```java
+// Use chaining to edit the properties of each item
+public static final RegistryObject<Item> SAPPHIRE = ITEMS.register("sapphire",
+        () -> new Item(new Item.Properties()
+                .fireResistant()
+                .stacksTo(16)
+                .durability(500))
+);
+```
+{: .nolineno }
+{: file="ModItems.java" }
+{: .blur }
+
+### Start up the game!
+
+Now choose the `runClient` configuration and run the game, you should check inside of the **Ingredients** tab and see both a Sapphire and a Ruby there 
+
+## Make Your Own Creative Tab
+
+We do not just want to add everything to the Ingredients tab, lets make tab that is purely for your mods items.
+
+### Setup for the tab
+
+Make a new class inside of the the `/items` folder and call it `ModCreativeModeTabs.java`
+
+Like the items above **we need to add a DeferredRegister into this class, this time of the Creative Mode Tabs** additionally we need to **make a register function call for the modEventBus**
+
+```java
+public static final DeferredRegister<CreativeModeTab> CREATITVE_MODE_TABS =
+    DeferredRegister.create(Registries.CREATIVE_MODE_TAB, TutorialCraft.MOD_ID);
+
+public static void register(IEventBus eventBus) {
+    CREATITVE_MODE_TABS.register(eventBus);
+}
+```
+{: .nolineno }
+{: file="ModCreativeModTabs.java" }
+
+Head back to the main mod class `TutorialCraft.java` and add the line to **register the Creative Mod Tab with the mod event bus** around the same place you did for the `ModItems`
+
+```java
+ModCreativeModeTabs.register(modEventBus);
+```
+{: .nolineno }
+
+### Making the Tab
+
+Just like before we are making a `RegistryObject` to be added, this time it is a `CreativeMobTab` registry object
+
+For our `Supplier` parameter, we are gonna use the builder pattern with using the `CreativeModTab.builder()` function
+
+**With this we can add customize it to our liking, here is what we are gonna customize for this tutorial**
+- **Icon**: The icon that show up for the tab
+- **Title**: What the tab is called 
+- **Display items**: the items you want into the tab
+
+to do this reference the the function below
+
+```java
+public static final RegistryObject<CreativeModeTab> TUTORIAL_TAB = CREATITVE_MODE_TABS.register("tutorial_tab",
+    () -> CreativeModeTab.builder()
+        // add a icon to the tab with that being the Ruby item we made
+        .icon(() -> new ItemStack(ModItems.RUBY.get()))
+        // add a title to the tab
+        .title(Component.translatable("creativetab.tutorial_tab"))
+        // display the Ruby and Sapphire we just made
+        .displayItems((pParameters, pOutput) -> {
+            pOutput.accept(ModItems.RUBY.get());
+            pOutput.accept(ModItems.SAPPHIRE.get());
+        })
+        .build());
+```
+{: .nolineno }
+{: file="ModCreativeModTabs.java" }
+
+
+> Notice the title that has `Component.translatable("creativetab.tutorial_tab")` this is we are making the title **dynamic** based on the language just like with the Ruby and Sapphire. In `en_us.json` add the variable inside **("creativetab.tutorial_tab")** and set the value as whatever you want to call it
+
+Now any time we have a new item on our mod we can add it onto the tab
 
 ## Make First Block
 
+Now it is time to add our own blocks. Specifically I am going to be making the ores for the Ruby and Sapphire.
+
+First we need a new folder in the `tutorialcraft` folder called `block`. (so `tutorialcraft` should encase both the `/items` folder and now the `block` folder)
+
+within this `block` folder make a new class called `ModBlocks.java`
+
+**We follow the same two steps as usual**
+- Make the `DeferredRegister` of Forge's `BLOCKS` instead of `ITEMS`
+- create a `register` method to register the `modEventBus`
+
+I will let you do that part yourself and **show the whole file below**.
+
+Next we need two more methods, `registerBlock` and `registerBlockItem`
+
+```java
+public class ModBlocks {
+
+    public static final DeferredRegister<Block> BLOCKS =
+            DeferredRegister.create(ForgeRegistries.BLOCKS, TutorialCraft.MOD_ID);
+
+    // Register a block: takes care of registering it with the forge blocks, as well as calling to register
+    // the block as a item as well
+    private static <T extends Block> RegistryObject<T> registerBlock(String name, Supplier<T> supplier) {
+        RegistryObject<T> block = BLOCKS.register(name, supplier);
+        registerBlockItem(name, block);
+        return block;
+    }
+
+    // method to make the blocks as items as well
+    private static <T extends Block> void registerBlockItem(String name, RegistryObject<T> block) {
+        ModItems.ITEMS.register(name, () -> new BlockItem(block.get(), new Item.Properties()));
+    }
+
+    public static void register(IEventBus bus) {
+        BLOCKS.register(bus);
+    }
+}
+```
+{: .nolineno }
+{: file="ModBlocks.java" }
+
+Make sure to add this line in the `TutorialCraft.java` class as well now that we have our `register` method
+
+```java
+public TutorialCraft(FMLJavaModLoadingContext context)
+{
+    IEventBus modEventBus = context.getModEventBus();
+
+    ModCreativeModeTabs.register(modEventBus);
+    ModItems.register(modEventBus);
+    ModBlocks.register(modEventBus);
+
+```
+{: .nolineno }
+{: file="TutorialCraft.java" }
+
+
+**Why are we registering the blocks as items?**
+
+> Because blocks only exist in the world itself, those blocks you see in your inventory and creative menu are actually BlockItems. So we need to register them not only as blocks for the world enviornment, but also items for the user to be able to carry around and select
+
+### Making Ruby Ore
+
+Now it is time to actually make the block. The process is incredibly similar to making the items
+- Make a registry object of the block
+- provide the **name identifier** and **supplier** function
+- edit its properties
+
+```java
+public static final RegistryObject<Block> RUBY_ORE = registerBlock(
+    "ruby_ore",
+    () -> new Block(BlockBehaviour.Properties.copy(Blocks.DIAMOND_ORE)) // we want this to mock diamond ores properties
+);
+```
+
+simple as that, next we need to update `en_us.json` to translate `ruby_ore`, additionally you will need to **make new folders in the `resources` folder for the Ruby Ore block json file, item json file, and texture**. Here is what your file tree for resources should look like now
+
+```
+src/
+└─ main/
+   └─ resources/
+      └─ assets/
+         └─ tutorialcraft/
+            ├─ lang/
+            │  └─ en_us.json
+            ├─ models/
+            │  ├─ item/
+            │  │  ├─ ruby.json
+            │  │  └─ ruby_ore.json
+            │  └─ block/
+            │     └─ ruby_ore.json
+            └─ textures/
+               ├─ item/
+               │  └─ ruby.png
+               └─ block/
+                  └─ ruby_ore.png
+```
+
+Here is what the `block/ruby_ore.json` should look like:
+
+```json
+{
+  "parent" : "minecraft:block/cube_all",
+  "textures" : {
+    "all" : "tutorialcraft:block/ruby_ore"
+  }
+}
+```
+
+Since ores have the same texture around the entire block, we can take one image and apply it to every side, hence why the parent is `"minecraft:block/cube_all"`
+
+Inside of `item/ruby_ore.json` should look like:
+
+```json
+{
+  "parent" : "tutorialcraft:block/ruby_ore"
+}
+```
+
+Since we already have the block declared, we can reference then when declaring the item version.
+
+Next in `en_us.json` and any other language you put down, make sure to put:
+
+```json
+"block.tutorialcraft.ruby_ore" : "Ruby Ore"
+```
+
+Next [here is the png](https://github.com/johnnystouffer/mod-tutorial/blob/main/src/main/resources/assets/tutorialcraft/textures/block/ruby_ore.png) of the Ruby Ore. Put this in the `textures/block` folder
+
+Lastly we can add the item of the Ruby Ore in CreativeTab by calling this inside of `displayItems` method
+
+```java
+pOutput.accept(ModBlocks.RUBY_ORE.get());
+```
+
+### Run the client
+
+Now make sure you run the program using `runClient` to verify the block exists
+
+If all looks good then congrats! You now have you first block
+
+Just like items adding blocks usually follows this pattern with some variation in what you are creating 
+
+### Challenge Block
+
+Now lets make **Sapphire Ore!**
+
+Complete the same steps above except for the sapphire ore, and of course here is the ore texture.
+
+**However there a couple things I want you to change to make this ore more interesting**
+- make this ore to have the friction of ice, so you walk around like you are sliding
+- make the sound of the ore sound like Amethyst
+- Edit the strength of this ore
+    - Set destroy time to 6.0
+    - Set explostion resistance to 6.5
+
+> I will NOT give a solution to this one, I will provide a hint underneath this dialog box, but you should able to comfortably figure out how to do this given this [documentation](https://docs.minecraftforge.net/en/latest/blocks/#creating-a-block), and using Google (try your best not to use AI right now)
+
+```
+Remember the chaining you did for the item properties? Try then again, just typing a period should show you a list of functions you can use as well.
+```
+{: .blur }
+{: .nolineno }
+
 ## Make your Own Tools
 
-## Make your Own Armor
+
+
+## Make your Own Armor       
 
 ## Challenge Tasks
 
