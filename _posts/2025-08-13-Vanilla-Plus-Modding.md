@@ -97,8 +97,6 @@ Unpack this folder and rename it to whatever you want your mod to be called.
 ### Setting Up Intellij
 
 > You should still go through this section even if you are using a different IDE. It will cover changes to gradle.properties, settings.gradle, etc. However, the actual running of the project and using Gradle is completely on you.
-
-> There are a lot of things that could go wrong here. Try to troubleshoot the errors yourself, but if you are stuck, feel free to reach out to me via Discord (**Johnny S** on the 2 Week Projects server). 
 {: .prompt-info}
 
 Ensure you have either the *full version* or *Community Edition* of Intellij installed.
