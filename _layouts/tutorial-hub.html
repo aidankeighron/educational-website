@@ -1,0 +1,42 @@
+---
+layout: default
+refactor: true
+panel_includes:
+  - module-outline
+---
+
+{% assign tutorial_key = page.tutorial_slug | default: page.slug %}
+{% assign modules = site.modules | where: "parent_post", tutorial_key | sort: "module_number" %}
+{% assign first_module = modules | first %}
+
+<article class="tutorial-hub px-1">
+  <header class="module-header mb-4">
+    <h1 class="mb-2">{{ page.title }}</h1>
+    {% if page.description %}
+      <p class="post-desc fw-light mb-0">{{ page.description }}</p>
+    {% endif %}
+  </header>
+
+  {% if first_module %}
+    <div class="tutorial-hub__cta mb-4">
+      <a class="btn btn-primary" href="{{ first_module.url | relative_url }}">Start Module 1</a>
+    </div>
+  {% endif %}
+
+  <div class="tutorial-hub__body content">
+    {{ content }}
+  </div>
+
+  {% if modules.size > 0 %}
+    <section class="tutorial-hub__modules mt-5">
+      <h2>Modules</h2>
+      <ol class="tutorial-module-list">
+        {% for module in modules %}
+          <li>
+            <a href="{{ module.url | relative_url }}">{{ module.title }}</a>
+          </li>
+        {% endfor %}
+      </ol>
+    </section>
+  {% endif %}
+</article>

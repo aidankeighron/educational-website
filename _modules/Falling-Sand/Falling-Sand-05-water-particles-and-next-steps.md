@@ -1,17 +1,10 @@
 ---
-title: Falling Sand 2
-author: aidan
-date: 2025-03-23 12:00:00 +0800
-categories: [FallingSand]
-tags: [JavaScript, Easy]
-description: Part 2 of the Falling Sand project. Creating new particles, and adding new interactions.
-comments: false
-pin: true
+title: Water, Particles, and Next Steps
+parent_post: Falling-Sand
+module_number: 5
+layout: module
 media_subpath: /assets/tutorials/falling sand
-image: /demoHeader2.png
 ---
-
-## Water particle
 
 Now let's add a new particle type: Water!
 
@@ -115,7 +108,7 @@ Random change to move to a random location: This is a more advanced challenge! T
 
 Have fun experimenting and see what kind of interesting water behaviors you can create!
 
-## Swap function
+# Swap function
 
 Now let's implement the `swap` function in our `particles.js` file. This will allow us to define how different particles interact when they try to move into the same space.
 
@@ -168,7 +161,7 @@ export function moveParticle(row, col, newRow, newCol, swap) {
 
 The `swap &&` in `if (swap && swap(getParticle(newRow, newCol))) {` just makes sure swap is not `undefined` or `null`.
 
-## Add more particles (Stone and Dirt)
+# Add more particles (Stone and Dirt)
 
 Let's add two more particle types to our simulation: `Stone` and `Dirt`.
 
@@ -241,7 +234,7 @@ export function checkParticleType(value) {
 
 Now you should be able to select `Stone` and `Dirt` from the dropdown and create them in your simulation! `Stone` will stay in place, and `Dirt` will fall like sand.
 
-## Have water convert dirt into grass
+# Have water convert dirt into grass
 
 Let's add an interesting interaction: when water touches dirt, it will turn the dirt into grass!
 
@@ -282,10 +275,10 @@ update(row, col) {
 
 Now, try creating some dirt and then some water on top of it – you should see the dirt turn into grass!
 
-## Next Steps
+# Next Steps
 
 
-### Adding new particles
+## Adding new particles
 
 There are `3` things you need to do to add a new particle
 
@@ -312,15 +305,15 @@ Example of adding a new particle in `index.html`. `value` is the string that you
 
 Here are a couple of ideas for new particles you can add to your simulation:
 
-#### Fire
+### Fire
 
 For the `Fire` particle you need to keep track of duration and max duration, every time update is called increase duration. Max duration should be initialized in the constructor  and once duration is `>=` to max duration is is remove (or has a chance to be removed). Fire works like water but moving up instead of down.
 
-#### Wood
+### Wood
 
 Acts like `Stone` but gets destroyed by fire and creates more of it. Maybe it absorbs water and that makes it harder to burn?
 
-#### Steam
+### Steam
 
 Moves like water but upwards, has a very small chance to disappear, if it is at the top of the screen it has a chance to turn condense into water.
 
@@ -333,19 +326,3 @@ Think about other real-world substances or fantastical elements and how they mig
 
 > Task: Add at least `3` new particles and make sure to add interactions with other particles (don't just add `Metal` and make it act like `Stone`). Get creative with it.
 {: .prompt-tip }
-
-## Completion
-
-**Congratulations!**
-
-You've now taken your Falling Sand simulation to the next level! In this second part of the tutorial, you've successfully:
-
-- Introduced a new particle type, Water, and implemented its unique physics, including random movement and interactions with other particles.
-- Utilized the getRandomInt() function to add probabilistic behavior to your particles, making the simulation more dynamic and realistic.
-- Implemented the swap() function to create interactions between different particle types, allowing Sand to fall through Water.
-- Added Stone and Dirt particles, demonstrating how to extend existing classes and create new particle behaviors.
-- Created a dynamic interaction between Water and Dirt, resulting in the creation of Grass, showcasing the power of particle interactions.
-- Further expanded your understanding of JavaScript classes, inheritance, and object-oriented programming.
-- Practiced your problem-solving and debugging skills by experimenting with particle behaviors.
-
-**You've built a solid foundation for creating even more complex and interesting particle simulations. Now, let's explore how you can further expand your project with new particles and interactions!**

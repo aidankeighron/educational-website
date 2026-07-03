@@ -168,6 +168,9 @@ collections:
   tabs:
     output: true
     sort_by: order
+  modules:
+    output: true
+    permalink: /posts/:path/
 
 defaults:
   - scope:
@@ -190,6 +193,12 @@ defaults:
     values:
       layout: page
       permalink: /:title/
+  - scope:
+      path: ""
+      type: modules
+    values:
+      layout: module
+      toc: false
 
 sass:
   style: compressed

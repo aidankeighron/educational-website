@@ -1,0 +1,65 @@
+.module-outline {
+  .module-outline__list {
+    padding-left: 1rem;
+    margin-bottom: 0;
+  }
+
+  .module-outline__item {
+    margin-bottom: 0.35rem;
+  }
+
+  a.active {
+    font-weight: 700;
+  }
+
+  .module-outline__subheadings {
+    margin-top: 0.5rem;
+    margin-bottom: 0.35rem;
+    padding-left: 1rem;
+    font-size: 0.95em;
+  }
+
+  .module-outline__subheading-item {
+    margin-bottom: 0.25rem;
+
+    a {
+      color: var(--text-muted-color);
+    }
+  }
+
+  .module-outline__subheadings-children {
+    margin-top: 0.35rem;
+    padding-left: 1.25rem;
+    list-style-type: lower-roman;
+  }
+}
+
+.tutorial-progress-bar {
+  height: 0.5rem;
+  background: var(--main-border-color);
+  border-radius: 999px;
+  overflow: hidden;
+  width: 100%;
+  border: 0;
+  display: block;
+  appearance: none;
+}
+
+.tutorial-progress-bar::-webkit-progress-bar {
+  background: var(--main-border-color);
+  border-radius: 999px;
+}
+
+.tutorial-progress-bar::-webkit-progress-value {
+  background: var(--link-color);
+  border-radius: 999px;
+}
+
+.tutorial-progress-bar::-moz-progress-bar {
+  background: var(--link-color);
+  border-radius: 999px;
+}
+
+.tutorial-module-list {
+  padding-left: 1.25rem;
+}

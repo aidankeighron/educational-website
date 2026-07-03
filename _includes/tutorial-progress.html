@@ -1,0 +1,11 @@
+{% assign current = include.current_index | minus: 0 %}
+{% assign total = include.total | minus: 0 %}
+{% if total > 0 %}
+  <section class="tutorial-progress mb-4" aria-label="Tutorial progress">
+    <div class="tutorial-progress__top d-flex justify-content-between text-muted small mb-2">
+      <span>Progress</span>
+      <span>{{ current }}/{{ total }}</span>
+    </div>
+    <progress class="tutorial-progress-bar" value="{{ current }}" max="{{ total }}">{{ current }}/{{ total }}</progress>
+  </section>
+{% endif %}
