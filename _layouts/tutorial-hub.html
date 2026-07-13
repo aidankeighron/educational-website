@@ -26,17 +26,4 @@ panel_includes:
   <div class="tutorial-hub__body content">
     {{ content }}
   </div>
-
-  {% if modules.size > 0 %}
-    <section class="tutorial-hub__modules mt-5">
-      <h2>Modules</h2>
-      <ol class="tutorial-module-list">
-        {% for module in modules %}
-          <li>
-            <a href="{{ module.url | relative_url }}">{{ module.title }}</a>
-          </li>
-        {% endfor %}
-      </ol>
-    </section>
-  {% endif %}
 </article>

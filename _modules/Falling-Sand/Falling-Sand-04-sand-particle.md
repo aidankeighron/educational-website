@@ -1,5 +1,5 @@
 ---
-title: Sand Particle
+title: "Sand Particle"
 parent_post: Falling-Sand
 module_number: 4
 layout: module

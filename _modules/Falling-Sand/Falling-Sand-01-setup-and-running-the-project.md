@@ -1,32 +1,10 @@
 ---
-title: About the project, Setup, and Running the Project
+title: "Setup and Running the Project"
 parent_post: Falling-Sand
 module_number: 1
 layout: module
 media_subpath: /assets/tutorials/falling sand
 ---
-
-# About the project
-
-Welcome to the Falling Sand tutorial! In this project, you will learn the fundamentals of programming by building a fun and interactive simulation of different particles.
-
-![Falling Sand Demo](/demo.gif)
-
-**What you will learn:**
-
-- Basic JavaScript concepts like variables, the Document Object Model (DOM), and event listeners.
-- How to use the HTML Canvas element to draw graphics on a webpage.
-- Fundamental game logic and physics simulation.
-- Object-oriented programming concepts like classes and inheritance.
-- Problem-solving and debugging skills.
-
-**What you will make:**
-
-By the end of this tutorial, you will have a working simulation where you can click on the screen to create different types of particles that will fall and interact based on simple rules.
-
-**Further possibilities:**
-
-Once you've completed this tutorial, you can expand on it in many ways! You could add more particle types with unique behaviors (like fire that burns wood, or ice that melts), implement more complex physics like animals and plants. The possibilities are endless!
 
 # Setup
 

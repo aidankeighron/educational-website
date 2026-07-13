@@ -1,5 +1,5 @@
 ---
-title: Basic JavaScript Knowledge
+title: "Basic JavaScript Knowledge"
 parent_post: Falling-Sand
 module_number: 2
 layout: module

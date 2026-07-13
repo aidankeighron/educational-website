@@ -1,5 +1,5 @@
 ---
-title: Draw Particles on Click
+title: "Draw Particles on Click"
 parent_post: Falling-Sand
 module_number: 3
 layout: module

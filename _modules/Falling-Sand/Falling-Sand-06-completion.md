@@ -1,5 +1,5 @@
 ---
-title: Completion
+title: "Completion"
 parent_post: Falling-Sand
 module_number: 6
 layout: module
