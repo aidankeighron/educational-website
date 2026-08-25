@@ -12,21 +12,17 @@ First, you'll need to get the project code and set up your development environme
 
 ## Set up your IDE 
 
-We will be using VS Code in this tutorial but you can use any IDE, you can download VS Code from [visualstudio.com](https://code.visualstudio.com/){:target="\_blank"}. 
+We will be using VS Code in this tutorial, with the Live Server extension for running the project locally.
 
-{% include embed/youtube.html id='KMxo3T_MTvY' %}
-
-**Install the Live Server extension in Visual Studio Code:** open the Extensions marketplace (usually by clicking on the four squares icon on the left sidebar) and search for "Live Server" by Ritwick Dey. Click "Install".
-
-[Tips and Tricks for VS Code](https://www.youtube.com/watch?v=ifTF3ags0XI&t=343s&ab_channel=Fireship){:target="\_blank"}
+> New to VS Code or need to set up Live Server? Check out our [Setting Up VS Code]({{ '/references/vscode-setup/' | relative_url }}) background page.
+{: .prompt-info }
 
 ## Download the starter code 
 
-For version control, we will use GitHub. If you're not familiar, GitHub is a platform for version control and collaboration, allowing developers to manage, share, and track changes to code efficiently, making teamwork and project management easier. Like Google Drive for programmers.
+For version control, we will use GitHub.
 
-{% include embed/youtube.html id='hwP7WQkmECE' %}
-
-Here is a more in-depth breakdown oh what GitHub is and how it works [Introduction to GitHub](https://digital.gov/resources/an-introduction-github/){:target="\_blank"}.
+> New to Git/GitHub? Check out our [Git & GitHub Basics]({{ '/references/git-github-basics/' | relative_url }}) background page for what Git/GitHub is and how forking works.
+{: .prompt-info }
 
 **If you don't have it already, download GitHub desktop:** [desktop.github.com/download](https://desktop.github.com/download/){:target="\_blank"}.
 
@@ -36,9 +32,6 @@ Here is a more in-depth breakdown oh what GitHub is and how it works [Introducti
 - Click the "Fork" button in the top right corner. (This will create a copy of the project in your own GitHub account)
 - Then open your newly created fork and click the green "Code" dropdown
 - Select "Open with GitHub Desktop"
-
-> A `fork` is a personal copy of a codebase where you can make changes without affecting others.
-{: .prompt-info }
 
 # Running the project
 

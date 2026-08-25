@@ -1,7 +1,7 @@
 ---
 title: "Completion"
 parent_post: Falling-Sand
-module_number: 6
+module_number: 5
 layout: module
 media_subpath: /assets/tutorials/falling sand
 ---

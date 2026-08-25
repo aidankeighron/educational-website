@@ -1,7 +1,7 @@
 ---
 title: "Water, Particles, and Next Steps"
 parent_post: Falling-Sand
-module_number: 5
+module_number: 4
 layout: module
 media_subpath: /assets/tutorials/falling sand
 ---

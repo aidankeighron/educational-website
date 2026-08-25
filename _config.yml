@@ -171,6 +171,9 @@ collections:
   modules:
     output: true
     permalink: /posts/:path/
+  references:
+    output: true
+    permalink: /references/:path/
 
 defaults:
   - scope:
@@ -198,6 +201,12 @@ defaults:
       type: modules
     values:
       layout: module
+      toc: false
+  - scope:
+      path: ""
+      type: references
+    values:
+      layout: reference
       toc: false
 
 sass:

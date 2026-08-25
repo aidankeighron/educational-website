@@ -1,7 +1,7 @@
 ---
 title: "Draw Particles on Click"
 parent_post: Falling-Sand
-module_number: 3
+module_number: 2
 layout: module
 media_subpath: /assets/tutorials/falling sand
 ---

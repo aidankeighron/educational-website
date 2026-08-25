@@ -1,7 +1,7 @@
 ---
 title: "Sand Particle"
 parent_post: Falling-Sand
-module_number: 4
+module_number: 3
 layout: module
 media_subpath: /assets/tutorials/falling sand
 ---

@@ -5,6 +5,7 @@ date: 2025-6-18 12:00:00 +0800
 categories: [FocusTube]
 layout: tutorial-hub
 tutorial_slug: FocusTube
+references: [what-is-an-api]
 tags: [JavaScript, React, NextJS, FocusTube, Medium]
 description: In this project you will learn the basics of NextJS to start building a YouTube wrapper that will help you focus and not stay distracted
 comments: false

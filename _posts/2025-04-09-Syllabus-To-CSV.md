@@ -5,6 +5,7 @@ date: 2025-03-23 12:00:00 +0800
 categories: [Syllabus To CSV]
 layout: tutorial-hub
 tutorial_slug: Syllabus-To-CSV
+references: [git-github-basics, what-is-an-api]
 tags: [JavaScript, Easy]
 description: Convert your class syllabus into a CSV of all your assignments
 comments: false

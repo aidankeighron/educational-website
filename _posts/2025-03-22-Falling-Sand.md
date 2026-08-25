@@ -5,6 +5,7 @@ date: 2025-03-22 12:00:00 +0800
 categories: [FallingSand]
 layout: tutorial-hub
 tutorial_slug: Falling-Sand
+references: [vscode-setup, git-github-basics, javascript-dom-basics]
 tags: [JavaScript, Easy]
 description: This is the tutorial for the Falling Sand project. 
 comments: false

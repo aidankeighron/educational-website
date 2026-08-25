@@ -11,52 +11,8 @@ media_subpath: /assets/tutorials/focustube
 - How to use and create the fundamental parts of an API (endpoints, requests and responses) in NextJS
 - How to connect, fetch, parse, and display API data from YouTube
 
-## Introduction to APIs and getting YouTube API key
-
-### What is an API?
-
-An API is an **Application Programming Interface**, which is a **set of rules that allow different software components to communicate with each other**.
-
-Today, we will be working with **REST APIs** which is the most popular type of API. It communicates via HTTP methods which are GET and POST (there is also PUT and DELETE, but we are not going to use those).
-
-- GET --> When you want to get data from the source.
-- POST --> When you want to give data to the source.
-
-### Example
-
-Imagine you want to build a *Pokemon Information App*. The hard way to make this app is to collect every single bit of information about every single pokemon. **This is where an API could make the process much easier**. There is an API called `PokeAPI` where you send a request for Pokemon data, and it will send it back to you.
-
-Here is how it works:
-- You send an HTTP request (we will cover this in detail later)
-- You specify what you want in the HTTP request. For example, you may want to know everything about Pikachu.
-- The other end of the API will process this request, gather the information about Pikachu, then put it in a **JSON File** so you can understand it
-- Lastly, they will send back the information you requested, and now you have all the information you needed without collecting any data yourself!
-
-#### As a programmer, it would look like:
-
-You send a request like this:
-
-```jsx
-const apiData = await fetch('https://pokeapi.co/api/v2/pokemon/pikachu')
-```
-
-You get something back that looks like this:
-
-```jsx
-// Note: This is an example, not what PokeAPI will actually send
-{
- "name": "pikachu",
- "height": 4,
- "weight": 60,
- "types": [
-   { "type": { "name": "electric" } }
- ]
-}
-```
-
-After you get this information back, you can parse it and use it however you would like.
-
-[Here is another example](https://www.youtube.com/watch?v=s7wmiS2mSXY&t=33s) if you are struggling a bit to understand.
+> New to APIs? Check out our [What is an API?]({{ '/references/what-is-an-api/' | relative_url }}) background page before continuing.
+{: .prompt-info }
 
 ## Enable the YouTube API
 

@@ -1,12 +1,10 @@
 ---
 title: "Basic JavaScript Knowledge"
-parent_post: Falling-Sand
-module_number: 2
-layout: module
-media_subpath: /assets/tutorials/falling sand
+description: "A quick refresher on the HTML DOM and event listeners for anyone new to JavaScript."
+layout: reference
 ---
 
-This section will cover some fundamental JavaScript concepts that we'll be using in this tutorial. If you are already comfortable with JavaScript, feel free to skip to the next section. [w3schools](https://www.w3schools.com/js/default.asp){:target="\_blank"} is a great resource for learning or refreshing your knowledge of any of these concepts.
+This page covers some fundamental JavaScript concepts used across several tutorials. If you're already comfortable with JavaScript, feel free to skip this. [w3schools](https://www.w3schools.com/js/default.asp){:target="\_blank"} is a great resource for learning or refreshing your knowledge of any of these concepts.
 
 # HTML DOM (accessing HTML DOM using `getElementById`)
 
@@ -16,9 +14,9 @@ The HTML Document Object Model (DOM) represents the structure of your HTML docum
 
 **Accessing HTML elements in JavaScript:**
 
-`getElementById` is a JavaScript method that allows you to access a specific HTML element by its id attribute. In our `index.html` file, you'll find elements with IDs like canvas, speedRange, and clear-button. We can access these elements in our JavaScript code like this:
+`getElementById` is a JavaScript method that allows you to access a specific HTML element by its id attribute. For example, if your HTML has elements with IDs like `canvas`, `speedRange`, and `clear-button`, you can access them in your JavaScript code like this:
 
-**Example (you don't need to add this code)**
+**Example**
 
 ```js
 const canvasElement = document.getElementById('canvas');
@@ -34,9 +32,9 @@ Further reading: [w3schools HTML DOM](https://www.w3schools.com/js/js_htmldom.as
 
 Event listeners allow you to respond to specific events that happen on your webpage, such as a user clicking a button or moving their mouse. We attach event listeners to HTML elements using JavaScript.
 
-Here's an example of how we can add an event listener to our "Clear Screen" button:
+Here's an example of how to add an event listener to a "Clear Screen" button:
 
-**Example (you don't need to add this code)**
+**Example**
 
 ```js
 const clearButtonElement = document.getElementById('clear-button');
