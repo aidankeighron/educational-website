@@ -392,8 +392,8 @@ When the sand reaches the bottom of the canvas, you might start seeing errors in
 
 To fix this, we need to update the `checkBounds` function in `canvas.js` to checks if a given row and column are within the valid bounds of our grid.
 
-> Task 1: Modify the `checkBounds` functions so it returns `true` if the `(row, col)` is within the bounds of `grid` and `false` otherwise. After writing function, use it in `moveParticle` to prevent a particle from being moved out of bounds.
-{: .prompt-tip }
+> **TASK 1:** Modify the `checkBounds` function so it returns `true` if `(row, col)` is within the bounds of `grid` and `false` otherwise. After writing the function, use it in `moveParticle` to prevent particles from being moved out of bounds.
+{: .prompt-warning }
 
 <details>
 <summary>Task 1: Hint</summary>
@@ -437,8 +437,8 @@ export function moveParticle(row, col, newRow, newCol, swap) {
 
 You might notice that when the sand moves down, it leaves a trail behind it. This is because we are only copying the sand particle to the new position and not removing it from its old position.
 
-> Task 2: Modify the `moveParticle` function in `canvas.js` to stop the particles streaking as they fall.
-{: .prompt-tip }
+> **TASK 2:** Modify the `moveParticle` function in `canvas.js` to stop the particles from streaking as they fall.
+{: .prompt-warning }
 
 <details>
 <summary>Task 2: Hint</summary>
@@ -480,8 +480,8 @@ Now, the errors when the sand hits the bottom and the streaking should be gone!
 Let's make our sand behave a bit more realistically. Currently, it just falls straight down. Lets add a check to make sure it doesn't overwrite other sand if there is already sand below it.
 
 
-> Task: Utilizing `getParticle` (it returns the particle at (row, col)) add a check in the `moveParticle` function in `canvas.js` to make sure a particle can not move on top of another particle:
-{: .prompt-tip }
+> **TASK 3:** Utilizing `getParticle` (which returns the particle at `(row, col)`), add a check in the `moveParticle` function in `canvas.js` to make sure a particle cannot move on top of another particle.
+{: .prompt-warning }
 
 > Remember if a gird location is empty it will contain the value `null`.
 {: .prompt-info }
@@ -563,7 +563,26 @@ update(row, col) {
 {: file="particles.js" }
 {: .nolineno }
 
-> CHALLENGE: Mess around with the sand physics, what happens if you have the sand move two steps every update (`row+2` or `col+2`), what if you try to move left and right first?
-{: .prompt-danger }
+> **CHALLENGE:** Mess around with the sand physics! What happens if you have the sand move two steps every update (`row+2` or `col+2`), or if you try to move left and right first?
+{: .prompt-warning }
+
+## Completion & Discussion Checklist
+
+Before joining the group discussion or concluding this tutorial, ensure you have completed the tasks, investigated the bugs, and are ready to discuss the questions below:
+
+<details markdown="1">
+<summary>Click to expand Completion & Discussion Checklist (7 Items)</summary>
+
+| # | Type | Item | Prompt Preview |
+| :-: | :--- | :--- | :--- |
+| 1 | Bug Hunt | Empty Grid Null Check | Accessing `particle.color` on an empty grid cell causes a null error. Verify that a particle exists at `(row, col)` before reading its properties. |
+| 2 | Question | Grid Bounds & Coordinates | Think about the dimensions of our grid. How can you check if a given row is within the valid range of rows? What about the column? |
+| 3 | Question | Particle Reference vs. Copy | What do we use to represent an empty particle? Are we moving the particle or just making a new one? |
+| 4 | Task | Implement `checkBounds()` | Modify the `checkBounds` function so it returns `true` if `(row, col)` is within the bounds of `grid` and `false` otherwise. Use it in `moveParticle` to prevent particles from moving out of bounds. |
+| 5 | Task | Fix Particle Streaking | Modify the `moveParticle` function in `canvas.js` to stop the particles from streaking as they fall. |
+| 6 | Task | Prevent Particle Overwrite | Utilizing `getParticle`, add a check in `moveParticle` in `canvas.js` to make sure a particle cannot move on top of another particle. |
+| 7 | Challenge | Custom Physics Experimentation | Mess around with the sand physics! What happens if you have the sand move two steps every update (`row+2` or `col+2`), or if you try to move left and right first? |
+
+</details>
 
 Congratulations! You've completed the first part of the Falling Sand tutorial. You can now create and make sand particles fall and react to simple physics. In the next part, we'll introduce more particle types and make them interact with each other.

@@ -20,7 +20,7 @@ Welcome to the Express Authentication tutorial! In this project, you will learn 
 **Prerequisites**:
 
 - Basic understanding of how the web works, APIs, sending and receiving requests
-- Basic coding skills in JS. React skills is preferrable
+- Basic coding skills in JS. React skills are preferable
 
 **What you will learn:**
 
@@ -83,9 +83,9 @@ npm init -y
 Then install dependencies:
 (try to understand their purposes in the scope of the project)
 
-```
+```bash
 npm install bcrypt jsonwebtoken mongoose express cors dotenv
-npm install --save-dev typescript ts-node nodemon @types/bcrypt @types/jsonwebtoken @types/express @types/cors @types/node eslint prettier
+npm install --save-dev typescript@^5.9.3 ts-node nodemon tsconfig-paths @types/bcrypt @types/jsonwebtoken @types/express @types/cors @types/node eslint prettier
 ```
 
 Next, we will create a `tsconfig.json` file. It is used to manage TypeScript in our project. Run
@@ -107,7 +107,6 @@ You will see a newly created `tsconfig.json` file. You can try playing around wi
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
     "paths": {
       "@shared/*": ["../shared/*"]
     },
@@ -210,7 +209,7 @@ const userSchema = new mongoose.Schema({
 });
 
 userSchema.set("toJSON", {
-  transform: (doc, ret) => {
+  transform: (doc, ret: any) => {
     ret.id = ret._id.toString();
     delete ret._id;
     delete ret.__v;
@@ -226,20 +225,14 @@ export default mongoose.model("User", userSchema);
 {: file="backend/src/models/user.ts" }
 {: .nolineno }
 
-(Guiding Question: Why do we store passwordHash instead of password? Try to think of the security implications if we didn't)
+> **QUESTION:** Why do we store a hashed password (`passwordHash`) in the database instead of the raw plaintext password? What security implications arise if an attacker gains access to a database table storing unhashed passwords?
+{: .prompt-tip }
 
 The `validate` part above is to validate our name against regex - and if it doesn't match, the database will refuse to save the user to the database. For the `contacts` part, we're using `mongoose.Schema.Types.ObjectId` as type. When we store objects into MongoDb, each object will have its own id. Think of this as an array of id of `Contact`s, so that we can convert them back to actual `Contact` later. 
 
 Also, the "toJSON" part at the end of our file is defining what will the object be like when transformed into JSON. We *absolutely* don't want to reveal an user's `passwordHash`, so we must delete that from the returned result. There are two more fields: `_id` and `__v`, in which we don't need `__v`, and for `_id`, I chose to rename it to just `id`. 
 
-Next, for our `Contact`: 
-
-> Task: Create our `Contact` model inside `backend/src/models`. It should have name, number, and a belongsTo field that reference back to an user. When referring to other objects, use its ObjectId. You should also add some validation of your choice - looking up some public regex can be a good idea.
-{: .prompt-tip}
-
-(Guiding tips: Before unblurring, think about this: a User can own many contacts (a *list* of contacts), but a Contact only *belongs to* one User. Look at the user.ts file for reference before typing the belongsTo field) 
-
-**Answer (click to unblur):**
+Next, let's create our `Contact` model. A user can own many contacts (a list of contacts), but each contact belongs to one user (`ObjectId` reference):
 
 ```typescript
 import mongoose from "mongoose";
@@ -253,16 +246,11 @@ const contactSchema = new mongoose.Schema({
   number: {
     type: String,
     required: true,
-    minLength: 8,
-    maxLength: 11,
     validate: {
-      validator: function (v: string) {
-        return /^\d{2,3}-(\d+)$/.test(v);
-      },
-      message: () => "Wrong format (123-1234567).",
+      validator: (v: string) => /^\d{2,3}-\d{7,}$/.test(v),
+      message: (props: { value: string }) => `${props.value} is not a valid phone number!`,
     },
   },
-
   belongsTo: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
@@ -270,45 +258,30 @@ const contactSchema = new mongoose.Schema({
 });
 
 contactSchema.set("toJSON", {
-  transform: (doc, ret) => {
-    ret.id = ret._id.toString();
-    delete ret._id;
-    delete ret.__v;
+  transform: (document, returnedObject: any) => {
+    returnedObject.id = returnedObject._id.toString();
+    delete returnedObject._id;
+    delete returnedObject.__v;
   },
 });
 
 export default mongoose.model("Contact", contactSchema);
 ```
 {: file="backend/src/models/contact.ts" }
-{: .nolineno}
-{: .blur }
-
-If you were able to understand the `User` file above, this file should be pretty similar. One difference is that the `belongsTo` field is not an array but instead one object - which make sense, because contacts can only be created when a user is logged in, which means that the contact can only belong to one user only.
-
-### Creating controllers 
-
-After we have defined our models, we can move on to write controllers. 
-
-A *controller* can generally be understood as your request handler. For example, if you create a GET request to `localhost:3001/api/users`, the controllers will handle that request, do various backend operations, such as talking/querying to database or getting the data, and then send back to you the response from the server.  For most applications, with each model, you should write all the [CRUD](https://www.codecademy.com/article/what-is-crud) controllers for each object. In RESTful applications, that translates to four types of requests: GET, POST, DELETE, PUT/PATCH.
-
-For the scope of this app, I'm going to simplify things a bit. For `User`, we just want a `POST` request (registering new users) and a GET request (for login). For `Contact`, we want a GET, POST, and DELETE. 
-
-(Guiding Tips: Controllers should usually be light on code. They should ideally:
-- Validate Request
-- Call Business Logic
-- Send Response
-)
-
-For `User`: 
-
-{: file="backend/src/controllers/userController.ts"}
 {: .nolineno }
 
-```typescript 
-import User from "../models/user";
-import { Request, Response, NextFunction } from "express";
+If you were able to understand the `User` file above, this file should be pretty similar. One difference is that the `belongsTo` field is not an array but instead one object - which make sense, because contacts can only be created when a user is logged in, which means that the contact can only belong to one user only. Note that the phone number validator regex `/^\d{2,3}-\d{7,}$/` expects 2–3 digits followed by a hyphen and at least 7 digits (e.g. `09-1234567` or `012-12345678`).
 
-export const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
+### Creating controllers for our models 
+
+Controllers are functions that will handle the logic of our application. Let's create `userController.ts` in `backend/src/controllers`: 
+
+```typescript
+import User from '../models/user';
+import Contact from '../models/contact';
+import { Request, Response, NextFunction } from 'express';
+
+export const getAll = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const users = await User.find({}).populate("contacts", { name: 1, number: 1 });
     res.json(users);
@@ -329,7 +302,9 @@ export const getById = async (req: Request, res: Response, next: NextFunction) =
   }
 }
 ```
-(Developer Check: Pay attention to the try/catch blocks. In this case, they are essential for determining the success/failure state of the database call. Without try/catch, there is no error handling for database call failure and throws exception or error state. General rule of thumb: use try/catch blocks for async functions that use AWAIT)
+
+> **QUESTION:** In asynchronous controller functions (such as `User.findById()`), what happens if a database query rejects or the network connection drops without a `try/catch` block wrapping the `await` call? How does passing errors to `next(err)` protect our Express application from unhandled promise rejections?
+{: .prompt-tip }
 
 `Request, Response, NextFunction` are types required for our `req, res, next` arguments. `User.find({})` is used to get all users from the database. 
 
@@ -337,12 +312,8 @@ Remember about the `Contact`s we said earlier that are stored as ObjectId? `popu
 
 This file only consists of GET-ing users. For adding users, we will handle that in a different file, `registerController`. But I'll hand that to you. 
 
-> Task: Write a controller that supports adding users. The request contains username, name, email, and password. You should try to validate your username, email, and password (just simple `if`s are sufficient). For email validation, you might want to see [this](https://uibakery.io/regex-library/email). And you will also want to hash our password before saving to our database, using [bcrypt](https://nordvpn.com/blog/what-is-bcrypt/).  Basically, just use this in your code
-> ```typescript
-> const passwordHash = await bcrypt.hash(password, 10); 
-> ```
-> and store the password hash along with the other details into your database. You would also want to look up how to store an object to the database, if you don't already know that. 
-{: .prompt-tip}
+> **TASK:** Write the `registerController` to validate username, email, and password, and hash the password before saving using `bcrypt.hash(password, 10)`.
+{: .prompt-warning }
 
 **Answer (click to unblur):**
 
@@ -352,48 +323,56 @@ import bcrypt from 'bcrypt';
 import { Request, Response, NextFunction } from 'express';
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
-  const {username, name, email, password} = req.body;
+  const { username, name, email, password } = req.body;
 
-  if (username.length <= 6)
+  if (!username || username.length < 3) {
     return void res.status(400).send({
-      error: "Username must be at least 6 characters"
+      error: "Username must be at least 3 characters"
     });
+  }
 
-  if (password.length <= 8) {
+  if (!password || password.length < 8) {
     return void res.status(400).send({
       error: "Password must be at least 8 characters"
-    })
+    });
+  }
+
+  if (!name) {
+    return void res.status(400).send({
+      error: "Name is required"
+    });
   }
 
   const emailRegex = /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
-  if (!emailRegex.test(email)) {
+  if (!email || !emailRegex.test(email)) {
     return void res.status(400).send({
       error: "Invalid email address"
-    })
-  };
-
-  const passwordHash = await bcrypt.hash(password, 10);
-
-  const user = new User({
-    username, 
-    name, 
-    email, 
-    passwordHash
-  });
+    });
+  }
 
   try {
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const user = new User({
+      username,
+      name,
+      email,
+      passwordHash
+    });
+
     const savedUser = await user.save();
     res.status(201).json(savedUser);
   } catch (err) {
     next(err);
   }
-}
+};
 ```
 {: file="backend/src/controllers/registerController.ts"}
 {: .nolineno }
 {: .blur }
 
-(Developer Check: Password Hashing is computationally expensive; therefore, it is optimal to validate password so that erroneous password formats won't get hashed unnecessarily)
+> **QUESTION:** Look at the execution order in our register controller: we validate user inputs before calling `bcrypt.hash()`. What potential server performance, reliability, and security issues could arise if we performed password hashing before verifying input formats?
+{: .prompt-tip }
 
 ### Creating the Express Application
 
@@ -407,11 +386,12 @@ We will use MongoDB for our database. Setup your database according to this [sho
 ```bash
 MONGODB_URI={your_mongodb_url}
 PORT=3001
+SECRET_KEY=your_secret_jwt_key
 ```
 {: file="backend/.env" }
 
-> **Important**: Never commit your `.env` file to version control! Add it to your `.gitignore` file.
-{: .prompt-warning }
+> **NOTE:** Never commit your `.env` file to version control! Add it to your `.gitignore` file. Use [jwt-keys.21no.de](https://jwt-keys.21no.de/) to generate a cryptographically strong secret string for `SECRET_KEY`.
+{: .prompt-info }
 
 Next, create a configuration file to handle environment variables:
 
@@ -424,6 +404,7 @@ dotenv.config();
 
 const PORT = process.env.PORT || 3001;
 const MONGODB_URI = process.env.MONGODB_URI || '';
+const SECRET_KEY = process.env.SECRET_KEY || '';
 
 export default {
   PORT,
@@ -436,11 +417,11 @@ Next, set up the routers for our endpoints. It makes the function we defined in 
 
 ```typescript
 import express from 'express';
-import { getAllUsers, getById } from '../controllers/userController';
+import { getAll, getById } from '../controllers/userController';
 
 const userRouter = express.Router();
 
-userRouter.get('/', getAllUsers);
+userRouter.get('/', getAll);
 userRouter.get('/:id', getById);
 
 export default userRouter;
@@ -529,13 +510,13 @@ Now our basic backend application should be done. First, configure your `package
 
 ```json
 "scripts": {
-    "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node -r tsconfig-paths/register' src/index.ts",
+    "dev": "nodemon --watch src --exec \"ts-node -r tsconfig-paths/register\" src/index.ts"
   }
 ```
 {: file="backend/package.json"}
 {: .nolineno}
 
-The important part here is the `-r tsconfig-paths/register` part. This will enable path mapping support (like `@shared/types`) and without this your `@shared/*` imports won't work. You can look up the rest if you don' understand.
+The important part here is the `-r tsconfig-paths/register` part. This will enable path mapping support (like `@shared/types`) and without this your `@shared/*` imports won't work. You can look up the rest if you don't understand.
 
 Then start your server:
 
@@ -620,13 +601,10 @@ Next, let's implement authentication with JWT (Json Web Token). Watch [this](htt
 > In this project I will only do the basic access token method. You can do your own research on the refresh token. Practically speaking, in a real project, unless you're working in cybersecurity, you would end up using a library for authentication anyway. 
 {: .prompt-info}
 
-After that you can play around on [jwt.io](https://jwt.io/). Notice it has three parts: headers, payload, and signature. The signature part is done using a private key. However, we don't have a private key yet.
+After that you can explore the debugger on [jwt.io](https://jwt.io/). Notice it has three parts: header, payload, and signature. To sign tokens, create a `SECRET_KEY` field in your `.env` file and configure it in `config.ts`. Use [jwt-keys.21no.de](https://jwt-keys.21no.de/) to generate a cryptographically strong secret string.
 
->Task: Create a SECRET_KEY field in your `.env` file and also set it up in the `config` file. It should not just be a random string. Use [this](https://jwt-keys.21no.de/) to generate a secure key.  
-{: .prompt-tip}
-
-> You might notice that a typical JWT application involves both public key and private key (assymmetric cryptography). In the scope of this project, however, we will only use a simple shared secret key (symmetric cryptography). 
-{: .prompt-info}
+> **NOTE:** In enterprise JWT setups, asymmetric cryptography (public/private key pairs) is commonly used so identity providers sign tokens that services verify independently. In this tutorial, we will use symmetric cryptography (a single shared secret key).
+{: .prompt-info }
 
 #### Which endpoints need protection?
 
@@ -662,26 +640,57 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 
   const user = await User.findOne({ username });
 
-  if (!user || !(await bcrypt.compare(password, String(user!.passwordHash))))
-    return void res.status(401).send({ err: "Invalid credentials "});
+  if (!user || !(await bcrypt.compare(password, String(user!.passwordHash)))) {
+    res.status(401).send({ err: "Invalid credentials" });
+  }
 
   const payload = {
-    username: user.username,
-    name: user.name,
-    id: user._id
+    username: user!.username,
+    name: user!.name,
+    id: user!._id
   };
 
   const token = jwt.sign(payload, config.SECRET_KEY, { expiresIn: 60*60 });
 
-  return void res.status(200).send({ token });
+  res.status(200).send({ token });
 } 
 ```
 {: file="backend/src/controllers/loginController.ts" }
 {: .nolineno }
 
-The login process works by first finding an user with the same username as provided by the request. Then, it hashes the password received from the request and compare it against the one queried from the database. If the username is not valid or the password is incorrect, it sends back a `401 unauthorized`. Otherwise, a JWT is signed along with the payload and returned.
+> **BUG HUNT:** If you test this controller with invalid credentials in Postman, your server will crash with `Error [ERR_HTTP_HEADERS_SENT]: Cannot set headers after they are sent to the client`! Why does Express keep running down to line 18 after sending the 401 response? What keyword is missing inside the `if` statement to immediately halt execution?
+{: .prompt-danger }
 
-(Guiding question: What is the function of { expiresIn: 60*60 }? Why is it set to 1 hour? Think about the security implication of the token)
+> **QUESTION:** What is the purpose of `{ expiresIn: 60 * 60 }`? Why is token expiration set to 1 hour instead of never expiring? What security risks exist if an access token has no expiration date?
+{: .prompt-tip }
+
+### Fixing the Response Flow
+
+In Express, calling `res.send()` or `res.json()` transmits the HTTP response payload to the client, but **it does not automatically exit the JavaScript function**. If execution continues, Express will attempt to send a second response on the same closed connection, triggering `ERR_HTTP_HEADERS_SENT`. Always prefix early error responses with `return`:
+
+```typescript
+  if (!user || !(await bcrypt.compare(password, String(user!.passwordHash)))) {
+    return void res.status(401).send({ err: "Invalid credentials" });
+  }
+```
+{: file="backend/src/controllers/loginController.ts" }
+{: .nolineno }
+
+Next, create the router for user login:
+
+```typescript
+import express from 'express';
+import { login } from '../controllers/loginController';
+
+const loginRouter = express.Router();
+
+loginRouter.post('/', login);
+
+export default loginRouter;
+```
+{: file="backend/src/routers/loginRouter.ts" }
+{: .nolineno }
+
 
 #### Handling JWT 
 
@@ -708,7 +717,7 @@ Next we will cover how the JWT is used.
 
 ##### 1. Token extraction middleware
 
-When the user is logged in and attempts to perform restricted operations, the JWT will be extracted from the request to validate it. This middleware will extracts the token from the `Authorization` header:
+When the user is logged in and attempts to perform restricted operations, the JWT will be extracted from the request to validate it. This middleware will extract the token from the `Authorization` header:
 
 ```typescript
 import { Request, Response, NextFunction } from 'express';
@@ -825,20 +834,14 @@ Aside from `username`, `name` and `id`, the `iat` and `exp` means issued time an
 
 To summarize: the first middleware extracts the JWT and attaches it to the request. The second one validates the token, and if the token is valid, it attaches the username and id of the user to the request. 
 
-> You might be wondering why we attaches the username, name and id to the request after decoding the JWT - would that expose the username and id? Well, the thing is that the JWT payload is not securely encrypted in the first place. JWT use base64 encoding, which is easily reversible, and pretty much everybody can decrypt a JWT once they obtain it. The core part of JWT is to prevent tampering - since only a slight alternation of the content will create a completely different JWT. Read more [here](https://softwareengineering.stackexchange.com/questions/280257/json-web-token-why-is-the-payload-public). 
+> You might be wondering why we attach the username, name and id to the request after decoding the JWT - would that expose the username and id? Well, the thing is that the JWT payload is not securely encrypted in the first place. JWT use base64 encoding, which is easily reversible, and pretty much everybody can decrypt a JWT once they obtain it. The core part of JWT is to prevent tampering - since only a slight alteration of the content will create a completely different JWT. Read more [here](https://softwareengineering.stackexchange.com/questions/280257/json-web-token-why-is-the-payload-public). 
 {: .prompt-info}
 
 ##### 3. Adding middleware to protected endpoints 
 
-Finally, we need to configure the middleware in our `app.ts` file. 
-
-> Task: Add the login endpoint and the two middlewares above to our `app.ts` file. The login and register endpoints should still be public, but the users endpoint should be protected by `jwtAuth`. 
-{: .prompt-tip}
-
-**Answer (click to unblur):**
+Finally, we configure the middleware in our `app.ts` file. Notice how we apply `jwtAuth` selectively to protect `/api/users` while keeping login and registration endpoints public:
 
 ```typescript
-
 // ...
 app.use(express.json());
 
@@ -853,20 +856,14 @@ app.use("/api/users", jwtAuth, userRouter);
 
 export default app;
 ```
-{: file="backend/app.ts"}
+{: file="backend/src/app.ts"}
 {: .nolineno}
-{: .blur}
 
-When the user login/register, there is no JWT, so the `modifyToken` middleware will do nothing. After that, when the user is logged in, they are assigned with a JWT. When they attempts to perform authorized-only operations, requests will be sent to `userRouter` with a JWT. The request will then go through the `modifyToken` middleware, then the `jwtAuth` middleware, then finally arriving at `userRouter` if the JWT is valid. 
+When a user logs in or registers, there is no JWT present, so the `modifyToken` middleware will do nothing. Once authenticated, subsequent requests contain the `Authorization: Bearer <token>` header, allowing `modifyToken` and `jwtAuth` to validate the token before reaching protected routes.
 
-### Creating Contact Controller
+### Creating Contact Controller & Router
 
-The final part of our backend is setting up contact controllers. 
-
-> Task: set up `getAllContacts`, `addNewContact` and `deleteById` in `contactController`. Then create a `contactRouter`, and add it to the `app.ts` file and protect with `jwtAuth`. 
-{: .prompt-tip}
-
-**Answer (click to unblur):**
+The final part of our backend is setting up contact controllers and routes:
 
 ```typescript
 import Contact from '../models/contact';
@@ -875,14 +872,58 @@ import { Request, Response, NextFunction } from 'express';
 import '@shared/types';
 
 export const getAllContacts = async (req: Request, res: Response, next: NextFunction) => {
-  const contacts = await Contact.find({}).populate("belongsTo", { username: 1, name: 1 });
-  res.json(contacts);
-}
+  try {
+    const contacts = await Contact.find({}).populate("belongsTo", { username: 1, name: 1 });
+    res.json(contacts);
+  } catch (err) {
+    next(err);
+  }
+};
 
 export const getById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const contact = await Contact.findById(req.params.id);
+    if (!contact) {
+      return void res.status(404).send({ error: "Contact not found" });
+    }
     res.json(contact);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const addNewContacts = async (req: Request, res: Response, next: NextFunction) => { 
+  const { name, number } = req.body;
+  const userId = req.user.id;
+
+  if (!userId) {
+    return void res.status(401).send({ error: "Invalid token" });
+  }
+  
+  if (!name) {
+    return void res.status(400).send({ error: "Name is required" });
+  }
+  if (!number) {
+    return void res.status(400).send({ error: "Number is required" });
+  }
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return void res.status(400).send({ error: "User not found" });
+    }
+    
+    const contact = new Contact({
+      name,
+      number,
+      belongsTo: userId
+    });
+
+    const newContact = await contact.save();
+    user.contacts = user.contacts.concat(newContact._id as any);
+    await user.save();
+
+    res.status(201).json(newContact);
   } catch (err) {
     next(err);
   }
@@ -891,63 +932,51 @@ export const getById = async (req: Request, res: Response, next: NextFunction) =
 export const deleteById = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.user.id;
 
-  if (!userId) return void res.status(401).send({ error: "Authentication required" });
-
-  const user = await User.findById(userId);
-  if (!user) return void res.status(400).send({ error: "User not found" });
+  if (!userId) {
+    return void res.status(401).send({ error: "Authentication required" });
+  }
 
   try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return void res.status(400).send({ error: "User not found" });
+    }
+
     await Contact.findByIdAndDelete(req.params.id);
-    user.contacts = user.contacts.filter(c => c.toString() != req.params.id);
+    user.contacts = user.contacts.filter(c => c.toString() !== req.params.id);
+    await user.save();
+
     res.status(204).end();
   } catch (err) {
     next(err);
   }
-}
-
-export const addNewContacts = async (req: Request, res: Response, next: NextFunction) => { 
-  const { name, number } = req.body;
-  const userId = req.user.id;
-
-  if (!userId) return void res.status(401).send({ error: "invalid token" });
-  
-  if (!name) {
-    return void res.status(400).send({ error: "Name is required" });
-  }
-  if (!number) {
-    return void res.status(400).send({ error: "Number is required "});
-  }
-
-  const user = await User.findById(userId);
-  if (!user) return void res.status(400).send({ error: "missing userId/invalid" });
-  
-  const contact = new Contact({
-    name,
-    number,
-    belongsTo: userId
-  });
-
-  console.log("ok");
-
-  try {
-    const newContact = await contact.save();
-    user.contacts = user.contacts.concat(newContact._id);
-
-    res.status(201).json(newContact);
-    await user.save();
-  } catch (err) {
-    next(err);
-  }
-}
+};
 ```
-{: file="backend/src/controllers/contactController.ts" }
+{: file="backend/src/controllers/contactController.ts"}
 {: .nolineno }
-{: .blur}
 
-> You might want to look up `req.params` and `req.body` if you don't already know it. 
-{: .prompt-info }
+Next, create the router to expose these contact endpoints:
 
-After that you should verify your code with Postman. It is always good practice to verify your code before moving on. This is very important later on if you work on projects with multiple people on a CI/CD system - you don't want your app to break apart because your code went wrong. 
+```typescript
+import express from 'express';
+import {
+  getAllContacts,
+  getById,
+  addNewContacts,
+  deleteById
+} from '../controllers/contactController';
+
+const contactRouter = express.Router();
+
+contactRouter.get('/', getAllContacts);
+contactRouter.get('/:id', getById);
+contactRouter.post('/', addNewContacts);
+contactRouter.delete('/:id', deleteById);
+
+export default contactRouter;
+```
+{: file="backend/src/routers/contactRouter.ts"}
+{: .nolineno } 
 
 ### Error handling
 
@@ -1001,33 +1030,45 @@ const errorHandler = (error: Error, req: Request, res: Response, next: NextFunct
   if (error.name === "MongoServerError" && error.message.includes("E11000 duplicate key error")) {
     const duplicate = error.message.includes("email")
       ? "Email"
-      : "Username"
+      : "Username";
     return void res.status(400).json({ error: `${duplicate} has already existed` });
+  }
+
+  if (error.name === "CastError") {
+    return void res.status(400).send({ error: "Invalid id" });
+  }
+
+  if (error.name === "ValidationError") {
+    return void res.status(400).json({ error: error.message });
+  }
 
   next(error);
 };
 
 export default errorHandler;
 ```
-{: file="backend/middleware/errorHandler.ts"}
+{: file="backend/src/middlewares/errorHandler.ts"}
 {: .nolineno}
 
-Reading from the logs above, we can see the error name is `MongoServerError` and the message includes `E11000 duplicate key error`. We use that to specifically target this error. Next, we check if the duplicated value is an email or username, then returning a message based on that error. 
+Finally, connect your new routes and error-handling middlewares in `app.ts`:
 
-The next error we will tackle is `CastError`. This is thrown when an user try to access an endpoint with `/:id` but then the id is invalid (only for Mongoose; since this error is thrown if the id is an invalid MongoDb ObjectId). Try it out yourself with Postman and see the error, then add the error handling part. 
+```typescript
+// ...
+import contactRouter from './routers/contactRouter';
+import unknownEndpoint from './middlewares/unknownEndpoint';
+import errorHandler from './middlewares/errorHandler';
 
-**Answer (click to unblur):**
+// Protected contact routes
+app.use("/api/contacts", jwtAuth, contactRouter);
 
-```typescript 
-	//
-	if (error.name === "CastError") {
-    return void res.status(400).send({ error: "Invalid id" });
+// Unknown endpoint & error handler
+app.use(unknownEndpoint);
+app.use(errorHandler);
+
+export default app;
 ```
-{: file="backend/middleware/errorHandler.ts }
-{: .nolineno }
-{: .blur }
-
-There are a lot more errors that I have not included. As you test your functionalities against different scenarios, you will eventually find more errors. Add them to `errorHandler` accordingly. 
+{: file="backend/src/app.ts"}
+{: .nolineno} 
 
 ## Part 2: Frontend setup 
 
@@ -1044,9 +1085,10 @@ npm create vite@latest
 
 Then, enter your project name, choose React and TypeScript. After that, you can run 
 
-```
+```bash
 cd frontend 
 npm install 
+npm install axios jwt-decode react-router-dom
 npm run dev
 ```
 {: .nolineno}
@@ -1067,6 +1109,10 @@ function App() {
     username: string;
     password: string;
   }
+
+  const handleLoginBackend = async (credentials: Credentials) => {
+    console.log("Submitting credentials:", credentials);
+  };
 
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -1118,18 +1164,17 @@ After this we can have a simple login form that look like this (the `register` b
 
 ![](Pasted image 20250708233009.png)
 
-First the form have two states: `username` and `password`, contained within a form, and set up to change as the user edit the text fields. Then, the submit button is named `login` and linked to `handleLogin`. `event.preventDefault()` is to prevent the page from reloading. Notice that `handleLogin` is currently missing `handleLoginBackend`. 
+First the form have two states: `username` and `password`, contained within a form, and set up to change as the user edit the text fields. Then, the submit button is named `login` and linked to `handleLogin`. `event.preventDefault()` is to prevent the page from reloading. Notice that `handleLogin` is currently calling a placeholder `handleLoginBackend`. 
 
-> Task: Create function `handleLoginBackend` that will send the request (username and password) from the frontend from the backend we set up above. If the credentials is valid, the backend will return the JWT and you should persist it within a state. 
-> You will need to look up how to send request from frontend. I used [Axios](https://github.com/axios/axios). 
-{: .prompt-tip}
+> **TASK:** Create function `handleLoginBackend` that will send the credentials (username and password) to the backend `/api/login`. If valid, persist the returned JWT within React state. (You can use [Axios](https://github.com/axios/axios)).
+{: .prompt-warning }
 
 **Answer (click to unblur):**
 
 ```tsx
 function App() {
   // ...
-  const [jwt, setJwt] = useState(null);
+  const [jwt, setJwt] = useState<string | null>(null);
 
   // ...
 
@@ -1138,9 +1183,9 @@ function App() {
 
     try {
       const response = await axios.post(baseUrl, credentials);
-      const jwt = response.data;
+      const token = response.data.token;
 
-      setJwt(jwt);
+      setJwt(token);
     } catch (error) {
       console.error("Login failed:", error);
     }
@@ -1159,9 +1204,13 @@ export default App;
 
 Before we move on, if you just send requests from frontend to backend like right now, chances are it will not work. If you open the console, it would be filled with errors. This is because of something called the same origin policy. To explain shortly, it's a security feature: your frontend is running default on port 5173 (Vite default), and backend on port 3000, so they cannot communicate since they're not on the same origin. 
 
-To mitigate this, you can install `cors` directly on backend and enable it, or add this to your `vites.config.ts` (assuming your backend is running on port 3000):
+To mitigate this, configure CORS on the backend or add a proxy in your `vite.config.ts` (pointing to your backend running on port 3001):
 
 ```ts
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -1172,55 +1221,67 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://localhost:3000", 
+        target: "http://localhost:3001", 
         changeOrigin: true,
       },
     }
   }
-})
+});
 ```
+{: file="frontend/vite.config.ts" }
+{: .nolineno }
 
-With this, you can communicate directly with the server. If you want to test your frontend code in real-time, first run your backend, then run your frontend, then test directly on your frontend port (in this case 5173) and your requests will go through. 
+Also, ensure your `frontend/tsconfig.json` includes the `@shared/*` path mapping so TypeScript resolves the shared types:
 
-Also, the `alias` part is to make sure your files recognizes the `@shared/types.ts` syntax. 
+```json
+"paths": {
+  "@shared/*": ["../shared/*"]
+}
+```
+{: file="frontend/tsconfig.json" }
+{: .nolineno }
 
-#### Displaying contacts
+With this, you can communicate directly with the server. If you want to test your frontend code in real-time, first run your backend, then run your frontend, and your requests to `/api` will be proxied automatically. 
 
-Then, after the user is logged in, we should display the contacts. 
+#### Displaying contacts & JWT Decoding
 
-> Task: Implement displaying the list of contacts after the user is logged in. To do it, you can check if the JWT is not null. 
-{: .prompt-tip}
-
-**Answer (click to unblur):**
+Next, after the user logs in, we display their contacts. To ensure users only see their own contacts, we use [jwt-decode](https://www.npmjs.com/package/jwt-decode) to read the user's username directly from the client-side JWT payload:
 
 ```tsx
 function App() {
-  // ...
+  const [jwt, setJwt] = useState<string | null>(null);
   const [contacts, setContacts] = useState([]);
 
+  const payload = jwt !== null 
+    ? jwtDecode<JwtPayload>(jwt)
+    : null;
+
   useEffect(() => {
-    if (jwt !== null) {
-      console.log(jwt);
+    if (payload !== null && jwt) {
       const contactUrl = "/api/contacts";
-      const token = jwt.token;
+      const token = jwt;
 
       const config = {
         headers: { Authorization: `Bearer ${token}` },
       };
 
-      axios.get(contactUrl, config).then((response) => setContacts(response.data));
+      axios.get(contactUrl, config).then((response) => {
+        setContacts(response.data.filter(
+          contact => contact.belongsTo.username === payload.username
+        ));
+      });
     }
-  }, [user]); // Add dependency array to prevent infinite re-renders
+  }, [payload, jwt]);
 
   return (
     <>
-      // ... 
+      {/* login form */}
       {jwt !== null && (
         <div>
           <h2>Your Contacts</h2>
           {contacts.map((contact) => (
-            <div>
-              {contact!.name} {contact!.number}
+            <div key={contact.id}>
+              {contact.name} {contact.number}
             </div>
           ))}
         </div>
@@ -1232,55 +1293,12 @@ function App() {
 export default App;
 ```
 {: file="frontend/src/App.tsx"}
-{: .nolineno}
-{: .blur}
-
-If you didn't know `useEffect` already you should look it up *immediately*. Also, here we add another variable `config` after `contactUrl` in order to send the JWT with the request.
-
-However, If you test this code right now, you'll notice a problem: **all contacts in the database are being displayed**, regardless of which user is logged in. This is a security issue! Each user should only see their own contacts.
-
-> Task: Fix so that only contacts belong to the authenticated user are displayed. To do that you'll first need to decode your JWT in order to get the username. Use [jwt-decode](https://www.npmjs.com/package/jwt-decode).
-{: .prompt-tip}
-
-**Answer (click to unblur):**
-
-```tsx
-function App() {
-	const [jwt, setJwt] = useState(null);
-	const [contacts, setContacts] = useState([]);
-
-	const payload = jwt !== null 
-    ? jwtDecode<JwtPayload>(jwt)
-    : null;
-
-	useEffect(() => {
-		if (payload !== null) {
-		  const contactUrl = "/api/contacts";
-		  const token = jwt.token;
-	
-		  const config = {
-			headers: { Authorization: `Bearer ${token}` },
-		  };
-	
-		  axios.get(contactUrl, config).then((response) => {
-        setContacts(response.data.filter(
-          contact => contact.belongsTo.username === payload.username
-        ))
-		  }) 
-		}
-    }, [payload]); 
-
-	// ...
-}
-```
-{: file="frontend/src/App.tsx"}
 {: .nolineno }
-{: .blur }
 
 The approach works like this: When jwt is `null`, nothing happens. But then if `jwt` is not null, then the entire function runs again, and then `payload` will run first before `useEffect` runs. After that, when `useEffect` runs, it will get the token, send it, and filter the response by payload data. 
 
-> ...or maybe you can change it in the backend so that the resposne already contains the filtered data? :) That approach is better but I'll let you figure out that yourself. 
-{: .prompt-tip}
+> **NOTE:** You can also update the backend `/api/contacts` endpoint to return only contacts belonging to the authenticated user (`req.user.id`). This avoids sending all contacts across the network and filtering them in React.
+{: .prompt-info }
 
 Also notice `JwtPayload`. It is yet another defined custom types in `types.ts`. We will cover it right in the next part. 
 
@@ -1292,18 +1310,20 @@ As our application grows, you might notice that our `App.tsx` is becoming quite 
 
 First move the login form into its own component: 
 
-```tsx 
-import React, { useState } from "react";
+```tsx
+import { useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface LoginFormProps {
   handleLogin: (username: string, password: string) => void;
 }
 
-const LoginForm = ({ handleLogin }: LoginFormProps ) => {
+const LoginForm = ({ handleLogin }: LoginFormProps) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
-  const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     handleLogin(username, password);
   };
@@ -1311,30 +1331,47 @@ const LoginForm = ({ handleLogin }: LoginFormProps ) => {
   return (
     <>
       <form onSubmit={onSubmit}>
-        {/* input */}
+        <div>
+          username
+          <input
+            type="text"
+            value={username}
+            name="Username"
+            onChange={(e) => setUsername(e.target.value)}
+          />
+        </div>
+        <div>
+          password
+          <input
+            type="password"
+            value={password}
+            name="Password"
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
         <button type="submit">Login</button>
       </form>
-      <button onClick={registerRedirect}>Register</button>
+      <button type="button" onClick={() => navigate("/register")}>Register</button>
     </>
   );
 };
 
 export default LoginForm;
-
 ```
-{: file="frontend/src/components/LoginForm.tsx}
+{: file="frontend/src/components/LoginForm.tsx"}
 {: .nolineno}
 
-But then how about the backend handling part (`handleLogin`)? We are also going to refactor it into another file, `useLogin`: 
+Next, let's encapsulate authentication state and logic into a custom hook `useLogin`: 
 
 ```tsx
 import { useState, useEffect } from "react";
-import type { LoginRequest, Contact, JwtPayload } from "@shared/types";
-import axios from "axios";
+import type { Contact, JwtPayload } from "@shared/types";
+import * as loginService from "../services/loginService";
+import * as contactService from "../services/contactService";
 import { jwtDecode } from "jwt-decode";
 
 export function useLogin() {
-  const [jwt, setJwt] = useState(null);
+  const [jwt, setJwt] = useState<string | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
 
   const payload = jwt !== null 
@@ -1342,70 +1379,76 @@ export function useLogin() {
     : null;
 
   useEffect(() => {
-    if (payload !== null) {
-      console.log(jwt);
-      const contactUrl = "/api/contacts";
-      const token = jwt.token;
-
-      const config = {
-      headers: { Authorization: `Bearer ${token}` },
-      };
-
-      axios.get(contactUrl, config).then((response) => {
-      setContacts(response.data.filter(
-        contact => contact.belongsTo.username === payload.username
-      ))
-	  }) 
-	}
-   }, [payload]); 
+    if (payload !== null && jwt) {
+      contactService.setToken(jwt);
+      contactService.getAll().then((data) => {
+        setContacts(data.filter(
+          contact => contact.belongsTo?.username === payload.username
+        ));
+      });
+    }
+  }, [payload, jwt]);
 
   const handleLogin = async (username: string, password: string) => {
-    // ...
+    try {
+      const response = await loginService.login({ username, password });
+      setJwt(response.token);
+      contactService.setToken(response.token);
+      window.localStorage.setItem("JwtAccessToken", response.token);
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
   };
 
-
   return {
+    jwt,
     payload,
     contacts,
     handleLogin,
   };
 }
-
 ```
-{: file="frontend/src/hooks/useLogin.tsx"}
+{: file="frontend/src/hooks/useLogin.ts"}
 {: .nolineno}
 
-> Task: Define the types used in this file that you have not defined in `types.ts`.
-{: .prompt-tip}
-
-**Answer (click to unblur):**
+Now, let's declare concrete TypeScript interfaces in `@shared/types.ts` to ensure type safety across our backend, hooks, and services:
 
 ```tsx
 export interface LoginRequest {
-  username: string, 
-  password: string 
-};
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  token: string;
+}
+
+export interface RegisterRequest {
+  username: string;
+  password: string;
+  name: string;
+  email: string;
+}
 
 export interface Contact {
-  id: string,
-  name: string, 
-  number: string,
+  id: string;
+  name: string;
+  number: string;
   belongsTo: {
-    username: string
-  }
-};
-
+    username: string;
+    name?: string;
+    id?: string;
+  };
+}
 ```
-{: file="@shared/types.ts}
+{: file="@shared/types.ts"}
 {: .nolineno}
-{: .blur}
 
 Although not specifying `LoginRequest` for the credentials does not result in warning, it is good practice to do so. Imagine having hundreds of types of request: `ContactRequest`, `DeleteRequest`, `UpdateRequest`, etc., you will quickly be overwhelmed and lose track of what are which if the types are not concrete. You should also do another `LoginResponse`. 
 
 Next, refactor the contact displaying part into its own component: 
 
 ```tsx
-import React from 'react';
 import type { Contact } from '@shared/types';
 
 interface ContactDisplayProps {
@@ -1436,26 +1479,26 @@ Here notice that `ContactDisplayProps` is directly defined inside the file. We c
 Finally, after refactoring, our `App.tsx` will be much cleaner:
 
 ```tsx
+import { BrowserRouter as Router } from "react-router-dom";
 import LoginForm from "./components/LoginForm";
 import ContactDisplay from "./components/ContactDisplay";
 import { useLogin } from "./hooks/useLogin";
 
 function App() {
-  const {payload, contacts, handleLogin} = useLogin();
+  const { payload, contacts, handleLogin } = useLogin();
 
   return (
-    <>
+    <Router>
       <h1>login</h1>
       <LoginForm handleLogin={handleLogin} />
       {payload !== null && (
         <ContactDisplay contacts={contacts} username={payload.username} />
       )}
-    </>
+    </Router>
   );
 }
 
 export default App;
-
 ```
 {: file="frontend/src/App.tsx"}
 {: .nolineno}
@@ -1511,29 +1554,85 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
   return response.data;
 };
 ```
-{: file="frontend/src/services/loginService.ts" }
+Similarly, let's create `registerService.ts` for registration requests:
+
+```tsx
+import axios from "axios";
+import type { RegisterRequest } from '@shared/types';
+
+const baseUrl = "/api/register";
+
+export const register = async (userData: RegisterRequest) => {
+  const response = await axios.post(baseUrl, userData);
+  return response.data;
+};
+```
+{: file="frontend/src/services/registerService.ts" }
 {: .nolineno }
 
-Notice the `Promise<LoginResponse>` return type annotation. This is a best practice - you should always define strict data types for your function inputs and outputs. You may want to refer back to your `loginController` to define the appropriate data type structure for `LoginResponse`. After that you should refactor the whole application before moving on. 
+And refactor all contact-related Axios calls into `contactService.ts` to keep API communication decoupled from UI rendering:
 
-> **Task**: Refactor your `Contact` API calls using the same service pattern, and create a dedicated service file for any place where you're making direct API calls in your current code.
-{: .prompt-tip}
+```tsx
+import axios from 'axios';
+import type { Contact } from '@shared/types';
+
+const baseUrl = '/api/contacts';
+let token: string = '';
+
+export const setToken = (newToken: string) => {
+  token = newToken;
+};
+
+export const getAll = async (): Promise<Contact[]> => {
+  const config = {
+    headers: { Authorization: `Bearer ${token}` }
+  };
+  const response = await axios.get(baseUrl, config);
+  return response.data;
+};
+
+export const create = async (newContact: { name: string; number: string }): Promise<Contact> => {
+  const config = {
+    headers: { Authorization: `Bearer ${token}` }
+  };
+  const response = await axios.post(baseUrl, newContact, config);
+  return response.data;
+};
+
+export const remove = async (id: string): Promise<void> => {
+  const config = {
+    headers: { Authorization: `Bearer ${token}` }
+  };
+  await axios.delete(`${baseUrl}/${id}`, config);
+};
+```
+{: file="frontend/src/services/contactService.ts" }
+{: .nolineno }
 
 ### Register page and React Router
 
-Now we can create a register page for new users to sign up.
+Now we can create a register page for new users to sign up using `react-router-dom`:
 
-Let's start with a basic register form component:
+```bash
+npm install react-router-dom
+```
+
+Let's create our `RegisterForm` component:
 
 ```tsx
 import type { RegisterRequest } from "@shared/types";
-import React, { useState } from 'react';
-import * as registerService from '../services/registerService';
+import { useState, type FormEvent } from "react";
+import * as registerService from "../services/registerService";
+import { useNavigate } from "react-router-dom";
 
 const RegisterForm = () => { 
-  // ... states
-  
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const navigate = useNavigate();
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     try {
@@ -1542,79 +1641,64 @@ const RegisterForm = () => {
         password,
         name, 
         email
-      }
-
-      await registerService.register(registerData);
-    } catch (err) {
-      console.error(err);
-    }
-  }
-  
-  return (
-    <>
-      <h1>Register</h1>
-      <form onSubmit={handleSubmit}>
-        {/* name, email, username, password */}
-        <button>Register</button>
-      </form>
-    </>
-  )
-}
-
-export default RegisterForm;
-```
-{: file="frontend/src/components/RegisterForm.tsx}
-{: .nolineno}
-
-The question now is: where do we put this page? Using conditional rendering for multiple pages becomes very complicated as our app grows. Instead, we're going to develop our app to use multiple endpoints in the frontend: `/login` for login page, `/register` for register page, and `/home` for the main page (after logged in). 
-
-> Note that in an old school web app this means sending a request to the server, refresh the page, and then we arrive at our destination. In our app, we are in fact still on the same page. We're just simply utilizing Javascript to perform conditional rendering based on endpoints. And by the way, those endpoints are also completely unrelated to the backend. 
-{: .prompt-info}
-
-In order to achieve this we will use React Router. First, install the dependencies:
-
-```
-npm install react-router-dom
-```
-
-Then make the following changes to `RegisterForm`: 
-
-```tsx
-// ...
-import { useNavigate } from 'react-router-dom';
-
-const RegisterForm = () => { 
-  // ... states
-  const navigate = useNavigate();
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    try {
-      // ...
+      };
 
       await registerService.register(registerData);
       navigate("/");
     } catch (err) {
       console.error(err);
     }
-  }
+  };
   
   return (
     <>
-      {/* ... */}
-      <button onClick={() => navigate("/")}>Cancel</button>
+      <h1>Register</h1>
+      <form onSubmit={handleSubmit}>
+        <div>
+          username
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+        </div>
+        <div>
+          name
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+        <div>
+          email
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <div>
+          password
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+        <button type="submit">Register</button>
+      </form>
+      <button type="button" onClick={() => navigate("/")}>Cancel</button>
     </>
-  )
-}
+  );
+};
+
+export default RegisterForm;
 ```
-{: file="frontend/src/components/RegisterForm.tsx}
+{: file="frontend/src/components/RegisterForm.tsx"}
 {: .nolineno}
 
-The `useNavigate` hook is used to navigate to a different page. In our logic, after the registration success, we will be redirected to the default page `/` (which is currently where our login page is located). We also added another cancel button at the end for users to return to homepage.
-
-> Task: Do the same thing in `LoginForm`: Create a `Register` button that navigates to `/register`. 
-{: .prompt-tip}
+The `useNavigate` hook is used to navigate to a different page. In our logic, after the registration success, we will be redirected to the default page `/` (which is currently where our login page is located). We also add a matching `Register` button inside `LoginForm` to allow users to navigate to `/register` using `useNavigate()`.
 
 After that, in `App.tsx`: 
 
@@ -1635,7 +1719,7 @@ function App() {
             <h1>Login</h1>
             <LoginForm handleLogin={handleLogin} />
             {payload !== null && (
-              <ContactDisplay contacts={contacts} username={user.username} />
+              <ContactDisplay contacts={contacts} username={payload.username} />
             )}
           </>
         } />
@@ -1662,12 +1746,11 @@ export function useLogin() {
   // ...
 
   const handleLogin = async (username: string, password: string) => {
-    // ... 
-
     try {
-      const response = await loginService.login(credentials);
+      const response = await loginService.login({ username, password });
       setJwt(response.token);
       window.localStorage.setItem("JwtAccessToken", response.token);
+      return true;
     } catch (error) {
       console.error("Login failed:", error);
       return false;
@@ -1677,18 +1760,16 @@ export function useLogin() {
 {: file="frontend/src/hooks/useLogin.ts"}
 {: .nolineno}
 
-Then add another `useEffect` to handle the case when the page is refreshed: 
+Then add an effect to restore the token and user session when the page is refreshed: 
 
 ```tsx
 export function useLogin() {
   const [jwt, setJwt] = useState<string | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const { showNotification } = useNotification();
 
   const payload = jwt !== null 
     ? jwtDecode<JwtPayload>(jwt)
     : null;
-
 
   useEffect(() => {
     const jwtAccessToken = window.localStorage.getItem("JwtAccessToken");
@@ -1698,10 +1779,6 @@ export function useLogin() {
       contactService.setToken(jwtAccessToken);
     }
   }, []);
-
-  useEffect(() => {
-    //..
-  })
 
   // ...
 ```
@@ -1713,28 +1790,7 @@ export function useLogin() {
 
 It works like this: First the user is logged in, then the JWT is stored inside `localStorage` (see `handleLogin`). Then, after we refresh, all the state will be refreshed (so our `jwt` variable would be null), but then `useEffect` is called, and it retrieves the JWT we stored earlier in the browser, call `setJwt`, and then set the token locally inside `contactService` (more on that later). Since we call `setJwt`, the page is rerendered again, but now we have our `jwt` variable set up, so our app should be able to run smoothly. 
 
-For `contactService`, just use 
-
-```ts
-let token: string;
-export const setToken = (newToken: string) => {
-  token = newToken;
-};
-```
-{: file="frontend/src/services/contactService.ts"}
-{: .nolineno}
-
-This will persist the token directly inside `contactService` and eliminates any necessity to pass the token from outside. 
-
-> Task: In the above part we did not validate if the JWT extracted from localStorage is valid or not (in particular, its expiry time). Try to validate the JWT after it is retrieved from the browser. If it's not valid, do not continue, but rather delete the token from `localStorage`. You can definitely look up on how to do this - I did the same. To test, go back to backend and change `expiresIn` to a small number and try to refresh the website after.
-{: .prompt-tip}
-
-After you're done we can continue working on the logout part. 
-
-> Task: Implement logout function. You should put it inside `useLogin`. The logic is pretty simple: since the contact will not render without `jwt`, you can just clear up all of them. 
-{: .prompt-tip}
-
-**Answer (click to unblur):**
+For logging out, we implement `handleLogout` inside `useLogin` to clear `localStorage`, reset state variables, and clear the token from `contactService`:
 
 ```tsx
   const handleLogout = () => {
@@ -1746,18 +1802,18 @@ After you're done we can continue working on the logout part.
 ```
 {: file="frontend/src/hooks/useLogin.ts"}
 {: .nolineno}
-{: .blur}
 
 `payload` will also be cleared after this since we call `setJwt` and `setContacts`.
 
-(Security consideration: For educational purposes, utilizing localStorage to save jwt is a good start. But in enterprise applications, authentication tokens are often stored in HttpOnly cookies, which JavaScript cannot access directly thereby limiting XSS (Cross-Site Scripting) attacks.)
+> **QUESTION:** For educational purposes, storing JWTs in `localStorage` is convenient. In production applications, what security trade-offs (such as XSS vs. CSRF vulnerabilities) differentiate storing authentication tokens in `localStorage` versus `HttpOnly` cookies?
+{: .prompt-tip }
 
 ### Better routes handling
 
 Currently we have `/register` for the register page. However, we want a better separation: `/login` for login page, `/home` for home page. We also want some logic handling: for example, when user logged in successfully, we want to immediately go to `/home`. To do that we will be upgrading our `App.tsx` file with more routes and logic. 
 
-> Task: Upgrade your `App.tsx` so that it has three routes: `/login`, `/register`, and `/home`. The `/login` endpoint should only contain `LoginForm`, `/home` should only contain `Homepage` (rename `ContactDisplay` into this), and `/register` to only contain the `RegisterForm`. When the user attempts to go to the default endpoint `/`, you should check if the user is logged in or not and then redirect correspondingly (same goes for `/login` and `/home`).  Use `<Navigate>` to redirect. 
-{: .prompt-tip}
+> **TASK:** Upgrade `App.tsx` so that it has three routes: `/login`, `/register`, and `/home`. If a logged-in user accesses `/` or `/login`, redirect them to `/home` using `<Navigate replace />`. If an unauthenticated user accesses `/home`, redirect them to `/login`.
+{: .prompt-warning }
 
 **Hint 1 (login endpoint)**
 
@@ -1834,6 +1890,106 @@ function App() {
 {: .nolineno}
 {: .blur}
 
+Let's create our `Homepage` and `NotFoundPage` components:
+
+```tsx
+import { useState, useEffect, type FormEvent } from "react";
+import type { Contact } from "@shared/types";
+import * as contactService from "../services/contactService";
+
+interface HomepageProps {
+  contacts: Contact[];
+  username: string;
+  handleLogout: () => void;
+}
+
+export const Homepage = ({ contacts, username, handleLogout }: HomepageProps) => {
+  const [name, setName] = useState("");
+  const [number, setNumber] = useState("");
+  const [contactList, setContactList] = useState<Contact[]>(contacts);
+
+  useEffect(() => {
+    setContactList(contacts);
+  }, [contacts]);
+
+  const handleAddContact = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!name || !number) return;
+
+    try {
+      const added = await contactService.create({ name, number });
+      setContactList(contactList.concat(added));
+      setName('');
+      setNumber('');
+    } catch (err) {
+      console.error('Failed to add contact', err);
+    }
+  };
+
+  return (
+    <div className="homepage-container">
+      <div className="homepage-header">
+        <span className="homepage-user">Logged in as {username}</span>
+        <button className="homepage-logout" onClick={handleLogout}>Logout</button>
+      </div>
+
+      <h1 className="homepage-title">Your Contacts</h1>
+      <div className="contacts-list">
+        {contactList.map((contact) => (
+          <div key={contact.id} className="contact-card">
+            <span className="contact-name">{contact.name}</span>
+            <span className="contact-number">{contact.number}</span>
+          </div>
+        ))}
+      </div>
+
+      <form className="add-contact-form" onSubmit={handleAddContact}>
+        <h3>Add New Contact</h3>
+        <div className="form-group">
+          <label>Name</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+        <div className="form-group">
+          <label>Number</label>
+          <input
+            type="text"
+            value={number}
+            onChange={(e) => setNumber(e.target.value)}
+          />
+        </div>
+        <button type="submit">Add Contact</button>
+      </form>
+    </div>
+  );
+};
+
+export default Homepage;
+```
+{: file="frontend/src/components/Homepage.tsx"}
+{: .nolineno}
+
+```tsx
+import { Link } from 'react-router-dom';
+
+export const NotFoundPage = () => {
+  return (
+    <div>
+      <h1>404 - Page Not Found</h1>
+      <p>The page you are looking for does not exist.</p>
+      <Link to="/">Go Home</Link>
+    </div>
+  );
+};
+
+export default NotFoundPage;
+```
+{: file="frontend/src/components/NotFoundPage.tsx"}
+{: .nolineno}
+
 The `replace` part in `<Navigate>` is for the new endpoint to replace the old endpoint in your browser history. Without `replace`, you could click the backwards button in your browser and you would go back to `/login` when you are at `/home`, while we don't really want that. 
 
 #### NotFoundPage on backend
@@ -1889,6 +2045,9 @@ Now, to use the frontend production build with the backend, one option is to cop
 ```
 {: file="backend/package.json"}
 {: .nolineno}
+
+> **NOTE:** On Windows PowerShell or Command Prompt, run the build command manually (`cd ../frontend; npm run build; Copy-Item -Recurse dist ..\backend`) or use WSL/Git Bash to run the chained shell commands.
+{: .prompt-info }
 
 This will delete the current `dist` folder (if present), go to frontend and build, then copy the entire folder back to the backend folder. (hence the path `"../../dist/index.html"` in `unknownEndpoint` above  - it tries to load `dist/index.html`).
 
@@ -2123,6 +2282,14 @@ Currently our app have no styling at all. You can improve it by adding more CSS/
 There is no right answer to this. But for example, mine look like this:
 
 ```css
+:root {
+  --primary-color: #2563eb;
+  --error-color: #ef4444;
+  --border-radius: 8px;
+  --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --transition: all 0.2s ease;
+}
+
 /* Homepage Styles */
 .homepage-container {
   max-width: 600px;
@@ -2195,9 +2362,28 @@ There is no right answer to this. But for example, mine look like this:
 /* etc. */
 ```
 {: file="frontend/src/styles/index.css"}
-{: .nolineno}
-
 Refer back to the gif at the beginning of the guide to see the full design.
+
+## Completion & Discussion Checklist
+
+Before joining the group discussion or concluding this tutorial, ensure you have completed the tasks, investigated the bugs, and are ready to discuss the questions below:
+
+<details markdown="1">
+<summary>Click to expand Completion & Discussion Checklist (9 Items)</summary>
+
+| # | Type | Item | Prompt Preview |
+| :-: | :--- | :--- | :--- |
+| 1 | Bug Hunt | Response Header Crash (`ERR_HTTP_HEADERS_SENT`) | If you test this controller with invalid credentials, the server crashes with `Cannot set headers after they are sent`. Why does Express continue running after calling `res.send()`, and how does `return` fix it? |
+| 2 | Question | Password Hashing Security | Why do we store a hashed password (`passwordHash`) in the database instead of the raw plaintext password? What security implications arise if an attacker accesses unhashed passwords? |
+| 3 | Question | Asynchronous Controller Error Handling | In asynchronous controller functions (like `User.findById()`), what happens if a query fails without a `try/catch` block? How does passing errors to `next(err)` protect the application? |
+| 4 | Question | Input Validation Timing & Cryptographic Cost | Look at the execution order in our register controller: we validate user inputs before calling `bcrypt.hash()`. What potential server performance, reliability, and security issues could arise if we performed password hashing before verifying input formats? |
+| 5 | Question | JWT Expiration Window | What is the purpose of `{ expiresIn: 60 * 60 }`? Why is token expiration set to 1 hour instead of never expiring? What risks exist if an access token has no expiration date? |
+| 6 | Question | Token Storage Security (`localStorage` vs. `HttpOnly`) | For educational purposes, storing JWTs in `localStorage` is convenient. In production applications, what security trade-offs (such as XSS vs. CSRF) differentiate storing tokens in `localStorage` versus `HttpOnly` cookies? |
+| 7 | Task | User Registration Controller | Write the `registerController` to validate username, email, and password, and hash the password before saving using `bcrypt.hash(password, 10)`. |
+| 8 | Task | Frontend Login & State Management | Create function `handleLoginBackend` that will send the credentials (username and password) to the backend `/api/login`. If valid, persist the returned JWT within React state. |
+| 9 | Task | Client Route Protection Guards | Upgrade `App.tsx` so that it has three routes: `/login`, `/register`, and `/home`. If a logged-in user accesses `/` or `/login`, redirect them to `/home` using `<Navigate replace />`. If an unauthenticated user accesses `/home`, redirect them to `/login`. |
+
+</details>
 
 ## Conclusion
 

@@ -84,8 +84,8 @@ export function checkParticleType(value) {
 
 Now when you switch the particle dropdown to `Water` you will be able to create water particles.
 
-> Task: Mess around with water physics change the probabilities of movement, add extra movement options, make floating water? Random chance to move to a random location. Add **`3`** new things to waters `update` function
-{: .prompt-tip }
+> **TASK 1:** Mess around with water physics! Change the probabilities of movement, add extra movement options, make floating water, or add a random chance to teleport to a random location. Add **`3`** new behaviors to water's `update` function.
+{: .prompt-warning }
 
 
 <details>
@@ -133,7 +133,7 @@ swap(other) {
 {: file="particles.js" }
 {: .nolineno }
 
-Now, lets modify the `moveParticle` function in `canvas.js` to use the `swap` argument.
+Now, let's modify the `moveParticle` function in `canvas.js` to use the `swap` argument.
 
 ```js
 export function moveParticle(row, col, newRow, newCol, swap) {
@@ -143,14 +143,11 @@ export function moveParticle(row, col, newRow, newCol, swap) {
 
     if (getParticle(newRow, newCol)) {
         // 👇 Add this check and swap logic 👇
-        // If there is a particle but we can swap then flip the particles
         if (swap && swap(getParticle(newRow, newCol))) {
-            const temp = grid[newRow][newCol];
             grid[newRow][newCol] = grid[row][col];
-            grid[row][col] = temp;
+            grid[row][col] = null;
             return true;
         }
-        // If we can't swap then don't move
         else {
             return false;
         }
@@ -165,8 +162,41 @@ export function moveParticle(row, col, newRow, newCol, swap) {
 {: file="canvas.js" }
 {: .nolineno }
 
+> **BUG HUNT:** Run the simulation, create a pool of water, and drop sand particles on top of it. Notice anything strange? The sand falls through, but the water completely vanishes into thin air instead of rising to the surface! Look at the swap logic: why is the displaced particle being destroyed, and how can we use a temporary variable (`const temp = ...`) to exchange their positions?
+{: .prompt-danger }
 
-The `swap &&` in `if (swap && swap(getParticle(newRow, newCol))) {` just makes sure swap is not `undefined` or `null`.
+### Fixing the Swap Logic
+
+When we overwrite `grid[newRow][newCol]` before saving what was previously in that cell, the displaced water particle is permanently lost. To properly swap two particles without losing either, save the destination particle in a temporary variable first:
+
+```js
+export function moveParticle(row, col, newRow, newCol, swap) {
+    if (!checkBounds(row, col) || !checkBounds(newRow, newCol)) {
+        return false;
+    }
+
+    if (getParticle(newRow, newCol)) {
+        if (swap && swap(getParticle(newRow, newCol))) {
+            // Save the displaced particle in temp before overwriting
+            const temp = grid[newRow][newCol];
+            grid[newRow][newCol] = grid[row][col];
+            grid[row][col] = temp;
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    grid[newRow][newCol] = grid[row][col];
+    grid[row][col] = null;
+    return true;
+}
+```
+{: file="canvas.js" }
+{: .nolineno }
+
+The `swap &&` in `if (swap && swap(getParticle(newRow, newCol)))` ensures `swap` is defined before calling it.
 
 ## Add more particles (Stone and Dirt)
 
@@ -174,8 +204,8 @@ Let's add two more particle types to our simulation: `Stone` and `Dirt`.
 
 Stone is just an extension of the base particle class with a different color and name (you don't even need to define update or swap functions because it inherits it from Particle).
 
-> Task: Create a new class called `Stone` that extends the Particle class. In its constructor, set the color to `"gray"` and the type to `"stone"`. You don't need to add any `update` or `swap` methods to the `Stone` class. Make sure to add `Stone` as an option in `checkParticleType`.
-{: .prompt-tip }
+> **TASK 2:** Create a new class called `Stone` that extends the `Particle` class. In its constructor, set the color to `"gray"` and the type to `"stone"`. You don't need to add any `update` or `swap` methods to the `Stone` class. Make sure to add `Stone` as an option in `checkParticleType`.
+{: .prompt-warning }
 
 **Answer (click to unblur):**
 
@@ -198,8 +228,8 @@ export class Stone extends Particle {
 
 `Dirt` inherits from `Sand`, you just need to change the color and title, the inheritance will copy the `update` and `swap` function.
 
-> Task: Create a new class called `Dirt` that extends the Sand class. In its constructor, set the color to `"brown"` and the type to `"dirt"`. You don't need to add any `update` or `swap` methods to the `Dirt` class. Make sure to add `Dirt` as an option in `checkParticleType`.
-{: .prompt-tip }
+> **TASK 3:** Create a new class called `Dirt` that extends the `Sand` class. In its constructor, set the color to `"brown"` and the type to `"dirt"`. You don't need to add any `update` or `swap` methods to the `Dirt` class. Make sure to add `Dirt` as an option in `checkParticleType`.
+{: .prompt-warning }
 
 **Answer (click to unblur):**
 
@@ -245,8 +275,8 @@ Now you should be able to select `Stone` and `Dirt` from the dropdown and create
 
 Let's add an interesting interaction: when water touches dirt, it will turn the dirt into grass!
 
-> Task: Create a new class called `Grass` in `particles.js` that extends the `Sand` class. In its constructor, set the color to `"green"` and the type to `"grass"`. **DO NOT** add the particle as an option in `checkParticleType`. Grass can ONLY be created with water and dirt.
-{: .prompt-tip }
+> **TASK 4:** Create a new class called `Grass` in `particles.js` that extends the `Sand` class. In its constructor, set the color to `"green"` and the type to `"grass"`. **DO NOT** add the particle as an option in `checkParticleType`. Grass can ONLY be created when water touches dirt.
+{: .prompt-warning }
 
 
 Now, let's implement the logic for water turning dirt into grass. Go to the Water's `update` function in `particles.js` and add this code:
@@ -331,8 +361,28 @@ Think about other real-world substances or fantastical elements and how they mig
 - Lava: A particle that falls and can burn other particles.
 
 
-> Task: Add at least `3` new particles and make sure to add interactions with other particles (don't just add `Metal` and make it act like `Stone`). Get creative with it.
-{: .prompt-tip }
+> **CHALLENGE TASK:** Add at least `3` new particles and make sure to add interactions with other particles (don't just add `Metal` and make it act like `Stone`). Get creative with it!
+{: .prompt-warning }
+
+## Completion & Discussion Checklist
+
+Before joining the group discussion or concluding this tutorial, ensure you have completed the tasks, investigated the bugs, and are ready to discuss the questions below:
+
+<details markdown="1">
+<summary>Click to expand Completion & Discussion Checklist (8 Items)</summary>
+
+| # | Type | Item | Prompt Preview |
+| :-: | :--- | :--- | :--- |
+| 1 | Bug Hunt | Vanishing Water Swap Bug | Run the simulation and drop sand on water. The sand falls through, but the water vanishes! Why did we lose the water particle, and how can we use `temp` to exchange their positions? |
+| 2 | Question | Random Probabilities | Try making water have a small chance to move upwards. What parameters for `getRandomInt()` would you use for a very low probability? |
+| 3 | Question | Elemental Simulation Rules | Think about other substances and elements. How can you define interaction rules for Acid, Ice, Lava, or Steam within object-oriented subclasses? |
+| 4 | Task | Water Movement Variations | Mess around with water physics! Change movement probabilities, add extra options, make floating water, or add teleportation. Add 3 new behaviors to water's `update` function. |
+| 5 | Task | Create `Stone` Class | Create a new class called `Stone` that extends `Particle`. In its constructor, set color to `"gray"` and type to `"stone"`. Add `Stone` as an option in `checkParticleType`. |
+| 6 | Task | Create `Dirt` Class | Create a new class called `Dirt` that extends `Sand`. In its constructor, set color to `"brown"` and type to `"dirt"`. Add `Dirt` as an option in `checkParticleType`. |
+| 7 | Task | Create `Grass` Class | Create a new class called `Grass` extending `Sand` (`color: "green"`, `type: "grass"`). Do not add it to `checkParticleType` — grass can only be created when water touches dirt. |
+| 8 | Challenge | 3 Custom Particles | Add at least 3 new particles and make sure to add interactions with other particles (don't just add `Metal` and make it act like `Stone`). Get creative with it! |
+
+</details>
 
 ## Completion
 

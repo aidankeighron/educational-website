@@ -588,21 +588,18 @@ There are a lot of moving components, but thankfully, you won't have to repeat t
 
 Time to try this on your own!
 
-Your goal is to **make a Sapphire item. However, there are additional features for you to add**:
-- It needs to be fire resistant
-- Stacks of Sapphires can only go up to 16
-- Make its durability 500
+> **CHALLENGE:** Make a **Sapphire item** with the following features:
+> - It needs to be fire resistant
+> - Stacks of Sapphires can only go up to 16
+> - Set its durability to 500
+{: .prompt-warning }
 
 [Here is the PNG](https://github.com/johnnystouffer/mod-tutorial/blob/main/src/main/resources/assets/tutorialcraft/textures/item/sapphire.png) for it.
 
 **Try this on your own, using [documentation](https://docs.minecraftforge.net/en/latest/items/) for help**. View the hint below if you need it. Additionally, my solution is included if you get completely stuck.
 
-**HINT**
-
-```
-Remember the chaining method I mentioned earlier when making the Ruby?
-This applies here. Look at the documentation and try to implement it.
-```
+> **HINT:** Remember the method chaining pattern we used when making the Ruby? Look at the Forge item properties documentation and chain the modifier methods together!
+{: .prompt-info }
 {: .nolineno }
 {: .blur }
 
@@ -866,24 +863,18 @@ Just like with items, adding blocks usually follows this pattern, with some vari
 
 ### Challenge Block
 
-Now lets make **Sapphire Ore**!
+Now let's make **Sapphire Ore**!
 
-Complete the same steps above to create the sapphire ore. **However, there a couple things I want you to change to make this ore more interesting:**
-- Make it so this ore has the friction of ice. (You slide when you walk over it)
-- Make the sound of the ore sound like Amethyst
-- Edit the strength of this ore
-    - Set destroy time to 6.0
-    - Set explostion resistance to 6.5
+> **CHALLENGE:** Complete the block creation steps to make **Sapphire Ore** with the following custom behaviors:
+> - Set its friction to match ice so players slide when walking over it.
+> - Configure its sound type to sound like Amethyst.
+> - Set `destroyTime` to `6.0` and `explosionResistance` to `6.5`.
+{: .prompt-warning }
 
 [Here is the](https://github.com/johnnystouffer/mod-tutorial/blob/main/src/main/resources/assets/tutorialcraft/textures/block/sapphire_ore.png) PNG for it.
 
-> There will NOT be a solution provided for this one. There is a hint below, but you should able to comfortably figure out how to do this given this [documentation](https://docs.minecraftforge.net/en/latest/blocks/#creating-a-block) and Google (try your best not to use AI right now).
-{: .prompt-danger }
-
-```
-Remember the chaining you did for the item properties? 
-Try that again! Typing a period should show you a list of functions you can use as well.
-```
+> **HINT:** Remember the chaining you did for item properties? Look at the Forge [Block properties documentation](https://docs.minecraftforge.net/en/latest/blocks/#creating-a-block) to chain these block attributes.
+{: .prompt-info }
 {: .blur }
 {: .nolineno }
 
@@ -986,13 +977,11 @@ public static final RegistryObject<Item> RUBY_HELMET = ITEMS.register(
 
 ### Wearing the Armor
 
-**Why is specifying the material used for the armor so important?**
+> **QUESTION:** Why is specifying the exact material name for armor so critical in Minecraft Forge? What naming pattern does Forge expect for wearable armor texture files?
+{: .prompt-tip }
 
-> Forge will take the provided material name and add the strings "_layer_1.png" and "_layer_2.png" to find the textures used for when you WEAR the armor. Therefore, the material name **NEEDS TO LINE UP WITH YOUR TEXTURE PNG FILE NAMES**.
-
-**Where do we put the files for the textures of what we are wearing?**
-
-> In your `textures/` folder, create a new folder called `models/`. Then inside of `models/`, make another folder called `armor/`. This is where Forge will look for the textures of the armor you wear.
+> **NOTE:** Forge appends `_layer_1.png` and `_layer_2.png` to your provided material name to locate the wearable model textures. Your material string **MUST** match your PNG file names exactly! Put these texture files in `src/main/resources/assets/<modid>/textures/models/armor/`.
+{: .prompt-info }
 
 Here is a [link to the two PNGs](https://github.com/johnnystouffer/mod-tutorial/tree/main/src/main/resources/assets/tutorialcraft/textures/models/armor) for you to add.
 
@@ -1004,12 +993,28 @@ Feel free to finish it up, make a different one with Sapphire, or design your ow
 
 ## Challenge Tasks
 
+## Completion & Discussion Checklist
+
+Before joining the group discussion or concluding this tutorial, ensure you have completed the tasks, investigated the bugs, and are ready to discuss the questions below:
+
+<details markdown="1">
+<summary>Click to expand Completion & Discussion Checklist (4 Items)</summary>
+
+| # | Type | Item | Prompt Preview |
+| :-: | :--- | :--- | :--- |
+| 1 | Question | Armor Texture Naming Pattern | Why is specifying the exact material name for armor so critical in Forge? What naming pattern does Forge expect for wearable armor texture files? |
+| 2 | Challenge | Sapphire Custom Item | Make a Sapphire item with custom properties: fire resistance, max stack size of 16, and durability set to 500 using property method chaining. |
+| 3 | Challenge | Sapphire Ore Block | Make Sapphire Ore with custom block attributes: ice friction, amethyst sound effects, `destroyTime = 6.0`, and `explosionResistance = 6.5`. |
+| 4 | Task | Complete Armor Set | Finish making the rest of the wearable armor set (Helmet, Leggings, Boots) and verify model texture bindings. |
+
+</details>
+
 ### Congrats!
 
 You are officially done with the instruction part of this tutorial! 
 
 **You should confidently be able to:**
-- Set up the modding enviornment
+- Set up the modding environment
 - Make new items within the game
 - Create new blocks within the game
 - Create new armor and tools within the game
