@@ -1,0 +1,41 @@
+---
+layout: default
+refactor: true
+panel_includes:
+  - module-outline
+---
+
+{% assign tutorial_key = page.tutorial_slug | default: page.slug %}
+{% assign modules = site.modules | where: "parent_post", tutorial_key | sort: "module_number" %}
+{% assign first_module = modules | first %}
+{% assign ref_pages = site.references | where_exp: "r", "page.references contains r.slug" %}
+
+<article class="tutorial-hub px-1">
+  <header class="module-header mb-4">
+    <h1 class="mb-2">{{ page.title }}</h1>
+    {% if page.description %}
+      <p class="post-desc fw-light mb-0">{{ page.description }}</p>
+    {% endif %}
+  </header>
+
+  {% if ref_pages.size > 0 %}
+    <section class="tutorial-hub__references mb-4">
+      <h2 class="panel-heading">Background Info</h2>
+      <div class="d-flex flex-wrap gap-2">
+        {% for ref in ref_pages %}
+          <a class="btn btn-outline-secondary" href="{{ ref.url | relative_url }}">{{ ref.title }}</a>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  {% if first_module %}
+    <div class="tutorial-hub__cta mb-4">
+      <a class="btn btn-primary" href="{{ first_module.url | relative_url }}">Start Module 1</a>
+    </div>
+  {% endif %}
+
+  <div class="tutorial-hub__body content">
+    {{ content }}
+  </div>
+</article>

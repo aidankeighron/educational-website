@@ -6,7 +6,7 @@
 
 <!-- layout specified -->
 
-{% if page.layout == 'post' or page.layout == 'page' or page.layout == 'home' %}
+{% if page.layout == 'post' or page.layout == 'page' or page.layout == 'home' or page.layout == 'module' or page.layout == 'tutorial-hub' %}
   {% assign urls = urls | append: ',' | append: site.data.origin[type]['lazy-polyfill'].js %}
 
   {% unless page.layout == 'home' %}
@@ -52,8 +52,12 @@
 {% include jsdelivr-combine.html urls=urls %}
 
 {% case page.layout %}
-  {% when 'home', 'categories', 'post', 'page' %}
-    {% assign js = page.layout %}
+  {% when 'home', 'categories', 'post', 'page', 'module', 'tutorial-hub' %}
+    {% if page.layout == 'module' or page.layout == 'tutorial-hub' %}
+      {% assign js = 'post' %}
+    {% else %}
+      {% assign js = page.layout %}
+    {% endif %}
   {% when 'archives', 'category', 'tag' %}
     {% assign js = 'misc' %}
   {% else %}

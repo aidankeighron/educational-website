@@ -40,7 +40,7 @@ layout: compress
                 {% include_cached update-list.html lang=lang %}
               {% endunless %}
             </div>
-            
+
             {% for _include in layout.panel_includes %}
               {% assign _include_path = _include | append: '.html' %}
               {% include {{ _include_path }} lang=lang %}
