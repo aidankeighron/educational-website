@@ -169,19 +169,11 @@ headers: {
 ```
 {: file="popup.js" }
 {: .nolineno }
-What does "Accept": "application/json" mean?
-This tells the server:
+> **QUESTION:** What does the header `"Accept": "application/json"` communicate to the API server? What might happen if a client doesn't specify which content format it expects back?
+{: .prompt-tip }
 
-“Hey, I expect the response to be in JSON format.”
-
-Without it, some APIs may return unexpected formats or not work as intended.
-
-### Your Goal
-- Make the fetch() call using the correct method (GET)
-
-- Pass in the required headers
-
-- Use .json() to extract the result into a usable object (just like we did when uploading the file)
+> **TASK 1:** Use `fetch()` to make a `GET` request to `https://api.mistral.ai/v1/files/FILE_ID/url?expiry=24` (replacing `FILE_ID` with `PDFJson.id`), pass the required `headers`, and extract the signed download URL using `.json()`.
+{: .prompt-warning }
 
 Once you’ve done that, you’ll have access to a temporary URL like:
 ```json
@@ -219,35 +211,9 @@ headers: {
 The Body (What You’re Sending)
 Before we send the body, we need to convert our JavaScript object into a string using JSON.stringify().
 
-What is JSON.stringify()?
-APIs expect request bodies to be sent as JSON strings — not raw JavaScript objects.
-JSON.stringify() takes an object and converts it into a JSON-formatted string that can be sent in the request.
-```js
-JSON.stringify({ name: "Arnav" });
-// -> '{"name":"Arnav"}'
-```
-{: .nolineno }
-Now, here’s the structure of the object you’ll send:
-```json
-{
-  "model": "mistral-ocr-latest",
-  "document": {
-    "type": "document_url",
-    "document_url": "THE_TEMPORARY_URL_HERE"
-  },
-  "include_image_base64": true
-}
-```
-{: file="popup.js" }
-{: .nolineno }
+> **QUESTION:** Why do web APIs expect serialized JSON strings (via `JSON.stringify()`) in HTTP request bodies instead of raw in-memory JavaScript objects?
+{: .prompt-tip }
 
-> Replace "THE_TEMPORARY_URL_HERE" with responseJSON.url from the previous step.
+> **TASK 2:** Use `fetch()` with method `'POST'` to send the JSON-stringified document payload to `https://api.mistral.ai/v1/ocr`, pass the authentication headers, and extract the result using `.json()`.
 {: .prompt-warning }
-
-### Your Goal
-- Use fetch() with method 'POST'
-- Add the correct headers
-- Convert the body to a JSON string using JSON.stringify()
-- Use .json() to extract the result
-- Return the variable that extracted the result
 

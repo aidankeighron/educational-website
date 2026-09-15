@@ -67,16 +67,31 @@ Without async, we’d have to use .then() chains, which are harder to manage.
 
 Arrow function syntax (() => {}) is a modern way to write functions in JavaScript. It's short, clean, and avoids creating its own this context — which works well here since we don’t need to refer to the event handler’s context directly.
 
-> **Tip:** In short we use async () => {} to write cleaner, more modern code that lets us easily work with APIs that take time to respond.
+> **Tip:** We use async to write cleaner code that lets us easily work with an API. If you'd like to learn more about why async & await is the best practice, watch this [video](https://www.youtube.com/watch?v=li7FzDHYZpc)
 {: .prompt-info }
 ```js
 const fileUploaded = this.files.item(0);
 ```
 {: file="popup.js" }
 {: .nolineno }
-This line grabs the first file the user selected. Since we’re only supporting one file at a time, we access the file at index 0.
+This line attempts to grab the first file the user selected.
 
-Below you should create your own safety check to check if fileUploaded is null. If it is, we want to return.
+> **BUG HUNT:** If you test this event handler by selecting a file and opening the DevTools Console (right-click the extension popup and click **Inspect**), you will see `TypeError: Cannot read properties of undefined (reading 'item')`! Why is `this.files` undefined inside an arrow function `async () => {}`, and how can we use the `event` parameter instead?
+{: .prompt-danger }
+
+### Fixing the `this` Context
+
+Unlike traditional `function()` declarations, arrow functions (`() => {}`) do not bind their own `this` context — `this` refers to the global window object. To access the uploaded file safely inside an arrow event listener, pass the `event` parameter and use `event.target.files[0]`:
+
+```js
+document.getElementById('file-upload').addEventListener('change', async (event) => {
+    const fileUploaded = event.target.files[0];
+    if (!fileUploaded) {
+        return;
+    }
+```
+{: file="popup.js" }
+{: .nolineno }
 
 ```js
 const form = new FormData();
@@ -96,19 +111,16 @@ A purpose field — this is useful if your API requires it (in this case, to lab
 
 The actual uploaded file, wrapped in a new File object.
 
-> **Note:**  Wrapping the file again with new File([...]) is optional but helpful if you want to manipulate the name or metadata before sending.
+> **Note:** Wrapping the file again with new File([...]) is optional but helpful if you want to manipulate the name or metadata before sending.
 {: .prompt-info }
-
-> Important: All of these lines (fileUploaded, if (fileUploaded == null), and the FormData block) should be written inside the event listener function — directly with the async () => {} function.
-{: .prompt-danger }
 
 This is the foundation of getting the syllabus file from the user and preparing it for conversion.
 
-At this point your code should look similar to this.
+At this point your code should look similar to this:
 ```js
-document.getElementById('file-upload').addEventListener('change', async () => {
-    const fileUploaded = this.files.item(0);
-    if(fileUploaded == null){
+document.getElementById('file-upload').addEventListener('change', async (event) => {
+    const fileUploaded = event.target.files[0];
+    if (!fileUploaded) {
         return;
     }
     const form = new FormData();

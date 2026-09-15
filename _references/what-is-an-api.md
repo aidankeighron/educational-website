@@ -6,39 +6,42 @@ layout: reference
 
 Before calling any external API in a tutorial, let's take a quick step back and understand **what an API actually is**.
 
-An **API (Application Programming Interface)** is a way for two programs to talk to each other. Often that means your code (running in the browser or on a server) talking to an external service over the internet.
+An **API (Application Programming Interface)** is a way for two programs to talk to each other. Think of it as a bridge that allows two different pieces of software to communicate — often that means your code (running in the browser or on a server) talking to an external service over the internet.
 
 > Think of it like placing an order at a restaurant: you (the client) tell the waiter (the API) what you want, and the waiter brings it from the kitchen (the server). You don't need to know how the kitchen works — just how to place an order properly.
 {: .prompt-info }
 
 ## HTTP methods
 
-Most APIs you'll work with are **REST APIs**, the most common type of API. They communicate via HTTP methods, most commonly GET and POST (there's also PUT and DELETE):
+Most APIs you'll work with are **REST APIs**, which are the standard way web applications communicate over the internet. They use HTTP methods — the same methods your browser uses to fetch web pages. The two most common are:
 
-- **GET** — when you want to get data from the source.
-- **POST** — when you want to send data to the source.
+- **GET** — when you want to retrieve data from a source (like reading a webpage).
+- **POST** — when you want to send new data to a source (like submitting a login form).
 
-## Example: fetching data from an API
+There are also **PUT** and **DELETE**, which you'll meet in tutorials that update or remove data.
 
-Imagine you want to build a *Pokemon Information App*. The hard way to make this app is to collect every single bit of information about every single Pokemon yourself. This is where an API makes the process much easier — there's an API called `PokeAPI` where you send a request for Pokemon data, and it sends it back to you.
+## A real-world example
 
-Here's how it works:
+Imagine you want to build a *Pokémon Information App*.
 
-- You send an HTTP request.
-- You specify what you want in the request — for example, everything about Pikachu.
-- The other end of the API processes the request, gathers the information about Pikachu, and puts it in a JSON file so you can understand it.
-- It sends back the information you requested, and now you have everything you needed without collecting any data yourself!
+The hard way to build this app would be manually researching and typing out the stats for all 1,000+ Pokémon into your own database. **This is where an API saves the day**. There is a free service called `PokeAPI` that already has all this data. You just have to ask for it!
 
-As a programmer, it would look like this. You send a request like:
+Here is how the interaction works:
+
+1. **The Request:** You send an HTTP request to the API asking for specific data (e.g., "Give me the stats for Pikachu").
+2. **The Processing:** The API server receives your request, finds Pikachu's data in its database, and formats it.
+3. **The Response:** The server sends the data back to you in a format your code can read, usually **JSON** (JavaScript Object Notation).
+
+In code, making that request looks like this:
 
 ```jsx
-const apiData = await fetch('https://pokeapi.co/api/v2/pokemon/pikachu')
+const response = await fetch('https://pokeapi.co/api/v2/pokemon/pikachu');
+const apiData = await response.json();
 ```
 
-And get something back that looks like this:
+And the `apiData` you get back will look something like this:
 
-```jsx
-// Note: This is an example, not what PokeAPI will actually send
+```json
 {
  "name": "pikachu",
  "height": 4,
@@ -49,9 +52,12 @@ And get something back that looks like this:
 }
 ```
 
+> **QUESTION:** Looking at the JSON data above, how is a JSON object similar to a standard JavaScript object? If you wanted to get the Pokemon's weight from `apiData`, what code would you write?
+{: .prompt-tip }
+
 After you get this information back, you can parse it and use it however you'd like.
 
-[Here is another example](https://www.youtube.com/watch?v=s7wmiS2mSXY&t=33s) if you're struggling a bit to understand.
+If you want a deeper visual explanation, check out [this 3-minute video on APIs](https://www.youtube.com/watch?v=s7wmiS2mSXY&t=33s).
 
 ## Helpful videos
 
@@ -66,3 +72,6 @@ After you get this information back, you can parse it and use it however you'd l
 An API key is like a password that allows your project to communicate with a third-party service. It tells the API who you are and whether you're allowed to use it.
 
 Think of it like a secret access badge — you'll need one to send requests and get a response back from the service.
+
+> Because an API key acts as a password, it must never be committed to your repository. See [Environment Variables & Secret Safety]({{ '/references/environment-variables/' | relative_url }}) for how to keep it out of version control.
+{: .prompt-warning }

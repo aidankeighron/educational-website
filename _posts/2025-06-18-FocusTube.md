@@ -5,7 +5,7 @@ date: 2025-6-18 12:00:00 +0800
 categories: [FocusTube]
 layout: tutorial-hub
 tutorial_slug: FocusTube
-references: [what-is-an-api]
+references: [what-is-an-api, environment-variables]
 tags: [JavaScript, React, NextJS, FocusTube, Medium]
 description: In this project you will learn the basics of NextJS to start building a YouTube wrapper that will help you focus and not stay distracted
 comments: false
@@ -40,3 +40,6 @@ There are many avenues you can take with this project. While it will be fully fu
 - You have decent knowledge of JavaScript
 - You have basic knowledge of React
 - You already have the necessary tools installed (Node.js, an IDE like VS Code)
+
+> Want to build this as a mobile app instead? The [FocusTube (React Native)]({{ '/posts/React-FocusTube/' | relative_url }}) series builds the same project with Expo and React Native.
+{: .prompt-info }

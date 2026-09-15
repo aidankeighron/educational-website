@@ -21,9 +21,10 @@ npm create vite@latest
 
 Then, enter your project name, choose React and TypeScript. After that, you can run 
 
-```
+```bash
 cd frontend 
 npm install 
+npm install axios jwt-decode react-router-dom
 npm run dev
 ```
 {: .nolineno}
@@ -44,6 +45,10 @@ function App() {
     username: string;
     password: string;
   }
+
+  const handleLoginBackend = async (credentials: Credentials) => {
+    console.log("Submitting credentials:", credentials);
+  };
 
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -95,18 +100,17 @@ After this we can have a simple login form that look like this (the `register` b
 
 ![](Pasted image 20250708233009.png)
 
-First the form have two states: `username` and `password`, contained within a form, and set up to change as the user edit the text fields. Then, the submit button is named `login` and linked to `handleLogin`. `event.preventDefault()` is to prevent the page from reloading. Notice that `handleLogin` is currently missing `handleLoginBackend`. 
+First the form have two states: `username` and `password`, contained within a form, and set up to change as the user edit the text fields. Then, the submit button is named `login` and linked to `handleLogin`. `event.preventDefault()` is to prevent the page from reloading. Notice that `handleLogin` is currently calling a placeholder `handleLoginBackend`. 
 
-> Task: Create function `handleLoginBackend` that will send the request (username and password) from the frontend from the backend we set up above. If the credentials is valid, the backend will return the JWT and you should persist it within a state. 
-> You will need to look up how to send request from frontend. I used [Axios](https://github.com/axios/axios). 
-{: .prompt-tip}
+> **TASK:** Create function `handleLoginBackend` that will send the credentials (username and password) to the backend `/api/login`. If valid, persist the returned JWT within React state. (You can use [Axios](https://github.com/axios/axios)).
+{: .prompt-warning }
 
 **Answer (click to unblur):**
 
 ```tsx
 function App() {
   // ...
-  const [jwt, setJwt] = useState(null);
+  const [jwt, setJwt] = useState<string | null>(null);
 
   // ...
 
@@ -115,9 +119,9 @@ function App() {
 
     try {
       const response = await axios.post(baseUrl, credentials);
-      const jwt = response.data;
+      const token = response.data.token;
 
-      setJwt(jwt);
+      setJwt(token);
     } catch (error) {
       console.error("Login failed:", error);
     }
@@ -136,9 +140,13 @@ export default App;
 
 Before we move on, if you just send requests from frontend to backend like right now, chances are it will not work. If you open the console, it would be filled with errors. This is because of something called the same origin policy. To explain shortly, it's a security feature: your frontend is running default on port 5173 (Vite default), and backend on port 3000, so they cannot communicate since they're not on the same origin. 
 
-To mitigate this, you can install `cors` directly on backend and enable it, or add this to your `vites.config.ts` (assuming your backend is running on port 3000):
+To mitigate this, configure CORS on the backend or add a proxy in your `vite.config.ts` (pointing to your backend running on port 3001):
 
 ```ts
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -149,55 +157,67 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://localhost:3000", 
+        target: "http://localhost:3001", 
         changeOrigin: true,
       },
     }
   }
-})
+});
 ```
+{: file="frontend/vite.config.ts" }
+{: .nolineno }
 
-With this, you can communicate directly with the server. If you want to test your frontend code in real-time, first run your backend, then run your frontend, then test directly on your frontend port (in this case 5173) and your requests will go through. 
+Also, ensure your `frontend/tsconfig.json` includes the `@shared/*` path mapping so TypeScript resolves the shared types:
 
-Also, the `alias` part is to make sure your files recognizes the `@shared/types.ts` syntax. 
+```json
+"paths": {
+  "@shared/*": ["../shared/*"]
+}
+```
+{: file="frontend/tsconfig.json" }
+{: .nolineno }
 
-#### Displaying contacts
+With this, you can communicate directly with the server. If you want to test your frontend code in real-time, first run your backend, then run your frontend, and your requests to `/api` will be proxied automatically. 
 
-Then, after the user is logged in, we should display the contacts. 
+#### Displaying contacts & JWT Decoding
 
-> Task: Implement displaying the list of contacts after the user is logged in. To do it, you can check if the JWT is not null. 
-{: .prompt-tip}
-
-**Answer (click to unblur):**
+Next, after the user logs in, we display their contacts. To ensure users only see their own contacts, we use [jwt-decode](https://www.npmjs.com/package/jwt-decode) to read the user's username directly from the client-side JWT payload:
 
 ```tsx
 function App() {
-  // ...
+  const [jwt, setJwt] = useState<string | null>(null);
   const [contacts, setContacts] = useState([]);
 
+  const payload = jwt !== null 
+    ? jwtDecode<JwtPayload>(jwt)
+    : null;
+
   useEffect(() => {
-    if (jwt !== null) {
-      console.log(jwt);
+    if (payload !== null && jwt) {
       const contactUrl = "/api/contacts";
-      const token = jwt.token;
+      const token = jwt;
 
       const config = {
         headers: { Authorization: `Bearer ${token}` },
       };
 
-      axios.get(contactUrl, config).then((response) => setContacts(response.data));
+      axios.get(contactUrl, config).then((response) => {
+        setContacts(response.data.filter(
+          contact => contact.belongsTo.username === payload.username
+        ));
+      });
     }
-  }, [user]); // Add dependency array to prevent infinite re-renders
+  }, [payload, jwt]);
 
   return (
     <>
-      // ... 
+      {/* login form */}
       {jwt !== null && (
         <div>
           <h2>Your Contacts</h2>
           {contacts.map((contact) => (
-            <div>
-              {contact!.name} {contact!.number}
+            <div key={contact.id}>
+              {contact.name} {contact.number}
             </div>
           ))}
         </div>
@@ -209,55 +229,11 @@ function App() {
 export default App;
 ```
 {: file="frontend/src/App.tsx"}
-{: .nolineno}
-{: .blur}
-
-If you didn't know `useEffect` already you should look it up *immediately*. Also, here we add another variable `config` after `contactUrl` in order to send the JWT with the request.
-
-However, If you test this code right now, you'll notice a problem: **all contacts in the database are being displayed**, regardless of which user is logged in. This is a security issue! Each user should only see their own contacts.
-
-> Task: Fix so that only contacts belong to the authenticated user are displayed. To do that you'll first need to decode your JWT in order to get the username. Use [jwt-decode](https://www.npmjs.com/package/jwt-decode).
-{: .prompt-tip}
-
-**Answer (click to unblur):**
-
-```tsx
-function App() {
-	const [jwt, setJwt] = useState(null);
-	const [contacts, setContacts] = useState([]);
-
-	const payload = jwt !== null 
-    ? jwtDecode<JwtPayload>(jwt)
-    : null;
-
-	useEffect(() => {
-		if (payload !== null) {
-		  const contactUrl = "/api/contacts";
-		  const token = jwt.token;
-	
-		  const config = {
-			headers: { Authorization: `Bearer ${token}` },
-		  };
-	
-		  axios.get(contactUrl, config).then((response) => {
-        setContacts(response.data.filter(
-          contact => contact.belongsTo.username === payload.username
-        ))
-		  }) 
-		}
-    }, [payload]); 
-
-	// ...
-}
-```
-{: file="frontend/src/App.tsx"}
 {: .nolineno }
-{: .blur }
 
 The approach works like this: When jwt is `null`, nothing happens. But then if `jwt` is not null, then the entire function runs again, and then `payload` will run first before `useEffect` runs. After that, when `useEffect` runs, it will get the token, send it, and filter the response by payload data. 
 
-> ...or maybe you can change it in the backend so that the resposne already contains the filtered data? :) That approach is better but I'll let you figure out that yourself. 
-{: .prompt-tip}
+> **NOTE:** You can also update the backend `/api/contacts` endpoint to return only contacts belonging to the authenticated user (`req.user.id`). This avoids sending all contacts across the network and filtering them in React.
+{: .prompt-info }
 
-Also notice `JwtPayload`. It is yet another defined custom types in `types.ts`. We will cover it right in the next part. 
-
+Also notice `JwtPayload`. It is yet another defined custom types in `types.ts`. We will cover it right in the next part.

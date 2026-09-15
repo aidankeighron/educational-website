@@ -141,4 +141,9 @@ export function GET(request) {
 ```
 {: file="app/api/search/route.js" }
 {: .nolineno }
-{: .blur }
+> **QUESTION:** Looking at the search parameters in the code above (`part`, `q`, `type`, `videoDuration`), what do you think each of these represents when we're requesting data from the YouTube API?
+{: .prompt-tip }
+
+> **TASK: Complete the Playlist API Endpoint**
+> Use the partial solution above as a guide to create the `/api/playlist/route.js` endpoint! You will need to check the YouTube API documentation to see what specific parameters the Playlist endpoint requires.
+{: .prompt-warning }

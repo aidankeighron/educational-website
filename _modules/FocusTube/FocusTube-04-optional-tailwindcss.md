@@ -8,7 +8,9 @@ media_subpath: /assets/tutorials/focustube
 
 ## OPTIONAL: TailwindCSS
 
-This portion is optional because I want this tutorial to focus more on APIs and NextJS. However, if you are interested in learning more about TailwindCSS, you can try it out on this project! If not, you are free to use the provided TailwindCSS classes if you would like to change the appearance of your web app.
+This portion is optional because I want this tutorial to focus more on APIs and NextJS. However, if you are interested in learning more about TailwindCSS, you can try it out on this project! TailwindCSS has shown to be a very powerful library especially when it comes to AI.
+
+If not, you are free to use the provided TailwindCSS classes if you would like to change the appearance of your web app.
 
 TailwindCSS is a different way of doing CSS. There are no ```.css``` files; instead, you add classes for each style you want.
 
@@ -42,12 +44,20 @@ Feel free to copy this TailwindCSS if you don't want to spend the tutorial fight
 
 #### app.js
 
+**Click below to unblur the different parts of the answer**
+
+**Part 1: State and Navigation Setup**
+First, we need to set up our React state to keep track of what the user types into the search bar. We also initialize `useRouter()` so we can send the user to different pages when they click the buttons.
 ```jsx
+"use client";
+
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 
 export default function Home() {
  const [input, changeInput] = useState("");
+ const router = useRouter();
 
 
  const handleInputChange = (e) => {
@@ -58,11 +68,21 @@ export default function Home() {
  const handleSubmit = (e) => {
    e.preventDefault();
    if (input.trim() !== "") {
-     window.location.href = `/search/${input}`;
+     router.push(`/search/${input}`);
    }
  };
 
+ // ... return statement below ...
+```
+{: file="app/page.js (Part 1)" }
+{: .nolineno }
+{: .blur }
 
+**Part 2: The Search Form**
+Next, we build the search form. We tie the `<input>` value to our state, and when the user presses Enter (triggering `onSubmit`)
+
+```jsx
+ // ... inside Home() return statement ...
  return (
    <div className="w-screen h-screen flex items-center justify-center flex-col">
      <div className="flex m-3 p-3">
@@ -92,13 +112,24 @@ export default function Home() {
          </button>
        </form>
      </div>
+     {/* ... navigation buttons below ... */}
+```
+{: file="app/page.js (Part 2)" }
+{: .nolineno }
+{: .blur }
 
+> **QUESTION:** You saw it introduced up above, but it is critical to our pages triggers. What is a <form> element? Does it change how we format the page?
+{: .prompt-tip }
 
+**Part 3: The Navigation Buttons**
+Finally, we add our quick-navigation buttons. Since these don't require a form submission, we can just use simple `onClick` events to check if the input is empty, and if not, route the user to the correct page.
+```jsx
+     {/* ... inside Home() return statement ... */}
      <div className="mt-10 flex flex-wrap justify-center gap-4">
        <button
          onClick={() => {
            if (input.trim() !== "") {
-             window.location.href = `/playlist-search/${input}`;
+             router.push(`/playlist-search/${input}`);
            }
          }}
          className="bg-neutral-600 text-white px-4 py-2 rounded-2xl hover:bg-neutral-500 active:bg-neutral-700 transition"
@@ -110,7 +141,7 @@ export default function Home() {
        <button
          onClick={() => {
            if (input.trim() !== "") {
-             window.location.href = `/playlists/${input}`;
+             router.push(`/playlists/${input}`);
            }
          }}
          className="bg-neutral-600 text-white px-4 py-2 rounded-2xl hover:bg-neutral-500 active:bg-neutral-700 transition"
@@ -122,7 +153,7 @@ export default function Home() {
        <button
          onClick={() => {
            if (input.trim() !== "") {
-             window.location.href = `/video/${input}`;
+             router.push(`/video/${input}`);
            }
          }}
          className="bg-neutral-600 text-white px-4 py-2 rounded-2xl hover:bg-neutral-500 active:bg-neutral-700 transition"
@@ -134,13 +165,15 @@ export default function Home() {
  );
 }
 ```
-{: file="app/page.js" }
+{: file="app/page.js (Part 3)" }
 {: .nolineno }
 {: .blur }
 
 #### Search Page
 
 ```jsx
+import Link from "next/link";
+
 export default function SearchPage() {
  return (
    <div className="w-screen min-h-screen flex flex-col items-center justify-start text-white">
@@ -148,7 +181,7 @@ export default function SearchPage() {
 
 
      <div className="flex flex-col items-center w-full overflow-y-auto pb-10">
-       <a href="/video" className="w-1/2 max-w-3xl bg-neutral-700 rounded-2xl p-3 m-3 flex items-start gap-3">
+       <Link href="/video" className="w-1/2 max-w-3xl bg-neutral-700 rounded-2xl p-3 m-3 flex items-start gap-3">
          <img
            src="https://i.ytimg.com/vi/abc123/mqdefault.jpg"
            alt="How to Learn JavaScript Fast"
@@ -160,22 +193,7 @@ export default function SearchPage() {
            <h2 className="text-lg font-semibold leading-tight mb-1"> How to Learn JavaScript Fast</h2>
            <p className="text-sm text-gray-300 leading-snug">A quick guide to getting started with JavaScript.</p>
          </div>
-       </a>
-
-
-       <a href="/video" className="w-1/2 max-w-3xl bg-neutral-700 rounded-2xl p-3 m-3 flex items-start gap-3">
-         <img
-           src="https://i.ytimg.com/vi/abc123/mqdefault.jpg"
-           alt="Master C++ in 3 Hours"
-           width={160}
-           height={120}
-           className="rounded-md shrink-0 object-fill"
-         />
-         <div className="flex flex-col justify-start h-full p-3">
-           <h2 className="text-lg font-semibold leading-tight mb-1">Master C++ in 3 Hours</h2>
-           <p className="text-sm text-gray-300 leading-snug"> An easy guide to teach you everything to get started with C++.</p>
-         </div>
-       </a>
+       </Link>
      </div>
    </div>
  );
@@ -183,7 +201,6 @@ export default function SearchPage() {
 ```
 {: file="app/search/page.js" }
 {: .nolineno }
-{: .blur }
 
 #### Video Page
 

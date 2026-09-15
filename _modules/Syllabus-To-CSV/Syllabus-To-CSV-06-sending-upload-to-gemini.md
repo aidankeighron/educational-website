@@ -26,46 +26,9 @@ const geminiApiKey = "your-gemini-api-key-here";
 ```
 {: file="hidden.js" }
 {: .nolineno }
-Your Task: Send the Markdown to Gemini
-Here’s what you need to do:
+> **TASK 4:** Implement `async function JsonToCSV(markdownExport)` to `POST` the combined markdown to Gemini's `generateContent` endpoint and request assignment extraction in CSV format.
+{: .prompt-warning }
 
-Create this function
-```js
-async function JsonToCSV(markdownExport) {}
-```
-{: file="popup.js" }
-{: .nolineno }
-Use fetch() to send a POST request to this Gemini endpoint:
-
-
-`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=YOUR_API_KEY`
-
-Replace YOUR_API_KEY with your Gemini key (preferably from `hidden.js`).
-
-In the headers, include:
-
-```
-"Content-Type": "application/json"
-```
-{: file="popup.js" }
-{: .nolineno }
-In the body of the request:
-- Use JSON.stringify() to convert your request body to JSON
-- Create a prompt asking Gemini to extract assignments from the Markdown you created
-- Ask for a CSV format with these columns:
-- Due Date
-- Class
-- Assignment Name
-- Assignment Type (from: Homework, Reading, Project, Exam)
-- Checkbox
-
-Make sure to include your entire markdownExport inside the prompt using a template string (${}).
-
-> Tip: The more specific and clear your prompt is, the better your results will be. You’re essentially saying:
-"Hey Gemini, here’s a syllabus in Markdown. Can you pull out the assignments and return them in a neat table?"
+> **NOTE:** The more specific and clear your prompt is, the better your results will be. Use `POST` to the Gemini endpoint (`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=YOUR_API_KEY`), instruct Gemini on exact column headers (`Due Date, Class, Assignment Name, Assignment Type, Checkbox`), and request pure CSV data without markdown ticks. Google often updates available free tier models; check [Google AI Pricing](https://ai.google.dev/gemini-api/docs/pricing) if you need to substitute another free tier model.
 {: .prompt-info }
-
-Your goal here is to get back a Gemini response containing a CSV-formatted list of assignments from your syllabus.
-
-We’ll use this response in the next step to create a downloadable .csv file the user can save!
 

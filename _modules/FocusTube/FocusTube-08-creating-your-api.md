@@ -12,7 +12,7 @@ Now, it is time to make your **NextJS API**.
 
 Making the API is about as easy as making the routes! In the `/app` folder, create a new folder titled `api`.
 
-We need three different endpoints. (An API endpoint is a URL that acts as the point of contact between an API client and an API server):
+We need three different endpoints. (An API endpoint is a URL that acts as the point of contact between an <span style="text-decoration: underline;" title="The software that requests the data. In FocusTube, our frontend pages act as the client.">API client</span> and an <span style="text-decoration: underline;" title="The software that listens and responds with the data. Our custom NextJS backend (and YouTube) acts as the server.">API server</span>):
 
 - `app/api/playlist`
 - `app/api/search`
@@ -58,13 +58,13 @@ my-app/
 └── README.md
 ```
 
+
 ### Creating the API endpoints
 
-We need to create our **GET** request for each route, as a reminder:
+We need to create a **GET** request for each route. As a reminder, a GET request is used when you want to *access* or *read* data.
 
-- A GET request is when you want to access data
-
-NOTE: We will not POST, only GET, since we do not have a place to put data.
+> **NOTE:** We will not use POST, only GET, since FocusTube only retrieves video data and does not have a database for users to upload or save data.
+{: .prompt-info }
 
 In every `route.js` put this here
 
@@ -83,6 +83,9 @@ For example, when we call this API, this is what our request will look like:
 Notice this part: `?videoId=randomVideoId`
 
 When you create an API request, this is how you will format it. After the question mark, put any parameters that the API accepts along with the input for it.
+
+> **QUESTION:** Besides a `videoId`, what other information do you think a robust video API might accept through query parameters? Think about searching, sorting, or filtering!
+{: .prompt-tip }
 
 So for the one above, this API has the `videoId` parameter, and the input for it, comes after the equal sign.
 
@@ -116,12 +119,24 @@ export async function GET(request) {
 {: file="app/video/page.js" }
 {: .nolineno }
 
-Now that you know how to create an endpoint, create the `route.js` for `/search` and `/playlist` given these two requests:
+### Understanding API Responses
 
+When we return a `new Response()`, we include a **status code**. In our example, we use `200`, which universally stands for "OK" (successful). 
+
+> **QUESTION:** Why is it important to include status codes in an API response? Have you ever encountered a `404` or `500` error while browsing the web? What do you think those mean in the context of an API?
+{: .prompt-tip }
+
+### Creating the Remaining Endpoints
+
+Now that you know how to create an endpoint, you can create the `route.js` for `/search` and `/playlist` using the exact same structure! 
+
+If someone calls your search API, the URL will look like this:
 - `http://localhost:3000/api/search?text=lofi&type=video`
-- `http://localhost:3000/api/playlist?playlistId=myplaylistid`
 
-HINT: For `/search`, the `&` means there are MULTIPLE PARAMETERS, those being `text` and  `type`
+Notice how the `/search` URL uses an `&` symbol. This is how you string multiple query parameters together in a URL! The API will receive both a `text` parameter and a `type` parameter.
+
+And for your playlist API, the URL will look like this:
+- `http://localhost:3000/api/playlist?playlistId=myplaylistid`
 
 ### Test Your APIs
 

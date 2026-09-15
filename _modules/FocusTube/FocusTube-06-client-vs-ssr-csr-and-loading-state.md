@@ -36,33 +36,10 @@ To choose which to use:
 
 **If the data can be fetched after the page loads or you are making an interactive page with UI updates (ie. useState()), use CSR.**
 
-### Routing
-
-Now that you know the difference between CSR and SSR, we will introduce another NextJS feature which can be used in CSR components.
-
-When using **CSR Components**, we can now use `useRouter()`.
-
-**What is useRouter()?**
-
-- Basically NextJS's `<a>` tag for **CSR Components**
-- Easy way to control navigation instead of relying on `<a>` tags
-- Supports many different functions, shown below
-
-```jsx
-const router = useRouter();
+> QUESTION: Think of an example use case for both SSR and CSR
+{: .prompt-tip }
 
 
-// sends you to another route in your website
-router.push('/specified/path');
-
-
-// refreshes the current route you are at
-route.refresh();
-
-
-// Go back in your history
-route.back();
-```
 
 ## Implementing Client Side Rendering
 
@@ -134,7 +111,10 @@ NextJS has a very simple and easy way to solve this issue; you can make a **stat
 - If you have a SSR Component, in the **same folder**, make a `loading.js` file
 - This `loading.js` file needs to be **static** so they can be ready right when someone loads the page.
 
-This implementation is super simple, this is what your file tree should look like.
+> QUESTION: As you might be picking up on, NextJS has some very useful file naming conventions. Can you think of any other useful files you may want along with your name page? Cross compare with the documentation and track if they were on there. https://nextjs.org/docs/app/api-reference/file-conventions
+{: .prompt-tip }
+
+This is what your file tree should look like.
 
 ```
 my-app/
@@ -179,8 +159,28 @@ export default function Loading() {
 }
 ```
 
-*That is all for this section of the tutorial!*
+## Completion & Discussion Checklist
 
-Part 2 is already posted, so whenever feel free to start it whenever you are ready.
+Before joining the group discussion or concluding this tutorial, ensure you have completed the tasks, investigated the bugs, and are ready to discuss the questions below:
 
-If you made it this far, thank you and I hope this tutorial has helped you get a decent start with NextJS!
+<details markdown="1">
+<summary>Click to expand Completion & Discussion Checklist (14 Items)</summary>
+
+| # | Type | Item | Prompt Preview |
+| :-: | :--- | :--- | :--- |
+| 1 | Bug Hunt | Mistyped `<iframe>` Attribute | In the iframe solution, one of the JSX attributes is deliberately mistyped. Use the editor's Problems panel to identify the invalid property and fix it. |
+| 2 | Question | Tooling & Router Paradigms | What exactly is ESLint? What is the architectural difference between the Next.js App Router and the older Pages Router? |
+| 3 | Question | Project Config Files | What are `.gitignore`, `node_modules`, and `package.json` for? What happens if you delete `package-lock.json`? |
+| 4 | Question | Component Definition | What is a React component? Learn a high-level definition to understand how components modularize UI code. |
+| 5 | Question | Component Return Values | What do React component functions return under the hood? |
+| 6 | Question | `<Link>` vs. Standard `<a>` Anchor | Why do we import the `<Link>` component instead of using a standard `<a>` tag? What happens in the browser if you use a standard anchor? |
+| 7 | Question | Input Events & `e.target.value` | In `onChange={(e) => setInput(e.target.value)}`, what is `e.target.value` and where does it come from? |
+| 8 | Question | `"use client"` Boundary | What does `"use client";` at the top of a file do? Why do interactive hooks like `useState` require it? |
+| 9 | Question | HTML Form Semantics | What is a `<form>` element and how does it change how we structure input handling? |
+| 10 | Question | SSR vs. CSR Trade-offs | Think of an example use case for both Server-Side Rendering (SSR) and Client-Side Rendering (CSR). When would you prefer one over the other? |
+| 11 | Question | App Router File Conventions | Next.js uses specific file conventions (`layout.js`, `loading.js`, `error.js`). Can you identify other special files in the documentation? |
+| 12 | Task | Create Playlist Route | Make the playlist route inside `/app/playlist/page.js`. Create a component that shows mock video cards and links each one to `/video`. |
+| 13 | Challenge | Dynamic Video Route Binding | Connect the route parameter in `/app/video/[videoId]/page.js` to the embedded `<iframe>` `src` to play dynamic video IDs. |
+| 14 | Challenge | Static Loading Boundary | Create a static `loading.js` component inside your route directory to render fallback UI during async route transitions. |
+
+</details>

@@ -105,13 +105,11 @@ public static final RegistryObject<Item> RUBY_HELMET = ITEMS.register(
 
 ### Wearing the Armor
 
-**Why is specifying the material used for the armor so important?**
+> **QUESTION:** Why is specifying the exact material name for armor so critical in Minecraft Forge? What naming pattern does Forge expect for wearable armor texture files?
+{: .prompt-tip }
 
-> Forge will take the provided material name and add the strings "_layer_1.png" and "_layer_2.png" to find the textures used for when you WEAR the armor. Therefore, the material name **NEEDS TO LINE UP WITH YOUR TEXTURE PNG FILE NAMES**.
-
-**Where do we put the files for the textures of what we are wearing?**
-
-> In your `textures/` folder, create a new folder called `models/`. Then inside of `models/`, make another folder called `armor/`. This is where Forge will look for the textures of the armor you wear.
+> **NOTE:** Forge appends `_layer_1.png` and `_layer_2.png` to your provided material name to locate the wearable model textures. Your material string **MUST** match your PNG file names exactly! Put these texture files in `src/main/resources/assets/<modid>/textures/models/armor/`.
+{: .prompt-info }
 
 Here is a [link to the two PNGs](https://github.com/johnnystouffer/mod-tutorial/tree/main/src/main/resources/assets/tutorialcraft/textures/models/armor) for you to add.
 

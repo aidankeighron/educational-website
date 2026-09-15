@@ -15,13 +15,10 @@ Next, let's implement authentication with JWT (Json Web Token). Watch [this](htt
 > In this project I will only do the basic access token method. You can do your own research on the refresh token. Practically speaking, in a real project, unless you're working in cybersecurity, you would end up using a library for authentication anyway. 
 {: .prompt-info}
 
-After that you can play around on [jwt.io](https://jwt.io/). Notice it has three parts: headers, payload, and signature. The signature part is done using a private key. However, we don't have a private key yet.
+After that you can explore the debugger on [jwt.io](https://jwt.io/). Notice it has three parts: header, payload, and signature. To sign tokens, create a `SECRET_KEY` field in your `.env` file and configure it in `config.ts`. Use [jwt-keys.21no.de](https://jwt-keys.21no.de/) to generate a cryptographically strong secret string.
 
->Task: Create a SECRET_KEY field in your `.env` file and also set it up in the `config` file. It should not just be a random string. Use [this](https://jwt-keys.21no.de/) to generate a secure key.  
-{: .prompt-tip}
-
-> You might notice that a typical JWT application involves both public key and private key (assymmetric cryptography). In the scope of this project, however, we will only use a simple shared secret key (symmetric cryptography). 
-{: .prompt-info}
+> **NOTE:** In enterprise JWT setups, asymmetric cryptography (public/private key pairs) is commonly used so identity providers sign tokens that services verify independently. In this tutorial, we will use symmetric cryptography (a single shared secret key).
+{: .prompt-info }
 
 #### Which endpoints need protection?
 
@@ -57,24 +54,57 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 
   const user = await User.findOne({ username });
 
-  if (!user || !(await bcrypt.compare(password, String(user!.passwordHash))))
-    return void res.status(401).send({ err: "Invalid credentials "});
+  if (!user || !(await bcrypt.compare(password, String(user!.passwordHash)))) {
+    res.status(401).send({ err: "Invalid credentials" });
+  }
 
   const payload = {
-    username: user.username,
-    name: user.name,
-    id: user._id
+    username: user!.username,
+    name: user!.name,
+    id: user!._id
   };
 
   const token = jwt.sign(payload, config.SECRET_KEY, { expiresIn: 60*60 });
 
-  return void res.status(200).send({ token });
+  res.status(200).send({ token });
 } 
 ```
 {: file="backend/src/controllers/loginController.ts" }
 {: .nolineno }
 
-The login process works by first finding an user with the same username as provided by the request. Then, it hashes the password received from the request and compare it against the one queried from the database. If the username is not valid or the password is incorrect, it sends back a `401 unauthorized`. Otherwise, a JWT is signed along with the payload and returned.
+> **BUG HUNT:** If you test this controller with invalid credentials in Postman, your server will crash with `Error [ERR_HTTP_HEADERS_SENT]: Cannot set headers after they are sent to the client`! Why does Express keep running down to line 18 after sending the 401 response? What keyword is missing inside the `if` statement to immediately halt execution?
+{: .prompt-danger }
+
+> **QUESTION:** What is the purpose of `{ expiresIn: 60 * 60 }`? Why is token expiration set to 1 hour instead of never expiring? What security risks exist if an access token has no expiration date?
+{: .prompt-tip }
+
+### Fixing the Response Flow
+
+In Express, calling `res.send()` or `res.json()` transmits the HTTP response payload to the client, but **it does not automatically exit the JavaScript function**. If execution continues, Express will attempt to send a second response on the same closed connection, triggering `ERR_HTTP_HEADERS_SENT`. Always prefix early error responses with `return`:
+
+```typescript
+  if (!user || !(await bcrypt.compare(password, String(user!.passwordHash)))) {
+    return void res.status(401).send({ err: "Invalid credentials" });
+  }
+```
+{: file="backend/src/controllers/loginController.ts" }
+{: .nolineno }
+
+Next, create the router for user login:
+
+```typescript
+import express from 'express';
+import { login } from '../controllers/loginController';
+
+const loginRouter = express.Router();
+
+loginRouter.post('/', login);
+
+export default loginRouter;
+```
+{: file="backend/src/routers/loginRouter.ts" }
+{: .nolineno }
+
 
 #### Handling JWT 
 
@@ -101,7 +131,7 @@ Next we will cover how the JWT is used.
 
 ##### 1. Token extraction middleware
 
-When the user is logged in and attempts to perform restricted operations, the JWT will be extracted from the request to validate it. This middleware will extracts the token from the `Authorization` header:
+When the user is logged in and attempts to perform restricted operations, the JWT will be extracted from the request to validate it. This middleware will extract the token from the `Authorization` header:
 
 ```typescript
 import { Request, Response, NextFunction } from 'express';
@@ -218,20 +248,14 @@ Aside from `username`, `name` and `id`, the `iat` and `exp` means issued time an
 
 To summarize: the first middleware extracts the JWT and attaches it to the request. The second one validates the token, and if the token is valid, it attaches the username and id of the user to the request. 
 
-> You might be wondering why we attaches the username, name and id to the request after decoding the JWT - would that expose the username and id? Well, the thing is that the JWT payload is not securely encrypted in the first place. JWT use base64 encoding, which is easily reversible, and pretty much everybody can decrypt a JWT once they obtain it. The core part of JWT is to prevent tampering - since only a slight alternation of the content will create a completely different JWT. Read more [here](https://softwareengineering.stackexchange.com/questions/280257/json-web-token-why-is-the-payload-public). 
+> You might be wondering why we attach the username, name and id to the request after decoding the JWT - would that expose the username and id? Well, the thing is that the JWT payload is not securely encrypted in the first place. JWT use base64 encoding, which is easily reversible, and pretty much everybody can decrypt a JWT once they obtain it. The core part of JWT is to prevent tampering - since only a slight alteration of the content will create a completely different JWT. Read more [here](https://softwareengineering.stackexchange.com/questions/280257/json-web-token-why-is-the-payload-public). 
 {: .prompt-info}
 
 ##### 3. Adding middleware to protected endpoints 
 
-Finally, we need to configure the middleware in our `app.ts` file. 
-
-> Task: Add the login endpoint and the two middlewares above to our `app.ts` file. The login and register endpoints should still be public, but the users endpoint should be protected by `jwtAuth`. 
-{: .prompt-tip}
-
-**Answer (click to unblur):**
+Finally, we configure the middleware in our `app.ts` file. Notice how we apply `jwtAuth` selectively to protect `/api/users` while keeping login and registration endpoints public:
 
 ```typescript
-
 // ...
 app.use(express.json());
 
@@ -246,20 +270,14 @@ app.use("/api/users", jwtAuth, userRouter);
 
 export default app;
 ```
-{: file="backend/app.ts"}
+{: file="backend/src/app.ts"}
 {: .nolineno}
-{: .blur}
 
-When the user login/register, there is no JWT, so the `modifyToken` middleware will do nothing. After that, when the user is logged in, they are assigned with a JWT. When they attempts to perform authorized-only operations, requests will be sent to `userRouter` with a JWT. The request will then go through the `modifyToken` middleware, then the `jwtAuth` middleware, then finally arriving at `userRouter` if the JWT is valid. 
+When a user logs in or registers, there is no JWT present, so the `modifyToken` middleware will do nothing. Once authenticated, subsequent requests contain the `Authorization: Bearer <token>` header, allowing `modifyToken` and `jwtAuth` to validate the token before reaching protected routes.
 
-### Creating Contact Controller
+### Creating Contact Controller & Router
 
-The final part of our backend is setting up contact controllers. 
-
-> Task: set up `getAllContacts`, `addNewContact` and `deleteById` in `contactController`. Then create a `contactRouter`, and add it to the `app.ts` file and protect with `jwtAuth`. 
-{: .prompt-tip}
-
-**Answer (click to unblur):**
+The final part of our backend is setting up contact controllers and routes:
 
 ```typescript
 import Contact from '../models/contact';
@@ -268,14 +286,58 @@ import { Request, Response, NextFunction } from 'express';
 import '@shared/types';
 
 export const getAllContacts = async (req: Request, res: Response, next: NextFunction) => {
-  const contacts = await Contact.find({}).populate("belongsTo", { username: 1, name: 1 });
-  res.json(contacts);
-}
+  try {
+    const contacts = await Contact.find({}).populate("belongsTo", { username: 1, name: 1 });
+    res.json(contacts);
+  } catch (err) {
+    next(err);
+  }
+};
 
 export const getById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const contact = await Contact.findById(req.params.id);
+    if (!contact) {
+      return void res.status(404).send({ error: "Contact not found" });
+    }
     res.json(contact);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const addNewContacts = async (req: Request, res: Response, next: NextFunction) => { 
+  const { name, number } = req.body;
+  const userId = req.user.id;
+
+  if (!userId) {
+    return void res.status(401).send({ error: "Invalid token" });
+  }
+  
+  if (!name) {
+    return void res.status(400).send({ error: "Name is required" });
+  }
+  if (!number) {
+    return void res.status(400).send({ error: "Number is required" });
+  }
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return void res.status(400).send({ error: "User not found" });
+    }
+    
+    const contact = new Contact({
+      name,
+      number,
+      belongsTo: userId
+    });
+
+    const newContact = await contact.save();
+    user.contacts = user.contacts.concat(newContact._id as any);
+    await user.save();
+
+    res.status(201).json(newContact);
   } catch (err) {
     next(err);
   }
@@ -284,63 +346,51 @@ export const getById = async (req: Request, res: Response, next: NextFunction) =
 export const deleteById = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.user.id;
 
-  if (!userId) return void res.status(401).send({ error: "Authentication required" });
-
-  const user = await User.findById(userId);
-  if (!user) return void res.status(400).send({ error: "User not found" });
+  if (!userId) {
+    return void res.status(401).send({ error: "Authentication required" });
+  }
 
   try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return void res.status(400).send({ error: "User not found" });
+    }
+
     await Contact.findByIdAndDelete(req.params.id);
-    user.contacts = user.contacts.filter(c => c.toString() != req.params.id);
+    user.contacts = user.contacts.filter(c => c.toString() !== req.params.id);
+    await user.save();
+
     res.status(204).end();
   } catch (err) {
     next(err);
   }
-}
-
-export const addNewContacts = async (req: Request, res: Response, next: NextFunction) => { 
-  const { name, number } = req.body;
-  const userId = req.user.id;
-
-  if (!userId) return void res.status(401).send({ error: "invalid token" });
-  
-  if (!name) {
-    return void res.status(400).send({ error: "Name is required" });
-  }
-  if (!number) {
-    return void res.status(400).send({ error: "Number is required "});
-  }
-
-  const user = await User.findById(userId);
-  if (!user) return void res.status(400).send({ error: "missing userId/invalid" });
-  
-  const contact = new Contact({
-    name,
-    number,
-    belongsTo: userId
-  });
-
-  console.log("ok");
-
-  try {
-    const newContact = await contact.save();
-    user.contacts = user.contacts.concat(newContact._id);
-
-    res.status(201).json(newContact);
-    await user.save();
-  } catch (err) {
-    next(err);
-  }
-}
+};
 ```
-{: file="backend/src/controllers/contactController.ts" }
+{: file="backend/src/controllers/contactController.ts"}
 {: .nolineno }
-{: .blur}
 
-> You might want to look up `req.params` and `req.body` if you don't already know it. 
-{: .prompt-info }
+Next, create the router to expose these contact endpoints:
 
-After that you should verify your code with Postman. It is always good practice to verify your code before moving on. This is very important later on if you work on projects with multiple people on a CI/CD system - you don't want your app to break apart because your code went wrong. 
+```typescript
+import express from 'express';
+import {
+  getAllContacts,
+  getById,
+  addNewContacts,
+  deleteById
+} from '../controllers/contactController';
+
+const contactRouter = express.Router();
+
+contactRouter.get('/', getAllContacts);
+contactRouter.get('/:id', getById);
+contactRouter.post('/', addNewContacts);
+contactRouter.delete('/:id', deleteById);
+
+export default contactRouter;
+```
+{: file="backend/src/routers/contactRouter.ts"}
+{: .nolineno } 
 
 ### Error handling
 
@@ -394,31 +444,42 @@ const errorHandler = (error: Error, req: Request, res: Response, next: NextFunct
   if (error.name === "MongoServerError" && error.message.includes("E11000 duplicate key error")) {
     const duplicate = error.message.includes("email")
       ? "Email"
-      : "Username"
+      : "Username";
     return void res.status(400).json({ error: `${duplicate} has already existed` });
+  }
+
+  if (error.name === "CastError") {
+    return void res.status(400).send({ error: "Invalid id" });
+  }
+
+  if (error.name === "ValidationError") {
+    return void res.status(400).json({ error: error.message });
+  }
 
   next(error);
 };
 
 export default errorHandler;
 ```
-{: file="backend/middleware/errorHandler.ts"}
+{: file="backend/src/middlewares/errorHandler.ts"}
 {: .nolineno}
 
-Reading from the logs above, we can see the error name is `MongoServerError` and the message includes `E11000 duplicate key error`. We use that to specifically target this error. Next, we check if the duplicated value is an email or username, then returning a message based on that error. 
+Finally, connect your new routes and error-handling middlewares in `app.ts`:
 
-The next error we will tackle is `CastError`. This is thrown when an user try to access an endpoint with `/:id` but then the id is invalid (only for Mongoose; since this error is thrown if the id is an invalid MongoDb ObjectId). Try it out yourself with Postman and see the error, then add the error handling part. 
+```typescript
+// ...
+import contactRouter from './routers/contactRouter';
+import unknownEndpoint from './middlewares/unknownEndpoint';
+import errorHandler from './middlewares/errorHandler';
 
-**Answer (click to unblur):**
+// Protected contact routes
+app.use("/api/contacts", jwtAuth, contactRouter);
 
-```typescript 
-	//
-	if (error.name === "CastError") {
-    return void res.status(400).send({ error: "Invalid id" });
+// Unknown endpoint & error handler
+app.use(unknownEndpoint);
+app.use(errorHandler);
+
+export default app;
 ```
-{: file="backend/middleware/errorHandler.ts }
-{: .nolineno }
-{: .blur }
-
-There are a lot more errors that I have not included. As you test your functionalities against different scenarios, you will eventually find more errors. Add them to `errorHandler` accordingly. 
-
+{: file="backend/src/app.ts"}
+{: .nolineno}

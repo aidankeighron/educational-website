@@ -185,24 +185,18 @@ Just like with items, adding blocks usually follows this pattern, with some vari
 
 ### Challenge Block
 
-Now lets make **Sapphire Ore**!
+Now let's make **Sapphire Ore**!
 
-Complete the same steps above to create the sapphire ore. **However, there a couple things I want you to change to make this ore more interesting:**
-- Make it so this ore has the friction of ice. (You slide when you walk over it)
-- Make the sound of the ore sound like Amethyst
-- Edit the strength of this ore
-    - Set destroy time to 6.0
-    - Set explostion resistance to 6.5
+> **CHALLENGE:** Complete the block creation steps to make **Sapphire Ore** with the following custom behaviors:
+> - Set its friction to match ice so players slide when walking over it.
+> - Configure its sound type to sound like Amethyst.
+> - Set `destroyTime` to `6.0` and `explosionResistance` to `6.5`.
+{: .prompt-warning }
 
 [Here is the](https://github.com/johnnystouffer/mod-tutorial/blob/main/src/main/resources/assets/tutorialcraft/textures/block/sapphire_ore.png) PNG for it.
 
-> There will NOT be a solution provided for this one. There is a hint below, but you should able to comfortably figure out how to do this given this [documentation](https://docs.minecraftforge.net/en/latest/blocks/#creating-a-block) and Google (try your best not to use AI right now).
-{: .prompt-danger }
-
-```
-Remember the chaining you did for the item properties? 
-Try that again! Typing a period should show you a list of functions you can use as well.
-```
+> **HINT:** Remember the chaining you did for item properties? Look at the Forge [Block properties documentation](https://docs.minecraftforge.net/en/latest/blocks/#creating-a-block) to chain these block attributes.
+{: .prompt-info }
 {: .blur }
 {: .nolineno }
 

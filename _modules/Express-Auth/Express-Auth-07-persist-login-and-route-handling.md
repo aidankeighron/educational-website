@@ -17,12 +17,11 @@ export function useLogin() {
   // ...
 
   const handleLogin = async (username: string, password: string) => {
-    // ... 
-
     try {
-      const response = await loginService.login(credentials);
+      const response = await loginService.login({ username, password });
       setJwt(response.token);
       window.localStorage.setItem("JwtAccessToken", response.token);
+      return true;
     } catch (error) {
       console.error("Login failed:", error);
       return false;
@@ -32,18 +31,16 @@ export function useLogin() {
 {: file="frontend/src/hooks/useLogin.ts"}
 {: .nolineno}
 
-Then add another `useEffect` to handle the case when the page is refreshed: 
+Then add an effect to restore the token and user session when the page is refreshed: 
 
 ```tsx
 export function useLogin() {
   const [jwt, setJwt] = useState<string | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const { showNotification } = useNotification();
 
   const payload = jwt !== null 
     ? jwtDecode<JwtPayload>(jwt)
     : null;
-
 
   useEffect(() => {
     const jwtAccessToken = window.localStorage.getItem("JwtAccessToken");
@@ -53,10 +50,6 @@ export function useLogin() {
       contactService.setToken(jwtAccessToken);
     }
   }, []);
-
-  useEffect(() => {
-    //..
-  })
 
   // ...
 ```
@@ -68,28 +61,7 @@ export function useLogin() {
 
 It works like this: First the user is logged in, then the JWT is stored inside `localStorage` (see `handleLogin`). Then, after we refresh, all the state will be refreshed (so our `jwt` variable would be null), but then `useEffect` is called, and it retrieves the JWT we stored earlier in the browser, call `setJwt`, and then set the token locally inside `contactService` (more on that later). Since we call `setJwt`, the page is rerendered again, but now we have our `jwt` variable set up, so our app should be able to run smoothly. 
 
-For `contactService`, just use 
-
-```ts
-let token: string;
-export const setToken = (newToken: string) => {
-  token = newToken;
-};
-```
-{: file="frontend/src/services/contactService.ts"}
-{: .nolineno}
-
-This will persist the token directly inside `contactService` and eliminates any necessity to pass the token from outside. 
-
-> Task: In the above part we did not validate if the JWT extracted from localStorage is valid or not (in particular, its expiry time). Try to validate the JWT after it is retrieved from the browser. If it's not valid, do not continue, but rather delete the token from `localStorage`. You can definitely look up on how to do this - I did the same. To test, go back to backend and change `expiresIn` to a small number and try to refresh the website after.
-{: .prompt-tip}
-
-After you're done we can continue working on the logout part. 
-
-> Task: Implement logout function. You should put it inside `useLogin`. The logic is pretty simple: since the contact will not render without `jwt`, you can just clear up all of them. 
-{: .prompt-tip}
-
-**Answer (click to unblur):**
+For logging out, we implement `handleLogout` inside `useLogin` to clear `localStorage`, reset state variables, and clear the token from `contactService`:
 
 ```tsx
   const handleLogout = () => {
@@ -101,16 +73,18 @@ After you're done we can continue working on the logout part.
 ```
 {: file="frontend/src/hooks/useLogin.ts"}
 {: .nolineno}
-{: .blur}
 
 `payload` will also be cleared after this since we call `setJwt` and `setContacts`.
+
+> **QUESTION:** For educational purposes, storing JWTs in `localStorage` is convenient. In production applications, what security trade-offs (such as XSS vs. CSRF vulnerabilities) differentiate storing authentication tokens in `localStorage` versus `HttpOnly` cookies?
+{: .prompt-tip }
 
 ### Better routes handling
 
 Currently we have `/register` for the register page. However, we want a better separation: `/login` for login page, `/home` for home page. We also want some logic handling: for example, when user logged in successfully, we want to immediately go to `/home`. To do that we will be upgrading our `App.tsx` file with more routes and logic. 
 
-> Task: Upgrade your `App.tsx` so that it has three routes: `/login`, `/register`, and `/home`. The `/login` endpoint should only contain `LoginForm`, `/home` should only contain `Homepage` (rename `ContactDisplay` into this), and `/register` to only contain the `RegisterForm`. When the user attempts to go to the default endpoint `/`, you should check if the user is logged in or not and then redirect correspondingly (same goes for `/login` and `/home`).  Use `<Navigate>` to redirect. 
-{: .prompt-tip}
+> **TASK:** Upgrade `App.tsx` so that it has three routes: `/login`, `/register`, and `/home`. If a logged-in user accesses `/` or `/login`, redirect them to `/home` using `<Navigate replace />`. If an unauthenticated user accesses `/home`, redirect them to `/login`.
+{: .prompt-warning }
 
 **Hint 1 (login endpoint)**
 
@@ -187,6 +161,106 @@ function App() {
 {: .nolineno}
 {: .blur}
 
+Let's create our `Homepage` and `NotFoundPage` components:
+
+```tsx
+import { useState, useEffect, type FormEvent } from "react";
+import type { Contact } from "@shared/types";
+import * as contactService from "../services/contactService";
+
+interface HomepageProps {
+  contacts: Contact[];
+  username: string;
+  handleLogout: () => void;
+}
+
+export const Homepage = ({ contacts, username, handleLogout }: HomepageProps) => {
+  const [name, setName] = useState("");
+  const [number, setNumber] = useState("");
+  const [contactList, setContactList] = useState<Contact[]>(contacts);
+
+  useEffect(() => {
+    setContactList(contacts);
+  }, [contacts]);
+
+  const handleAddContact = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!name || !number) return;
+
+    try {
+      const added = await contactService.create({ name, number });
+      setContactList(contactList.concat(added));
+      setName('');
+      setNumber('');
+    } catch (err) {
+      console.error('Failed to add contact', err);
+    }
+  };
+
+  return (
+    <div className="homepage-container">
+      <div className="homepage-header">
+        <span className="homepage-user">Logged in as {username}</span>
+        <button className="homepage-logout" onClick={handleLogout}>Logout</button>
+      </div>
+
+      <h1 className="homepage-title">Your Contacts</h1>
+      <div className="contacts-list">
+        {contactList.map((contact) => (
+          <div key={contact.id} className="contact-card">
+            <span className="contact-name">{contact.name}</span>
+            <span className="contact-number">{contact.number}</span>
+          </div>
+        ))}
+      </div>
+
+      <form className="add-contact-form" onSubmit={handleAddContact}>
+        <h3>Add New Contact</h3>
+        <div className="form-group">
+          <label>Name</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+        <div className="form-group">
+          <label>Number</label>
+          <input
+            type="text"
+            value={number}
+            onChange={(e) => setNumber(e.target.value)}
+          />
+        </div>
+        <button type="submit">Add Contact</button>
+      </form>
+    </div>
+  );
+};
+
+export default Homepage;
+```
+{: file="frontend/src/components/Homepage.tsx"}
+{: .nolineno}
+
+```tsx
+import { Link } from 'react-router-dom';
+
+export const NotFoundPage = () => {
+  return (
+    <div>
+      <h1>404 - Page Not Found</h1>
+      <p>The page you are looking for does not exist.</p>
+      <Link to="/">Go Home</Link>
+    </div>
+  );
+};
+
+export default NotFoundPage;
+```
+{: file="frontend/src/components/NotFoundPage.tsx"}
+{: .nolineno}
+
 The `replace` part in `<Navigate>` is for the new endpoint to replace the old endpoint in your browser history. Without `replace`, you could click the backwards button in your browser and you would go back to `/login` when you are at `/home`, while we don't really want that. 
 
 #### NotFoundPage on backend
@@ -243,6 +317,9 @@ Now, to use the frontend production build with the backend, one option is to cop
 {: file="backend/package.json"}
 {: .nolineno}
 
+> **NOTE:** On Windows PowerShell or Command Prompt, run the build command manually (`cd ../frontend; npm run build; Copy-Item -Recurse dist ..\backend`) or use WSL/Git Bash to run the chained shell commands.
+{: .prompt-info }
+
 This will delete the current `dist` folder (if present), go to frontend and build, then copy the entire folder back to the backend folder. (hence the path `"../../dist/index.html"` in `unknownEndpoint` above  - it tries to load `dist/index.html`).
 
 Next, go back to backend `app.ts`, and add one line:
@@ -260,4 +337,3 @@ app.use(modifyToken);
 {: .nolineno}
 
 This will allow the backend to serve the static`dist` folder.
-

@@ -18,11 +18,12 @@ We will use MongoDB for our database. Setup your database according to this [sho
 ```bash
 MONGODB_URI={your_mongodb_url}
 PORT=3001
+SECRET_KEY=your_secret_jwt_key
 ```
 {: file="backend/.env" }
 
-> **Important**: Never commit your `.env` file to version control! Add it to your `.gitignore` file.
-{: .prompt-warning }
+> **NOTE:** Never commit your `.env` file to version control! Add it to your `.gitignore` file. Use [jwt-keys.21no.de](https://jwt-keys.21no.de/) to generate a cryptographically strong secret string for `SECRET_KEY`.
+{: .prompt-info }
 
 Next, create a configuration file to handle environment variables:
 
@@ -35,6 +36,7 @@ dotenv.config();
 
 const PORT = process.env.PORT || 3001;
 const MONGODB_URI = process.env.MONGODB_URI || '';
+const SECRET_KEY = process.env.SECRET_KEY || '';
 
 export default {
   PORT,
@@ -47,11 +49,11 @@ Next, set up the routers for our endpoints. It makes the function we defined in 
 
 ```typescript
 import express from 'express';
-import { getAllUsers, getById } from '../controllers/userController';
+import { getAll, getById } from '../controllers/userController';
 
 const userRouter = express.Router();
 
-userRouter.get('/', getAllUsers);
+userRouter.get('/', getAll);
 userRouter.get('/:id', getById);
 
 export default userRouter;
@@ -140,13 +142,13 @@ Now our basic backend application should be done. First, configure your `package
 
 ```json
 "scripts": {
-    "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node -r tsconfig-paths/register' src/index.ts",
+    "dev": "nodemon --watch src --exec \"ts-node -r tsconfig-paths/register\" src/index.ts"
   }
 ```
 {: file="backend/package.json"}
 {: .nolineno}
 
-The important part here is the `-r tsconfig-paths/register` part. This will enable path mapping support (like `@shared/types`) and without this your `@shared/*` imports won't work. You can look up the rest if you don' understand.
+The important part here is the `-r tsconfig-paths/register` part. This will enable path mapping support (like `@shared/types`) and without this your `@shared/*` imports won't work. You can look up the rest if you don't understand.
 
 Then start your server:
 
@@ -221,4 +223,3 @@ Expected Response (200 OK):
 
 > **Note**: Notice that the `passwordHash` field is not included in the response. This is because of our `toJSON` transformation in the User model that removes sensitive data.
 {: .prompt-info }
-

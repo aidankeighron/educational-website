@@ -175,21 +175,18 @@ There are a lot of moving components, but thankfully, you won't have to repeat t
 
 Time to try this on your own!
 
-Your goal is to **make a Sapphire item. However, there are additional features for you to add**:
-- It needs to be fire resistant
-- Stacks of Sapphires can only go up to 16
-- Make its durability 500
+> **CHALLENGE:** Make a **Sapphire item** with the following features:
+> - It needs to be fire resistant
+> - Stacks of Sapphires can only go up to 16
+> - Set its durability to 500
+{: .prompt-warning }
 
 [Here is the PNG](https://github.com/johnnystouffer/mod-tutorial/blob/main/src/main/resources/assets/tutorialcraft/textures/item/sapphire.png) for it.
 
 **Try this on your own, using [documentation](https://docs.minecraftforge.net/en/latest/items/) for help**. View the hint below if you need it. Additionally, my solution is included if you get completely stuck.
 
-**HINT**
-
-```
-Remember the chaining method I mentioned earlier when making the Ruby?
-This applies here. Look at the documentation and try to implement it.
-```
+> **HINT:** Remember the method chaining pattern we used when making the Ruby? Look at the Forge item properties documentation and chain the modifier methods together!
+{: .prompt-info }
 {: .nolineno }
 {: .blur }
 

@@ -231,6 +231,9 @@ exclude:
   - purgecss.js
   - rollup.config.js
   - "package*.json"
+  - node_modules
+  - vendor
+  - demos
 
 jekyll-archives:
   enabled: [categories, tags]

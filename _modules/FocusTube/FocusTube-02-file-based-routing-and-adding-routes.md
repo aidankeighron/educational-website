@@ -8,7 +8,7 @@ media_subpath: /assets/tutorials/focustube
 
 ## File-Based Routing
 
-File-Based Routing means that the structure of your files and folders inside the **app/** directory automatically defines the routes in your web app.
+**File-Based Routing** means that the structure of your files and folders inside the **app/** directory *automatically* defines the routes in your web app.
 
 Let’s take a look at what this really means.
 
@@ -22,12 +22,19 @@ export default function Video() {
 {: file="app/video/page.js" }
 {: .nolineno }
 
-Next, go to [http://localhost:3000/video](http://localhost:3000/video)
 
+
+Next, go to [http://localhost:3000/video](http://localhost:3000/video)
 
 Here, you will find the component you just wrote. This because of the File-Based Routing in NextJS; since you made a folder in your **/app** directory and gave it a **page.js**, the web app now treats this *as a route*. In other words, any **folder** in the **/app** directory will become a path in your web app (as long as you have a page.js file inside).
 
+> **QUESTION:** What is a component? They are key to truly mastering the power of react, so learn a high level definition to keep in the back of your mind since this term will come up again and again.
+{: .prompt-tip }
+
 For more information, please feel free to use the [NextJS Documentation](https://nextjs.org/docs/app/building-your-application/routing/route-handlers).
+
+<!-- > **QUESTION:** What is a 'route'? Give an example of when you might need one
+{: .prompt-tip } -->
 
 ## Adding more Routes
 
@@ -95,7 +102,7 @@ export default function Content() {
 {: file="app/video/page.js" }
 {: .nolineno }
 
-> **In the above answer I purposely mistyped one of the attributes of ```<iframe>```.**
+> **BUG:** In the above answer I purposely **mistyped** one of the attributes of `<iframe>`.
 {: .prompt-danger }
 
 Luckily, when you save the file and look at it at the ```/video``` web app route, you will see **a NextJS logo that says issue on the bottom left**.
@@ -106,27 +113,42 @@ When this happens, make sure you always use **Fn+F12**, which lets you inspect y
 
 ### Search Route
 
-Next up, we have our ```/search``` route.
+Next up, we have our `/search` route.
 
-This may sound counter-intuitive, but the search page will be the search results, not the actual search bar. The search bar will be added on the *home page*, which we will get to shortly.
+> **NOTE:** This may sound counter-intuitive, but the search page will display the search results, not the actual search bar. The search bar will be added on the *home page*, which we will get to shortly.
+{: .prompt-info }
 
-I want you to challenge your JavaScript skills for this one. Do your best not to look at the answer until you have tried it yourself.
-
-For this page, you should:
-
-- Add a React component in the page.js that renders a fake video card/item or two
-- Style each video as a card with a thumbnail, title, and description
-- Make sure the cards link to the ```/video``` route (we will get it to link to actual videos later)
-
-**Click below to unblur the answer**
+First, let's create a basic page component that just returns a title.
 
 ```jsx
 export default function SearchPage() {
  return (
    <div>
      <h1>Search Results</h1>
+     {/* Video cards will go here */}
+   </div>
+ );
+}
+```
+{: file="app/search/page.js" }
+{: .nolineno }
+
+> **QUESTION:** This is the second component we have seen. You may start to pickup a pattern on how they are constructed. What do these component functions return?
+{: .prompt-tip }
+
+Next, we need a way to mock a single "Video Card". A video card should have a thumbnail image, a title, and a description. We also want the entire card to be clickable so it can take the user to the `/video` route we just made! A perfect job for a `<Link>` component.
+
+Let's import `<Link>` and add a dummy video card below our title:
+
+```jsx
+import Link from 'next/link';
+
+export default function SearchPage() {
+ return (
+   <div>
+     <h1>Search Results</h1>
      <div>
-       <a href="/video">
+       <Link href="/video">
          <img
            src="https://i.ytimg.com/vi/abc123/mqdefault.jpg"
            alt="How to Learn JavaScript Fast"
@@ -137,21 +159,7 @@ export default function SearchPage() {
            <h2>How to Learn JavaScript Fast</h2>
            <p>A quick guide to getting started with JavaScript.</p>
          </div>
-       </a>
-     </div>
-     <div>
-       <a href="/video">
-         <img
-           src="https://i.ytimg.com/vi/abc123/mqdefault.jpg"
-           alt="Master C++ in 3 Hours"
-           width={160}
-           height={120}
-         />
-         <div>
-           <h2>Master C++ in 3 hours</h2>
-           <p>An easy guide to teach you everything to get started with C++</p>
-         </div>
-       </a>
+       </Link>
      </div>
    </div>
  );
@@ -159,11 +167,18 @@ export default function SearchPage() {
 ```
 {: file="app/search/page.js" }
 {: .nolineno }
-{: .blur }
+
+Wait, what is a `<Link>` component? We defined a 'component' above. It is just that. Just prebuilt for you by React. Using this prebuilt component gives us another really cool ability...
+
+> **QUESTION:**  Why do we import the `<Link>` component instead of just using a standard `<a>` tag? What happens in the browser if you use a standard `<a>` tag?
+{: .prompt-tip }
+
+You can copy and paste the `<Link>` block multiple times if you want to see what a list of results looks like. Later in the tutorial, we will replace this hardcoded fake data with real API calls!
 
 ### Playlist Route
 
-This one you will have to do on your own, but it is very similar to the search route.
+> **TASK:** Make the playlist route. It is very similar to the search route. You got this!
+{: .prompt-warning }
 
 - Inside ```/playlist/page.js```, create a React component that shows fake video cards/items in a playlist
 - Style each video as you want

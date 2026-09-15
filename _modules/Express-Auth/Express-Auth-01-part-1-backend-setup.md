@@ -20,10 +20,11 @@ npm init -y
 ```
 
 Then install dependencies:
+(try to understand their purposes in the scope of the project)
 
-```
+```bash
 npm install bcrypt jsonwebtoken mongoose express cors dotenv
-npm install --save-dev typescript ts-node nodemon @types/bcrypt @types/jsonwebtoken @types/express @types/cors @types/node eslint prettier
+npm install --save-dev typescript@^5.9.3 ts-node nodemon tsconfig-paths @types/bcrypt @types/jsonwebtoken @types/express @types/cors @types/node eslint prettier
 ```
 
 Next, we will create a `tsconfig.json` file. It is used to manage TypeScript in our project. Run
@@ -45,7 +46,6 @@ You will see a newly created `tsconfig.json` file. You can try playing around wi
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
     "paths": {
       "@shared/*": ["../shared/*"]
     },
@@ -95,4 +95,3 @@ backend/
 ├── package.json                
 └── tsconfig.json      
 ```
-

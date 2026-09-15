@@ -212,6 +212,8 @@ The final part is to add a small field to add new contacts to an user like this:
 
 This is no different from the login form so you should do it yourself :)
 
+(Guiding tips: Try simulating the loading state that you would normally see on websites (like a "Saving Profile..." with a loading wheel spinner)
+
 ### Add styling 
 
 Currently our app have no styling at all. You can improve it by adding more CSS/Tailwind/MUI/ etc. in order to improve the appearance of the app. 
@@ -219,6 +221,14 @@ Currently our app have no styling at all. You can improve it by adding more CSS/
 There is no right answer to this. But for example, mine look like this:
 
 ```css
+:root {
+  --primary-color: #2563eb;
+  --error-color: #ef4444;
+  --border-radius: 8px;
+  --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --transition: all 0.2s ease;
+}
+
 /* Homepage Styles */
 .homepage-container {
   max-width: 600px;
@@ -291,9 +301,28 @@ There is no right answer to this. But for example, mine look like this:
 /* etc. */
 ```
 {: file="frontend/src/styles/index.css"}
-{: .nolineno}
-
 Refer back to the gif at the beginning of the guide to see the full design.
+
+## Completion & Discussion Checklist
+
+Before joining the group discussion or concluding this tutorial, ensure you have completed the tasks, investigated the bugs, and are ready to discuss the questions below:
+
+<details markdown="1">
+<summary>Click to expand Completion & Discussion Checklist (9 Items)</summary>
+
+| # | Type | Item | Prompt Preview |
+| :-: | :--- | :--- | :--- |
+| 1 | Bug Hunt | Response Header Crash (`ERR_HTTP_HEADERS_SENT`) | If you test this controller with invalid credentials, the server crashes with `Cannot set headers after they are sent`. Why does Express continue running after calling `res.send()`, and how does `return` fix it? |
+| 2 | Question | Password Hashing Security | Why do we store a hashed password (`passwordHash`) in the database instead of the raw plaintext password? What security implications arise if an attacker accesses unhashed passwords? |
+| 3 | Question | Asynchronous Controller Error Handling | In asynchronous controller functions (like `User.findById()`), what happens if a query fails without a `try/catch` block? How does passing errors to `next(err)` protect the application? |
+| 4 | Question | Input Validation Timing & Cryptographic Cost | Look at the execution order in our register controller: we validate user inputs before calling `bcrypt.hash()`. What potential server performance, reliability, and security issues could arise if we performed password hashing before verifying input formats? |
+| 5 | Question | JWT Expiration Window | What is the purpose of `{ expiresIn: 60 * 60 }`? Why is token expiration set to 1 hour instead of never expiring? What risks exist if an access token has no expiration date? |
+| 6 | Question | Token Storage Security (`localStorage` vs. `HttpOnly`) | For educational purposes, storing JWTs in `localStorage` is convenient. In production applications, what security trade-offs (such as XSS vs. CSRF) differentiate storing tokens in `localStorage` versus `HttpOnly` cookies? |
+| 7 | Task | User Registration Controller | Write the `registerController` to validate username, email, and password, and hash the password before saving using `bcrypt.hash(password, 10)`. |
+| 8 | Task | Frontend Login & State Management | Create function `handleLoginBackend` that will send the credentials (username and password) to the backend `/api/login`. If valid, persist the returned JWT within React state. |
+| 9 | Task | Client Route Protection Guards | Upgrade `App.tsx` so that it has three routes: `/login`, `/register`, and `/home`. If a logged-in user accesses `/` or `/login`, redirect them to `/home` using `<Navigate replace />`. If an unauthenticated user accesses `/home`, redirect them to `/login`. |
+
+</details>
 
 ## Conclusion
 

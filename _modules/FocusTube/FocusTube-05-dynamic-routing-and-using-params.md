@@ -100,7 +100,6 @@ export default function Route({ params }) {
 
 Since all of our routes are dynamic, in every route, **call params and integrate it in someway to your component**, it does not have to make sense yet, that is for later.
 
-
 > The code I gave you had an error, it is not a major error (for now), click **Fn + F12** and it will show you the error. Read the document it provides to correct your code
 {: .prompt-danger }
 

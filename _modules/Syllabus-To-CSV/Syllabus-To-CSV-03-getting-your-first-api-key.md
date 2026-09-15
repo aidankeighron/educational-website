@@ -58,7 +58,7 @@ export default {
 {: .nolineno }
 
 > Never commit this file to GitHub!
-If you’re using Git, be sure to add `hidden.js` to your `.gitignore`.
+If you’re using Git, be sure to add `hidden.js` to your `.gitignore` file.
 {: .prompt-danger }
 
 > New to `.gitignore`? Check out our [Git & GitHub Basics]({{ '/references/git-github-basics/' | relative_url }}) background page for what it is and how to use it.

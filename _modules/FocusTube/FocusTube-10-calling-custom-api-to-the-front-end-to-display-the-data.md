@@ -23,6 +23,9 @@ First, we call the API in `/app/search`:
  );
 ```
 
+> **QUESTION:** What exactly does `encodeURIComponent()` do to a string like "lofi beats 2024!"? What potential issues could occur if we didn't use this function when passing user input into our URL?
+{: .prompt-tip }
+
 Just like how we called the YouTube API, we can call our own API. When we receieve the data, we can display it.
 
 ### How to Display API Data
@@ -99,38 +102,60 @@ Now that you know what the API data may look like, you can get to the data you n
 - **Description** = `items[i].snippet.description`
 - **Video ID** = `items[i].id.videoId`
 
-> **NOTE:** I expect you to know how to get info from JSON objects, if not, here is a [quick demonstration](https://www.youtube.com/watch?v=iiADhChRriM).
-{: .prompt-warning }
+> **TIP:** If you need a refresher on how to extract information from JSON objects, here is a [quick demonstration](https://www.youtube.com/watch?v=iiADhChRriM).
+{: .prompt-tip }
 
 
 To show all the videos, we need to **iterate through all the videos in the items array and display a video card for each one**.
 
-This is easily done with JavaScript's map function:
+First, let's look at what a single video card would look like. We can use an anchor tag (`<a>`) to make the entire card clickable, wrapping the video's thumbnail, title, and description:
+
+```jsx
+<a href={`/video/${vid.id.videoId}`}>
+    <img
+        src={vid.snippet.thumbnails.medium.url}
+        alt={vid.snippet.title}
+        width={160}
+        height={120}
+    />
+    <div>
+        <h2> {vid.snippet.title} </h2>
+        <p> {vid.snippet.description} </p>
+    </div>
+</a>
+```
+
+Now, instead of manually writing that block over and over for every single video, we can use JavaScript's `map()` function. This function goes through our array of videos one by one, and returns our card component for each video. 
+
+Let's build it up:
 
 ```jsx
 const videos = await res.json();
 
-
-return (<div className="flex flex-col items-center w-full overflow-y-auto pb-10">
- {videos.items?.map((vid) => { // go through every video in the items
-
-    // cant use useRouter() since this is SSR
-     return (
-      <a href={`/video/${vid.id.videoId}`}>
-         <img
-             src={vid.snippet.thumbnails.medium.url}
-             alt={vid.snippet.title}
-             width={160}
-             height={120}
-         />
-         <div>
-             <h2> {vid.snippet.title} </h2>
-             <p> {vid.snippet.description} </p>
-         </div>
-     </a>);
-   });
- }
-</div>);
+return (
+  <div className="flex flex-col items-center w-full overflow-y-auto pb-10">
+    {/* Map through the items array */}
+    {videos.items?.map((vid) => { 
+      
+      // We return our anchor tag card for each 'vid'
+      // Note: we can't use useRouter() since this is SSR, so we stick to <a>
+      return (
+        <a href={`/video/${vid.id.videoId}`} key={vid.id.videoId}>
+          <img
+              src={vid.snippet.thumbnails.medium.url}
+              alt={vid.snippet.title}
+              width={160}
+              height={120}
+          />
+          <div>
+              <h2> {vid.snippet.title} </h2>
+              <p> {vid.snippet.description} </p>
+          </div>
+        </a>
+      );
+    })}
+  </div>
+);
 ```
 
 Your full `/video/page.js` should look like this:
@@ -192,16 +217,15 @@ export default function Content() {
 {: .nolineno }
 {: .blur }
 
-Please give an attempt at making the playlist one. You will need to:
-
-- Call your playlist API to retreive the playlist
-- Go through the items (videos) in your playlist and display them as cards
-- Make sure each video links to the `/video/[videoId]/page.js` of that video
-
-> A partial solution with errors is given, but given the demonstrations provided above, you should have more than enough to complete this on your own.
+> **TASK: Build the Playlist Page**
+> 
+> Please give an attempt at making the playlist page. You will need to:
+> - Call your playlist API to retrieve the playlist
+> - Go through the items (videos) in your playlist and display them as cards
+> - Make sure each video links to the `/video/[videoId]/page.js` of that video
+> 
+> A partial solution with some intentional errors is given below, but given the demonstrations provided above, you should have more than enough to complete this on your own!
 {: .prompt-warning }
-
-**Solution (with errors)**
 
 ```jsx
 export default function PlaylistPage({ params }) {
@@ -244,4 +268,3 @@ export default function PlaylistPage({ params }) {
 ```
 {: file="app/playlist/[playlistId]/page.js" }
 {: .nolineno }
-{: .blur }

@@ -14,18 +14,20 @@ As our application grows, you might notice that our `App.tsx` is becoming quite 
 
 First move the login form into its own component: 
 
-```tsx 
-import React, { useState } from "react";
+```tsx
+import { useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface LoginFormProps {
   handleLogin: (username: string, password: string) => void;
 }
 
-const LoginForm = ({ handleLogin }: LoginFormProps ) => {
+const LoginForm = ({ handleLogin }: LoginFormProps) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
-  const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     handleLogin(username, password);
   };
@@ -33,30 +35,47 @@ const LoginForm = ({ handleLogin }: LoginFormProps ) => {
   return (
     <>
       <form onSubmit={onSubmit}>
-        {/* input */}
+        <div>
+          username
+          <input
+            type="text"
+            value={username}
+            name="Username"
+            onChange={(e) => setUsername(e.target.value)}
+          />
+        </div>
+        <div>
+          password
+          <input
+            type="password"
+            value={password}
+            name="Password"
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
         <button type="submit">Login</button>
       </form>
-      <button onClick={registerRedirect}>Register</button>
+      <button type="button" onClick={() => navigate("/register")}>Register</button>
     </>
   );
 };
 
 export default LoginForm;
-
 ```
-{: file="frontend/src/components/LoginForm.tsx}
+{: file="frontend/src/components/LoginForm.tsx"}
 {: .nolineno}
 
-But then how about the backend handling part (`handleLogin`)? We are also going to refactor it into another file, `useLogin`: 
+Next, let's encapsulate authentication state and logic into a custom hook `useLogin`: 
 
 ```tsx
 import { useState, useEffect } from "react";
-import type { LoginRequest, Contact, JwtPayload } from "@shared/types";
-import axios from "axios";
+import type { Contact, JwtPayload } from "@shared/types";
+import * as loginService from "../services/loginService";
+import * as contactService from "../services/contactService";
 import { jwtDecode } from "jwt-decode";
 
 export function useLogin() {
-  const [jwt, setJwt] = useState(null);
+  const [jwt, setJwt] = useState<string | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
 
   const payload = jwt !== null 
@@ -64,70 +83,76 @@ export function useLogin() {
     : null;
 
   useEffect(() => {
-    if (payload !== null) {
-      console.log(jwt);
-      const contactUrl = "/api/contacts";
-      const token = jwt.token;
-
-      const config = {
-      headers: { Authorization: `Bearer ${token}` },
-      };
-
-      axios.get(contactUrl, config).then((response) => {
-      setContacts(response.data.filter(
-        contact => contact.belongsTo.username === payload.username
-      ))
-	  }) 
-	}
-   }, [payload]); 
+    if (payload !== null && jwt) {
+      contactService.setToken(jwt);
+      contactService.getAll().then((data) => {
+        setContacts(data.filter(
+          contact => contact.belongsTo?.username === payload.username
+        ));
+      });
+    }
+  }, [payload, jwt]);
 
   const handleLogin = async (username: string, password: string) => {
-    // ...
+    try {
+      const response = await loginService.login({ username, password });
+      setJwt(response.token);
+      contactService.setToken(response.token);
+      window.localStorage.setItem("JwtAccessToken", response.token);
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
   };
 
-
   return {
+    jwt,
     payload,
     contacts,
     handleLogin,
   };
 }
-
 ```
-{: file="frontend/src/hooks/useLogin.tsx"}
+{: file="frontend/src/hooks/useLogin.ts"}
 {: .nolineno}
 
-> Task: Define the types used in this file that you have not defined in `types.ts`.
-{: .prompt-tip}
-
-**Answer (click to unblur):**
+Now, let's declare concrete TypeScript interfaces in `@shared/types.ts` to ensure type safety across our backend, hooks, and services:
 
 ```tsx
 export interface LoginRequest {
-  username: string, 
-  password: string 
-};
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  token: string;
+}
+
+export interface RegisterRequest {
+  username: string;
+  password: string;
+  name: string;
+  email: string;
+}
 
 export interface Contact {
-  id: string,
-  name: string, 
-  number: string,
+  id: string;
+  name: string;
+  number: string;
   belongsTo: {
-    username: string
-  }
-};
-
+    username: string;
+    name?: string;
+    id?: string;
+  };
+}
 ```
-{: file="@shared/types.ts}
+{: file="@shared/types.ts"}
 {: .nolineno}
-{: .blur}
 
 Although not specifying `LoginRequest` for the credentials does not result in warning, it is good practice to do so. Imagine having hundreds of types of request: `ContactRequest`, `DeleteRequest`, `UpdateRequest`, etc., you will quickly be overwhelmed and lose track of what are which if the types are not concrete. You should also do another `LoginResponse`. 
 
 Next, refactor the contact displaying part into its own component: 
 
 ```tsx
-import React from 'react';
 import type { Contact } from '@shared/types';
 
 interface ContactDisplayProps {
@@ -158,26 +183,26 @@ Here notice that `ContactDisplayProps` is directly defined inside the file. We c
 Finally, after refactoring, our `App.tsx` will be much cleaner:
 
 ```tsx
+import { BrowserRouter as Router } from "react-router-dom";
 import LoginForm from "./components/LoginForm";
 import ContactDisplay from "./components/ContactDisplay";
 import { useLogin } from "./hooks/useLogin";
 
 function App() {
-  const {payload, contacts, handleLogin} = useLogin();
+  const { payload, contacts, handleLogin } = useLogin();
 
   return (
-    <>
+    <Router>
       <h1>login</h1>
       <LoginForm handleLogin={handleLogin} />
       {payload !== null && (
         <ContactDisplay contacts={contacts} username={payload.username} />
       )}
-    </>
+    </Router>
   );
 }
 
 export default App;
-
 ```
 {: file="frontend/src/App.tsx"}
 {: .nolineno}
@@ -233,29 +258,85 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
   return response.data;
 };
 ```
-{: file="frontend/src/services/loginService.ts" }
+Similarly, let's create `registerService.ts` for registration requests:
+
+```tsx
+import axios from "axios";
+import type { RegisterRequest } from '@shared/types';
+
+const baseUrl = "/api/register";
+
+export const register = async (userData: RegisterRequest) => {
+  const response = await axios.post(baseUrl, userData);
+  return response.data;
+};
+```
+{: file="frontend/src/services/registerService.ts" }
 {: .nolineno }
 
-Notice the `Promise<LoginResponse>` return type annotation. This is a best practice - you should always define strict data types for your function inputs and outputs. You may want to refer back to your `loginController` to define the appropriate data type structure for `LoginResponse`. After that you should refactor the whole application before moving on. 
+And refactor all contact-related Axios calls into `contactService.ts` to keep API communication decoupled from UI rendering:
 
-> **Task**: Refactor your `Contact` API calls using the same service pattern, and create a dedicated service file for any place where you're making direct API calls in your current code.
-{: .prompt-tip}
+```tsx
+import axios from 'axios';
+import type { Contact } from '@shared/types';
+
+const baseUrl = '/api/contacts';
+let token: string = '';
+
+export const setToken = (newToken: string) => {
+  token = newToken;
+};
+
+export const getAll = async (): Promise<Contact[]> => {
+  const config = {
+    headers: { Authorization: `Bearer ${token}` }
+  };
+  const response = await axios.get(baseUrl, config);
+  return response.data;
+};
+
+export const create = async (newContact: { name: string; number: string }): Promise<Contact> => {
+  const config = {
+    headers: { Authorization: `Bearer ${token}` }
+  };
+  const response = await axios.post(baseUrl, newContact, config);
+  return response.data;
+};
+
+export const remove = async (id: string): Promise<void> => {
+  const config = {
+    headers: { Authorization: `Bearer ${token}` }
+  };
+  await axios.delete(`${baseUrl}/${id}`, config);
+};
+```
+{: file="frontend/src/services/contactService.ts" }
+{: .nolineno }
 
 ### Register page and React Router
 
-Now we can create a register page for new users to sign up.
+Now we can create a register page for new users to sign up using `react-router-dom`:
 
-Let's start with a basic register form component:
+```bash
+npm install react-router-dom
+```
+
+Let's create our `RegisterForm` component:
 
 ```tsx
 import type { RegisterRequest } from "@shared/types";
-import React, { useState } from 'react';
-import * as registerService from '../services/registerService';
+import { useState, type FormEvent } from "react";
+import * as registerService from "../services/registerService";
+import { useNavigate } from "react-router-dom";
 
 const RegisterForm = () => { 
-  // ... states
-  
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const navigate = useNavigate();
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     try {
@@ -264,79 +345,64 @@ const RegisterForm = () => {
         password,
         name, 
         email
-      }
-
-      await registerService.register(registerData);
-    } catch (err) {
-      console.error(err);
-    }
-  }
-  
-  return (
-    <>
-      <h1>Register</h1>
-      <form onSubmit={handleSubmit}>
-        {/* name, email, username, password */}
-        <button>Register</button>
-      </form>
-    </>
-  )
-}
-
-export default RegisterForm;
-```
-{: file="frontend/src/components/RegisterForm.tsx}
-{: .nolineno}
-
-The question now is: where do we put this page? Using conditional rendering for multiple pages becomes very complicated as our app grows. Instead, we're going to develop our app to use multiple endpoints in the frontend: `/login` for login page, `/register` for register page, and `/home` for the main page (after logged in). 
-
-> Note that in an old school web app this means sending a request to the server, refresh the page, and then we arrive at our destination. In our app, we are in fact still on the same page. We're just simply utilizing Javascript to perform conditional rendering based on endpoints. And by the way, those endpoints are also completely unrelated to the backend. 
-{: .prompt-info}
-
-In order to achieve this we will use React Router. First, install the dependencies:
-
-```
-npm install react-router-dom
-```
-
-Then make the following changes to `RegisterForm`: 
-
-```tsx
-// ...
-import { useNavigate } from 'react-router-dom';
-
-const RegisterForm = () => { 
-  // ... states
-  const navigate = useNavigate();
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    try {
-      // ...
+      };
 
       await registerService.register(registerData);
       navigate("/");
     } catch (err) {
       console.error(err);
     }
-  }
+  };
   
   return (
     <>
-      {/* ... */}
-      <button onClick={() => navigate("/")}>Cancel</button>
+      <h1>Register</h1>
+      <form onSubmit={handleSubmit}>
+        <div>
+          username
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+        </div>
+        <div>
+          name
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+        <div>
+          email
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <div>
+          password
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+        <button type="submit">Register</button>
+      </form>
+      <button type="button" onClick={() => navigate("/")}>Cancel</button>
     </>
-  )
-}
+  );
+};
+
+export default RegisterForm;
 ```
-{: file="frontend/src/components/RegisterForm.tsx}
+{: file="frontend/src/components/RegisterForm.tsx"}
 {: .nolineno}
 
-The `useNavigate` hook is used to navigate to a different page. In our logic, after the registration success, we will be redirected to the default page `/` (which is currently where our login page is located). We also added another cancel button at the end for users to return to homepage.
-
-> Task: Do the same thing in `LoginForm`: Create a `Register` button that navigates to `/register`. 
-{: .prompt-tip}
+The `useNavigate` hook is used to navigate to a different page. In our logic, after the registration success, we will be redirected to the default page `/` (which is currently where our login page is located). We also add a matching `Register` button inside `LoginForm` to allow users to navigate to `/register` using `useNavigate()`.
 
 After that, in `App.tsx`: 
 
@@ -357,7 +423,7 @@ function App() {
             <h1>Login</h1>
             <LoginForm handleLogin={handleLogin} />
             {payload !== null && (
-              <ContactDisplay contacts={contacts} username={user.username} />
+              <ContactDisplay contacts={contacts} username={payload.username} />
             )}
           </>
         } />
@@ -371,5 +437,4 @@ function App() {
 {: file="frontend/src/App.tsx"}
 {: .nolineno}
 
-Now we have three new keywords here: `Router`, `Routes`, and `Route`. `Router` (or actually `BrowserRouter`) wraps our entire application and enables routing, as well as managing the current endpoint and navigation history. The `Routes` is a container that group different `Route` into a collection, and ensure only one `Route` in the group will render at one time. Finally, `Route` should be pretty self-explanatory. 
-
+Now we have three new keywords here: `Router`, `Routes`, and `Route`. `Router` (or actually `BrowserRouter`) wraps our entire application and enables routing, as well as managing the current endpoint and navigation history. The `Routes` is a container that group different `Route` into a collection, and ensure only one `Route` in the group will render at one time. Finally, `Route` should be pretty self-explanatory.

@@ -15,7 +15,7 @@ We are going to create a new GitHub repo for this project, no starter code neede
 - Select `Add` > `Create new repository`
 - Give it a Name and *optionally* a description
 - Click create repository
-- Open in your preferred IDE
+- Open in your preferred IDE (such as VS Code)
 
 Create a file called `manifest.json`, make sure to give it a name and description.
 

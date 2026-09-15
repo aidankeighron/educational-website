@@ -8,6 +8,9 @@ media_subpath: /assets/tutorials/falling sand
 
 Now let's start drawing particles on the canvas when you click the mouse.
 
+> This module uses the DOM and event listeners. New to those? Check out our [JavaScript & DOM Basics]({{ '/references/javascript-dom-basics/' | relative_url }}) background page first.
+{: .prompt-info }
+
 # Brief overview of how canvas works
 
 The HTML `<canvas>` element is used to draw graphics on a webpage using JavaScript. It's like a blank painting surface that you can control with code. To draw on the canvas, you first need to get its 2D rendering context. This context provides methods for drawing shapes, text, images, and more.

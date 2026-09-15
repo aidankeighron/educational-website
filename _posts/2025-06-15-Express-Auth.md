@@ -5,6 +5,7 @@ date: 2025-07-16 12:00:00 +0700
 categories: [ExpressAuth]
 layout: tutorial-hub
 tutorial_slug: Express-Auth
+references: [what-is-an-api, environment-variables]
 tags: [TypeScript, Intermediate, Authentication, JWT, Express, MongoDB, React]
 description: Learn how to build a secure authentication system using Express, MongoDB, React, and TypeScript
 comments: false
@@ -22,7 +23,7 @@ Welcome to the Express Authentication tutorial! In this project, you will learn 
 **Prerequisites**:
 
 - Basic understanding of how the web works, APIs, sending and receiving requests
-- Basic coding skills in JS. React skills is preferrable
+- Basic coding skills in JS. React skills are preferable
 
 **What you will learn:**
 
