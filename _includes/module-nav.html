@@ -1,0 +1,35 @@
+{% assign modules = include.modules %}
+{% assign current_index = include.current_index | minus: 0 %}
+{% assign tutorial_post = include.tutorial_post %}
+{% assign prev_module = nil %}
+{% assign next_module = nil %}
+{% if current_index > 1 %}
+  {% assign prev_index = current_index | minus: 2 %}
+  {% assign prev_module = modules[prev_index] %}
+{% endif %}
+{% if current_index > 0 and current_index < modules.size %}
+  {% assign next_index = current_index %}
+  {% assign next_module = modules[next_index] %}
+{% endif %}
+
+<nav class="module-nav mt-5" aria-label="Module navigation">
+  <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
+    <div>
+      {% if prev_module %}
+        <a class="btn btn-outline-primary" href="{{ prev_module.url | relative_url }}">Previous: {{ prev_module.title }}</a>
+      {% elsif tutorial_post %}
+        <a class="btn btn-outline-secondary" href="{{ tutorial_post.url | relative_url }}">Back to overview</a>
+      {% endif %}
+    </div>
+    <div class="text-muted small">
+      {% if current_index > 0 %}{{ current_index }}{% else %}?{% endif %}/{{ modules.size }}
+    </div>
+    <div>
+      {% if next_module %}
+        <a class="btn btn-primary" href="{{ next_module.url | relative_url }}">Next: {{ next_module.title }}</a>
+      {% elsif tutorial_post %}
+        <a class="btn btn-success" href="{{ tutorial_post.url | relative_url }}">Tutorial complete</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>

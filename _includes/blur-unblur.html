@@ -1,0 +1,10 @@
+<script>
+  const blurredCodeBlocks = document.getElementsByClassName('blur');
+
+  for (let i = 0; i < blurredCodeBlocks.length; ++i) {
+    const blurredCodeBlock = blurredCodeBlocks[i];
+    blurredCodeBlock.addEventListener('click', () => {
+      blurredCodeBlock.classList.remove('blur');
+    });
+  }
+</script>

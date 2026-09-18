@@ -168,6 +168,12 @@ collections:
   tabs:
     output: true
     sort_by: order
+  modules:
+    output: true
+    permalink: /posts/:path/
+  references:
+    output: true
+    permalink: /references/:path/
 
 defaults:
   - scope:
@@ -190,6 +196,18 @@ defaults:
     values:
       layout: page
       permalink: /:title/
+  - scope:
+      path: ""
+      type: modules
+    values:
+      layout: module
+      toc: false
+  - scope:
+      path: ""
+      type: references
+    values:
+      layout: reference
+      toc: false
 
 sass:
   style: compressed
@@ -213,6 +231,9 @@ exclude:
   - purgecss.js
   - rollup.config.js
   - "package*.json"
+  - node_modules
+  - vendor
+  - demos
 
 jekyll-archives:
   enabled: [categories, tags]
@@ -220,5 +241,5 @@ jekyll-archives:
     category: category
     tag: tag
   permalinks:
-    tag: /tags/:name/
-    category: /categories/:name/
+    tag: /topics/:name/
+    category: /series/:name/

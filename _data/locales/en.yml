@@ -4,15 +4,15 @@
 
 layout:
   post: Post
-  category: Category
-  tag: Tag
+  category: Topic
+  tag: Series
 
 # The tabs of sidebar
 tabs:
   # format: <filename_without_extension>: <value>
   home: Home
-  categories: Categories
-  tags: Tags
+  categories: Topics
+  tags: Series
   archives: Archives
   about: About
 

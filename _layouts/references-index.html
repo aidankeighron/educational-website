@@ -1,0 +1,23 @@
+---
+layout: page
+# All background/reference pages
+---
+
+{% assign reference_pages = site.references | sort: "title" %}
+
+<div id="references-index">
+  {% if reference_pages.size > 0 %}
+    <ul class="list-unstyled">
+      {% for ref in reference_pages %}
+        <li class="mb-4">
+          <a class="btn btn-outline-secondary" href="{{ ref.url | relative_url }}">{{ ref.title }}</a>
+          {% if ref.description %}
+            <p class="text-muted mt-2 mb-0">{{ ref.description }}</p>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-muted">No background pages yet.</p>
+  {% endif %}
+</div>
