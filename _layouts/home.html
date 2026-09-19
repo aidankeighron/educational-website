@@ -5,47 +5,9 @@ refactor: true
 
 {% include lang.html %}
 
-{% assign all_pinned = site.posts | where: 'pin', 'true' %}
-{% assign all_normal = site.posts | where_exp: 'item', 'item.pin != true and item.hidden != true' %}
-
-{% assign posts = '' | split: '' %}
-
-<!-- Get pinned posts on current page -->
-
-{% assign visible_start = paginator.page | minus: 1 | times: paginator.per_page %}
-{% assign visible_end = visible_start | plus: paginator.per_page %}
-
-{% if all_pinned.size > visible_start %}
-  {% if all_pinned.size > visible_end %}
-    {% assign pinned_size = paginator.per_page %}
-  {% else %}
-    {% assign pinned_size = all_pinned.size | minus: visible_start %}
-  {% endif %}
-
-  {% for i in (visible_start..all_pinned.size) limit: pinned_size %}
-    {% assign posts = posts | push: all_pinned[i] %}
-  {% endfor %}
-{% else %}
-  {% assign pinned_size = 0 %}
-{% endif %}
-
-<!-- Get normal posts on current page -->
-
-{% assign normal_size = paginator.posts | size | minus: pinned_size %}
-
-{% if normal_size > 0 %}
-  {% if pinned_size > 0 %}
-    {% assign normal_start = 0 %}
-  {% else %}
-    {% assign normal_start = visible_start | minus: all_pinned.size %}
-  {% endif %}
-
-  {% assign normal_end = normal_start | plus: normal_size | minus: 1 %}
-
-  {% for i in (normal_start..normal_end) %}
-    {% assign posts = posts | push: all_normal[i] %}
-  {% endfor %}
-{% endif %}
+{% assign sorted_posts = site.posts | where_exp: 'item', 'item.hidden != true' | sort: 'order' %}
+{% assign page_start = paginator.page | minus: 1 | times: paginator.per_page %}
+{% assign posts = sorted_posts | slice: page_start, paginator.per_page %}
 
 <div id="post-list" class="flex-grow-1 px-xl-1">
   {% for post in posts %}
@@ -82,32 +44,33 @@ refactor: true
               <p>{% include post-description.html %}</p>
             </div>
 
-            <div class="post-meta flex-grow-1 d-flex align-items-end">
-              <div class="me-auto">
-                <!-- posted date -->
-                <i class="far fa-calendar fa-fw me-1"></i>
-                {% include datetime.html date=post.date lang=lang %}
-
-                <!-- categories -->
-                {% if post.categories.size > 0 %}
-                  <i class="far fa-folder-open fa-fw me-1"></i>
-                  <span class="categories">
-                    {% for category in post.categories %}
-                      {{ category }}
-                      {%- unless forloop.last -%},{%- endunless -%}
-                    {% endfor %}
+            <div class="tutorial-meta flex-grow-1 d-flex flex-column justify-content-end">
+              <div class="tutorial-meta__facts text-muted small">
+                {% if post.difficulty %}
+                  <span class="tutorial-meta__difficulty tutorial-meta__difficulty--{{ post.difficulty | downcase }}">
+                    <i class="fas fa-signal fa-fw me-1"></i>{{ post.difficulty }}
                   </span>
                 {% endif %}
               </div>
 
-              {% if post.pin %}
-                <div class="pin ms-1">
-                  <i class="fas fa-thumbtack fa-fw"></i>
-                  <span>{{ site.data.locales[lang].post.pin_prompt }}</span>
+              {% if post.languages.size > 0 %}
+                <div class="tutorial-meta__row mt-2">
+                  <i class="fas fa-code fa-fw me-1" title="Languages"></i>
+                  {% for lang_name in post.languages %}
+                    <span class="badge tutorial-meta__badge tutorial-meta__badge--lang">{{ lang_name }}</span>
+                  {% endfor %}
+                </div>
+              {% endif %}
+
+              {% if post.technologies.size > 0 %}
+                <div class="tutorial-meta__row mt-2">
+                  <i class="fas fa-layer-group fa-fw me-1" title="Technologies"></i>
+                  {% for tech in post.technologies %}
+                    <span class="badge tutorial-meta__badge">{{ tech }}</span>
+                  {% endfor %}
                 </div>
               {% endif %}
             </div>
-            <!-- .post-meta -->
           </div>
           <!-- .card-body -->
         </div>

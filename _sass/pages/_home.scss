@@ -171,3 +171,41 @@
     }
   }
 }
+
+.tutorial-meta {
+  &__difficulty {
+    font-weight: 600;
+
+    &--beginner {
+      color: #2e9d5b;
+    }
+
+    &--intermediate {
+      color: #d98a1f;
+    }
+
+    &--advanced {
+      color: #d64545;
+    }
+  }
+
+  &__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--text-muted-color);
+    font-size: 0.8rem;
+  }
+
+  &__badge {
+    font-weight: 500;
+    color: var(--text-color);
+    background: var(--tag-hover, rgba(128, 128, 128, 0.15));
+    border-radius: 0.5rem;
+
+    &--lang {
+      background: rgba(13, 110, 253, 0.15);
+    }
+  }
+}

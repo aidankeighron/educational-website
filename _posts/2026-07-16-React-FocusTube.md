@@ -9,7 +9,10 @@ references: [what-is-an-api, environment-variables]
 tags: [React, React Native, Expo, FocusTube, Medium]
 description: In this project you will learn the basics of React Native and Expo to build a mobile YouTube wrapper app that will help you focus and not stay distracted
 comments: false
-pin: true
+order: 4
+difficulty: Intermediate
+languages: [JavaScript, React]
+technologies: [React Native, Expo, YouTube API, NativeWind]
 media_subpath: /assets/tutorials/focustube
 image: /focus-screen.png
 ---

@@ -8,7 +8,10 @@ tutorial_slug: Vanilla-Plus-Modding
 tags: [Minecraft, Modding, Java, Medium]
 description: Part 1 of the Modding Minecraft series. This step will teach you the basics of modding when creating your own custom items (ie. blocks, tools, weapons, materials, etc).
 comments: false
-pin: true
+order: 6
+difficulty: Intermediate
+languages: [Java]
+technologies: [Minecraft Forge, IntelliJ IDEA]
 media_subpath: /assets/tutorials/minecraft-mod
 image: /minecraft-mod-1.png
 ---
