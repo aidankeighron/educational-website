@@ -29,7 +29,7 @@ refactor: true
             {% capture lqip %}lqip="{{ post.image.lqip }}"{% endcapture %}
           {% endif %}
 
-          <div class="col-md-5">
+          <div class="col-md-5{% if post.image_stretch %} img-stretch{% endif %}">
             <img src="{{ src }}" alt="{{ alt }}" {{ lqip }}>
           </div>
 
@@ -48,7 +48,16 @@ refactor: true
               <div class="tutorial-meta__facts text-muted small">
                 {% if post.difficulty %}
                   <span class="tutorial-meta__difficulty tutorial-meta__difficulty--{{ post.difficulty | downcase }}">
-                    <i class="fas fa-signal fa-fw me-1"></i>{{ post.difficulty }}
+                    {% case post.difficulty %}
+                      {% when 'Beginner' %}{% assign level = 1 %}
+                      {% when 'Intermediate' %}{% assign level = 2 %}
+                      {% else %}{% assign level = 3 %}
+                    {% endcase %}
+                    <svg class="tutorial-meta__bars me-1" viewBox="0 0 12 12" width="14" height="14" aria-hidden="true">
+                      <rect x="0" y="7" width="3" height="5" rx="0.6" class="{% if level >= 1 %}on{% endif %}"/>
+                      <rect x="4.5" y="4" width="3" height="8" rx="0.6" class="{% if level >= 2 %}on{% endif %}"/>
+                      <rect x="9" y="0" width="3" height="12" rx="0.6" class="{% if level >= 3 %}on{% endif %}"/>
+                    </svg>{{ post.difficulty }}
                   </span>
                 {% endif %}
               </div>

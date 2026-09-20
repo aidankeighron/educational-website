@@ -14,6 +14,7 @@ languages: [JavaScript, HTML, CSS]
 technologies: [Git & GitHub, Web Hosting]
 media_subpath: /assets/tutorials/personal-website
 image: /aidanexample.png
+image_stretch: true
 ---
 
 ## About the project

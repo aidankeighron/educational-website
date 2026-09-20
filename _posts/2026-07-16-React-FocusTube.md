@@ -15,6 +15,7 @@ languages: [JavaScript, React]
 technologies: [React Native, Expo, YouTube API, NativeWind]
 media_subpath: /assets/tutorials/focustube
 image: /focus-screen.png
+image_stretch: true
 ---
 
 ## About the project

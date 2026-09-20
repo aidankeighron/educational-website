@@ -15,6 +15,7 @@ languages: [JavaScript, React]
 technologies: [NextJS, YouTube API, TailwindCSS]
 media_subpath: /assets/tutorials/focustube
 image: /focus-screen.png
+image_stretch: true
 ---
 
 ## About the project

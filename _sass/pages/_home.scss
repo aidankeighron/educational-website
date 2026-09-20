@@ -172,7 +172,45 @@
   }
 }
 
+#post-list .card .row > [class*='col-md-5'] {
+  .preview-img {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: auto;
+    height: 100%;
+    background: var(--img-bg, var(--card-bg));
+
+    img {
+      width: 100%;
+      height: auto;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 0;
+    }
+  }
+
+  &.img-stretch .preview-img img {
+    height: 100%;
+    max-height: none;
+    object-fit: fill;
+  }
+}
+
 .tutorial-meta {
+  &__bars {
+    vertical-align: -2px;
+
+    rect {
+      fill: currentcolor;
+      opacity: 0.25;
+
+      &.on {
+        opacity: 1;
+      }
+    }
+  }
+
   &__difficulty {
     font-weight: 600;
 
