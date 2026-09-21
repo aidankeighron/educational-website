@@ -8,7 +8,7 @@ tutorial_slug: Personal-Website
 tags: [JavaScript, Medium]
 description: Create your own personal website from scratch.
 comments: false
-order: 7
+order: 8
 difficulty: Advanced
 languages: [JavaScript, HTML, CSS]
 technologies: [Git & GitHub, Web Hosting]

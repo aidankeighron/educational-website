@@ -9,7 +9,7 @@ references: [what-is-an-api, environment-variables]
 tags: [TypeScript, Intermediate, Authentication, JWT, Express, MongoDB, React]
 description: Learn how to build a secure authentication system using Express, MongoDB, React, and TypeScript
 comments: false
-order: 5
+order: 6
 difficulty: Intermediate
 languages: [TypeScript, JavaScript]
 technologies: [Express, MongoDB, React, JWT, REST API]
