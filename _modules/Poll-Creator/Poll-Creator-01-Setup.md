@@ -39,17 +39,17 @@ At any point if you want to run the app and see what it looks like on your devic
 
 Scan the QR code generated to run the app with your Expo Go app. When we generated the expo app it automatically generated a basic application, but we don't want this app and are going to discard it. Run the following command in the terminal to reset the project to a blank template (**ensure you are in the right directory**)
 
-    npx run reset-project
+    npm run reset-project
 
 > **Tip:** You will have the option to either keep or remove the app-example directory when the project is reset. If you have never developed with react native before it may be helpful to have the directory as a reference
 {: .prompt-info }
 
-Now the file structure will have two similar directories, my-app and app. When running the program the command will be run from inside the **my-app** directory. When adding the screens to our application those will go inside **app** which is inside the my-app directory
+Now the file structure will have two similar directories, my-app and app. When running the program, the command will be run from inside the **my-app** directory. When adding the screens to our application those will go inside **app** which is inside the my-app directory
 
 
 ### Setting up Firebase
 
-For this project we are going to use two tools from firebase: authentication and database (auth and db). The auth will allow us to keep track of login information and support multiple users. We will be using the db for storing the poll and its results.
+For this project we are going to use two tools from Firebase: authentication and database (auth and db). The auth will allow us to keep track of login information and support multiple users. We will be using the db for storing the poll and its results.
 
 Go to [Firebase Console](https://console.firebase.google.com/) and sign in with your Google account
 > **Tip:** Using a personal Google account is best since it will allow you to keep using Firebase after your MSU email is deleted when you graduate
@@ -76,9 +76,9 @@ After registering the app, Firebase will display a configuration object that we 
         appId: "..."
     };
 ```
-{: file = "firebaseConfig.js"}
+{: file="firebaseConfig.js"}
 
-To use the auth and db that we we will need a config file. This file will initialize both tools and export them for use in our program. We are going to put the code we just copied into this file and complete it later
+To use the auth and db that we will need a config file. This file will initialize both tools and export them for use in our program. We are going to put the code we just copied into this file and complete it later
 
 - Make a directory called src inside of **my-app** and then make another directory called config inside of the new src directory
 - Create a file called firebaseConfig.js inside of the config directory
@@ -115,5 +115,5 @@ The template for the firebase config that we want (complete with both auth and d
 ```
 {: file="firebaseConfig.js" }
 
-> **Tip:** If at any point you need to access your firebaseConfig object again go to Firebase Console &rarr; Settings &rarr; General. Scroll down and select "Config"
+> **Tip:** If, at any point, you need to access your firebaseConfig object again go to Firebase Console &rarr; Settings &rarr; General. Scroll down and select "Config"
 {: .prompt-info }

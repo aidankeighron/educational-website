@@ -6,7 +6,7 @@ categories:
 layout: tutorial-hub
 tutorial_slug: Poll-Creator
 references: [git-github-basics, what-is-an-api, environment-variables]
-tags: [JavaScript, React, Medium]
+tags: [JavaScript, React, React Native, Medium]
 description: Create a poll or quiz and distribute to friends
 comments: false
 order: 5
@@ -14,7 +14,7 @@ difficulty: Intermediate
 languages: [JavaScript]
 technologies: [React Native, Firebase Auth/Firestore DB, Expo Go]
 media_subpath: /assets/tutorials/poll
-image: /Poll.png
+image: /Poll.jpg
 ---
 
 ### About the Project
@@ -28,4 +28,4 @@ In this project you will learn how to use react native, a common framework for d
 
 **What you should already know**
 - JavaScript
-- How to use Git/Github
+- How to use Git/GitHub

@@ -9,9 +9,9 @@ layout: module
 
 Now that we have completed all of the setup for our firebase project we are ready to start developing. The first step will be to route the user to a login page whenever the app is initialized
 
-Navigate to the **app** directory. This is where all of the screens of our app will go. Right now there should be two files, an index.tsx and a _layout.tsx. The _layout.tsx if for shared UI across screeens, and we will not be modifying it. The index.tsx is automatically the first page rendered and runs code that starts the app.
+Navigate to the **app** directory. This is where all of the screens of our app will go. Right now there should be two files, an index.tsx and a _layout.tsx. The _layout.tsx is for shared UI across screens, and we will not be modifying it. The index.tsx is automatically the first page rendered and runs code that starts the app.
 
-When the app is first intialized we want the index.tsx file to redirect to the login page, so let's write the code to do this. 
+When the app is first initialized we want the index.tsx file to redirect to the login page, so let's write the code to do this. 
 
 The basic screen to do this is:
 
@@ -62,7 +62,7 @@ Below are the imports that need to be added at the top of the file:
 {: file="index.tsx"}
 
 Here's a breakdown of what each import statement does:
-- The auth import allows us to accesss the authentication that we set up in the config file
+- The auth import allows us to access the authentication that we set up in the config file
 - Likewise, the next import is a function to create a user within the auth
 - Of course we want the admin credentials we just made
 - These are react-specific and extremely important (they'll get their own section)

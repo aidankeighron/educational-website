@@ -10,7 +10,7 @@ layout: module
 You have finished the main project. Over the course of this project hopefully you learned how to...
 
 - use Google Firebase products
-- develop mobile software using react native
+- develop mobile software using React Native
 - code using React useStates and useEffects
 - add and retrieve data from a NoSQL database
 
@@ -21,7 +21,7 @@ Rather than starting again from scratch, there's a number of cool expansion idea
 ***
 **Expanding ideas:**
 - Add the ability for an admin to have more than one live poll
-- Add in the "login with Google" or other providers from Firebase Auth (you can toggle these in the firebase console)
+- Add in the "login with Google" or other providers from Firebase Auth (you can toggle these in the Firebase Console)
 - Create a "resubmit" button if a user wants to change their vote
 - Have an AI model explain the poll results to the admin
 

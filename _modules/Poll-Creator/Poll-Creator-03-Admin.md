@@ -250,18 +250,18 @@ We're going to work on functionality 1-3 right now and save the poll results for
 
 ### Walking through the code
 
-Let's take a look at the key functional componments of admin.tsx:
+Let's take a look at the key functional components of admin.tsx:
 
 First, there are more helper functions in this file than we've had before. There are 3 small helper functions that are self-explanatory.
 
-One of those three helper functions could use the following code to make sure that the admin can't chose an unreasonable amount of options for the poll:
+One of those three helper functions could use the following code to make sure that the admin can't choose an unreasonable amount of options for the poll:
 
 ```tsx
     if (parseInt(value) > maxOptions){
       value = maxOptions.toString();
     }
 ```
-{: file}
+{: file="admin.tsx"}
 
 You should be able to find where it goes and understand what it's doing if you look through the helper functions.
 

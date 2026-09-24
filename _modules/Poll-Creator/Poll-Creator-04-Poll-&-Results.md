@@ -7,7 +7,7 @@ layout: module
 
 ### Poll.tsx
 
-> Do not continue on to this step until you have completed the prvious coding task!
+> Do not continue on to this step until you have completed the previous coding task!
 {: .prompt-danger }
 
 Now we will make the guest users able to take the poll that we have made. We will provide the UI for the poll and the code to parse our saved poll into the UI. What you will need to do is upload the results into the database so that they can be visualized by the admin in results.tsx later
@@ -147,7 +147,7 @@ Now we will make the guest users able to take the poll that we have made. We wil
 
 There are two more tasks that you need to complete to make the application fully functional. First, we need **completed.tsx** to display some sort of congratulations message indicating the user has completed the poll. This task can range anywhere from a minimal UI to a fancy design project. It's entirely up to you!
 
-Second, and more important: **we want the admin to be able to see the rersults!** Come up with a clever way to visualize the data for the admin. Some things to keep in mind:
+Second, and more important: **we want the admin to be able to see the results!** Come up with a clever way to visualize the data for the admin. Some things to keep in mind:
 
 - You need to pull each user's data from the database so the admin can see all the results
 - Nobody wants to look at a bunch of words - try to make a visualization that's appealing. Possible implementations could be a bar graph or a pie chart
