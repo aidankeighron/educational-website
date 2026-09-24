@@ -9,9 +9,13 @@ references: [what-is-an-api, environment-variables]
 tags: [JavaScript, React, NextJS, FocusTube, Medium]
 description: In this project you will learn the basics of NextJS to start building a YouTube wrapper that will help you focus and not stay distracted
 comments: false
-pin: true
+order: 3
+difficulty: Intermediate
+languages: [JavaScript, React]
+technologies: [NextJS, YouTube API, TailwindCSS]
 media_subpath: /assets/tutorials/focustube
 image: /focus-screen.png
+image_stretch: true
 ---
 
 ## About the project

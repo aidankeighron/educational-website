@@ -9,7 +9,10 @@ references: [git-github-basics, what-is-an-api, environment-variables]
 tags: [JavaScript, Easy]
 description: Convert your class syllabus into a CSV file with all of your assignments
 comments: false
-pin: true
+order: 2
+difficulty: Beginner
+languages: [JavaScript, HTML, CSS]
+technologies: [Chrome Extension, REST API, LLM API]
 media_subpath: /assets/tutorials/csv
 image: /csv.png
 ---

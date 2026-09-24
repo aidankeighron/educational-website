@@ -9,9 +9,13 @@ references: [vscode-setup, git-github-basics, javascript-dom-basics]
 tags: [JavaScript, Easy]
 description: This is the tutorial for the Falling Sand project. 
 comments: false
-pin: true
+order: 1
+difficulty: Beginner
+languages: [JavaScript, HTML, CSS]
+technologies: [HTML Canvas, DOM, Git & GitHub]
 media_subpath: /assets/tutorials/falling sand
 image: /demoHeader1.png
+image_stretch: true
 ---
 
 # About the project

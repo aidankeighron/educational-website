@@ -21,7 +21,7 @@ panel_includes:
   {% if ref_pages.size > 0 %}
     <section class="tutorial-hub__references mb-4">
       <h2 class="panel-heading">Background Info</h2>
-      <div class="d-flex flex-wrap gap-2">
+      <div class="d-flex flex-wrap gap-3">
         {% for ref in ref_pages %}
           <a class="btn btn-outline-secondary" href="{{ ref.url | relative_url }}">{{ ref.title }}</a>
         {% endfor %}
@@ -29,13 +29,14 @@ panel_includes:
     </section>
   {% endif %}
 
+  <div class="tutorial-hub__body content">
+    {{ content }}
+  </div>
+
   {% if first_module %}
-    <div class="tutorial-hub__cta mb-4">
+    <div class="tutorial-hub__cta mt-5">
       <a class="btn btn-primary" href="{{ first_module.url | relative_url }}">Start Module 1</a>
     </div>
   {% endif %}
 
-  <div class="tutorial-hub__body content">
-    {{ content }}
-  </div>
 </article>
