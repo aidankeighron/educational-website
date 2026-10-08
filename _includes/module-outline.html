@@ -1,0 +1,104 @@
+{% assign tutorial_key = page.parent_post | default: page.tutorial_slug | default: page.slug %}
+{% assign tutorial_post = site.posts | where: "tutorial_slug", tutorial_key | first %}
+{% if tutorial_post == nil %}
+  {% assign tutorial_post = site.posts | where: "slug", tutorial_key | first %}
+{% endif %}
+{% assign modules = site.modules | where: "parent_post", tutorial_key | sort: "module_number" %}
+{% assign is_module_page = page.layout == "module" %}
+
+{% if modules.size > 0 %}
+  <section class="module-outline">
+    <h2 class="panel-heading">Outline</h2>
+    <ol class="module-outline__list">
+      {% if tutorial_post %}
+        <li class="module-outline__item">
+          <a href="{{ tutorial_post.url | relative_url }}" class="{% if page.url == tutorial_post.url %}active{% endif %}">
+            Overview
+          </a>
+        </li>
+      {% endif %}
+      {% for module in modules %}
+        <li class="module-outline__item">
+          <a href="{{ module.url | relative_url }}" class="{% if page.url == module.url %}active{% endif %}">
+            {{ module.title }}
+          </a>
+          {% if is_module_page and page.url == module.url %}
+            <ol class="module-outline__subheadings" id="module-subheadings"></ol>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  </section>
+{% endif %}
+
+{% if is_module_page %}
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const subheadingsList = document.getElementById('module-subheadings');
+      if (!subheadingsList) return;
+
+      const headings = Array.from(
+        document.querySelectorAll('article.tutorial-lesson .content h1, article.tutorial-lesson .content h2, article.tutorial-lesson .content h3, article.tutorial-lesson .content h4, article.tutorial-lesson .content h5, article.tutorial-lesson .content h6')
+      ).filter((heading) => heading.textContent.trim().length > 0);
+
+      if (!headings.length) {
+        subheadingsList.remove();
+        return;
+      }
+
+      const usedIds = new Set();
+      const slugify = (text) =>
+        text
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-');
+
+      const minLevel = Math.min(
+        ...headings.map((heading) => Number.parseInt(heading.tagName.substring(1), 10))
+      );
+      const levelStack = [{ level: minLevel - 1, list: subheadingsList }];
+
+      headings.forEach((heading, index) => {
+        if (!heading.id) {
+          const baseId = slugify(heading.textContent) || `module-section-${index + 1}`;
+          let candidate = baseId;
+          let counter = 2;
+          while (usedIds.has(candidate)) {
+            candidate = `${baseId}-${counter}`;
+            counter += 1;
+          }
+          heading.id = candidate;
+        }
+        usedIds.add(heading.id);
+
+        const link = document.createElement('a');
+        link.href = `#${heading.id}`;
+        link.textContent = heading.textContent.trim();
+
+        const level = Number.parseInt(heading.tagName.substring(1), 10);
+        while (levelStack.length > 1 && level <= levelStack[levelStack.length - 1].level) {
+          levelStack.pop();
+        }
+
+        const parent = levelStack[levelStack.length - 1];
+        const item = document.createElement('li');
+        item.className = `module-outline__subheading-item module-outline__subheading-item--h${level}`;
+        item.appendChild(link);
+        parent.list.appendChild(item);
+
+        const childList = document.createElement('ol');
+        childList.className = 'module-outline__subheadings-children';
+        item.appendChild(childList);
+        levelStack.push({ level, list: childList });
+      });
+
+      subheadingsList.querySelectorAll('.module-outline__subheadings-children').forEach((list) => {
+        if (list.children.length === 0) {
+          list.remove();
+        }
+      });
+    });
+  </script>
+{% endif %}

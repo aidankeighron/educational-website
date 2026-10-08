@@ -1,0 +1,41 @@
+---
+layout: default
+refactor: true
+panel_includes:
+  - module-outline
+---
+
+{% assign tutorial_key = page.parent_post %}
+{% assign tutorial_post = site.posts | where: "tutorial_slug", tutorial_key | first %}
+{% if tutorial_post == nil %}
+  {% assign tutorial_post = site.posts | where: "slug", tutorial_key | first %}
+{% endif %}
+{% assign modules = site.modules | where: "parent_post", tutorial_key | sort: "module_number" %}
+{% assign total_modules = modules | size %}
+{% assign current_index = 0 %}
+{% for item in modules %}
+  {% if item.path == page.path %}
+    {% assign current_index = forloop.index %}
+  {% elsif item.url == page.url %}
+    {% assign current_index = forloop.index %}
+  {% endif %}
+{% endfor %}
+
+<article class="tutorial-lesson px-1">
+  <header class="module-header mb-4">
+    <nav class="module-breadcrumb text-muted small mb-2">
+      {% if tutorial_post %}<a href="{{ tutorial_post.url | relative_url }}">{{ tutorial_post.title }}</a>&nbsp;/&nbsp;{% endif %}
+      <span>{{ page.title }}</span>
+    </nav>
+    <h1 class="mb-2">{{ page.title }}</h1>
+  </header>
+
+  {% include tutorial-progress.html current_index=current_index total=total_modules %}
+
+  <div class="content">
+    {{ content }}
+  </div>
+
+  {% include module-nav.html modules=modules current_index=current_index tutorial_post=tutorial_post %}
+  {% include blur-unblur.html %}
+</article>
