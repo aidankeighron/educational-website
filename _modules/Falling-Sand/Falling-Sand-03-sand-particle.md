@@ -303,17 +303,15 @@ update(row, col) {
 Before joining the group discussion or moving on to the next module, ensure you have completed the tasks, investigated the bugs, and are ready to discuss the questions below:
 
 <details markdown="1">
-<summary>Click to expand Completion & Discussion Checklist (7 Items)</summary>
+<summary>Click to expand Completion & Discussion Checklist (5 Items)</summary>
 
 | # | Type | Item | Prompt Preview |
 | :-: | :--- | :--- | :--- |
-| 1 | Bug Hunt | Empty Grid Null Check | Accessing `particle.color` on an empty grid cell causes a null error. Verify that a particle exists at `(row, col)` before reading its properties. |
-| 2 | Question | Grid Bounds & Coordinates | Think about the dimensions of our grid. How can you check if a given row is within the valid range of rows? What about the column? |
-| 3 | Question | Particle Reference vs. Copy | What do we use to represent an empty particle? Are we moving the particle or just making a new one? |
-| 4 | Task | Implement `checkBounds()` | Modify the `checkBounds` function so it returns `true` if `(row, col)` is within the bounds of `grid` and `false` otherwise. Use it in `moveParticle` to prevent particles from moving out of bounds. |
-| 5 | Task | Fix Particle Streaking | Modify the `moveParticle` function in `canvas.js` to stop the particles from streaking as they fall. |
-| 6 | Task | Prevent Particle Overwrite | Utilizing `getParticle`, add a check in `moveParticle` in `canvas.js` to make sure a particle cannot move on top of another particle. |
-| 7 | Challenge | Custom Physics Experimentation | Mess around with the sand physics! What happens if you have the sand move two steps every update (`row+2` or `col+2`), or if you try to move left and right first? |
+| 1 | Bug Hunt | Empty Grid Null Check | The code we just added has an error. `grid` uses `null` to represent empty spaces. This will cause an error when we try to access `particle.color` because `particle` is `null`. |
+| 2 | Task | Implement `checkBounds()` | Modify the `checkBounds` function so it returns `true` if `(row, col)` is within the bounds of `grid` and `false` otherwise. After writing the function, use it in `moveParticle` to prevent particles from being moved out of bounds. |
+| 3 | Task | Fix Particle Streaking | Modify the `moveParticle` function in `canvas.js` to stop the particles from streaking as they fall. |
+| 4 | Task | Prevent Particle Overwrite | Utilizing `getParticle` (which returns the particle at `(row, col)`), add a check in the `moveParticle` function in `canvas.js` to make sure a particle cannot move on top of another particle. |
+| 5 | Challenge | Custom Physics Experimentation | Mess around with the sand physics! What happens if you have the sand move two steps every update (`row+2` or `col+2`), or if you try to move left and right first? |
 
 </details>
 
