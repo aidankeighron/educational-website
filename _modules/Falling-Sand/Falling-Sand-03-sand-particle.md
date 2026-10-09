@@ -298,21 +298,4 @@ update(row, col) {
 > **CHALLENGE:** Mess around with the sand physics! What happens if you have the sand move two steps every update (`row+2` or `col+2`), or if you try to move left and right first?
 {: .prompt-warning }
 
-## Completion & Discussion Checklist
-
-Before joining the group discussion or moving on to the next module, ensure you have completed the tasks, investigated the bugs, and are ready to discuss the questions below:
-
-<details markdown="1">
-<summary>Click to expand Completion & Discussion Checklist (5 Items)</summary>
-
-| # | Type | Item | Prompt Preview |
-| :-: | :--- | :--- | :--- |
-| 1 | Bug Hunt | Empty Grid Null Check | The code we just added has an error. `grid` uses `null` to represent empty spaces. This will cause an error when we try to access `particle.color` because `particle` is `null`. |
-| 2 | Task | Implement `checkBounds()` | Modify the `checkBounds` function so it returns `true` if `(row, col)` is within the bounds of `grid` and `false` otherwise. After writing the function, use it in `moveParticle` to prevent particles from being moved out of bounds. |
-| 3 | Task | Fix Particle Streaking | Modify the `moveParticle` function in `canvas.js` to stop the particles from streaking as they fall. |
-| 4 | Task | Prevent Particle Overwrite | Utilizing `getParticle` (which returns the particle at `(row, col)`), add a check in the `moveParticle` function in `canvas.js` to make sure a particle cannot move on top of another particle. |
-| 5 | Challenge | Custom Physics Experimentation | Mess around with the sand physics! What happens if you have the sand move two steps every update (`row+2` or `col+2`), or if you try to move left and right first? |
-
-</details>
-
 Congratulations! You've completed the first part of the Falling Sand tutorial. You can now create and make sand particles fall and react to simple physics. In the next part, we'll introduce more particle types and make them interact with each other.
