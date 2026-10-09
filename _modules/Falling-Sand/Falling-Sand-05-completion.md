@@ -6,23 +6,26 @@ layout: module
 media_subpath: /assets/tutorials/falling sand
 ---
 
-# Completion & Discussion Checklist
+## Completion & Discussion Checklist
 
 Before joining the group discussion or concluding this tutorial, ensure you have completed the tasks, investigated the bugs, and are ready to discuss the questions below:
 
 <details markdown="1">
-<summary>Click to expand Completion & Discussion Checklist (8 Items)</summary>
+<summary>Click to expand Completion & Discussion Checklist (11 Items)</summary>
 
 | # | Type | Item | Prompt Preview |
 | :-: | :--- | :--- | :--- |
-| 1 | Bug Hunt | Vanishing Water Swap Bug | Run the simulation and drop sand on water. The sand falls through, but the water vanishes! Why did we lose the water particle, and how can we use `temp` to exchange their positions? |
-| 2 | Question | Random Probabilities | Try making water have a small chance to move upwards. What parameters for `getRandomInt()` would you use for a very low probability? |
-| 3 | Question | Elemental Simulation Rules | Think about other substances and elements. How can you define interaction rules for Acid, Ice, Lava, or Steam within object-oriented subclasses? |
-| 4 | Task | Water Movement Variations | Mess around with water physics! Change movement probabilities, add extra options, make floating water, or add teleportation. Add 3 new behaviors to water's `update` function. |
-| 5 | Task | Create `Stone` Class | Create a new class called `Stone` that extends `Particle`. In its constructor, set color to `"gray"` and type to `"stone"`. Add `Stone` as an option in `checkParticleType`. |
-| 6 | Task | Create `Dirt` Class | Create a new class called `Dirt` that extends `Sand`. In its constructor, set color to `"brown"` and type to `"dirt"`. Add `Dirt` as an option in `checkParticleType`. |
-| 7 | Task | Create `Grass` Class | Create a new class called `Grass` extending `Sand` (`color: "green"`, `type: "grass"`). Do not add it to `checkParticleType` — grass can only be created when water touches dirt. |
-| 8 | Challenge | 3 Custom Particles | Add at least 3 new particles and make sure to add interactions with other particles (don't just add `Metal` and make it act like `Stone`). Get creative with it! |
+| 1 | Bug Hunt | Empty Grid Null Check | The code we just added has an error. `grid` uses `null` to represent empty spaces. This will cause an error when we try to access `particle.color` because `particle` is `null`. |
+| 2 | Bug Hunt | Vanishing Water Swap Bug | Run the simulation, create a pool of water, and drop sand particles on top of it. Notice anything strange? The sand falls through, but the water completely vanishes into thin air instead of rising to the surface! |
+| 3 | Task | Implement `checkBounds()` | Modify the `checkBounds` function so it returns `true` if `(row, col)` is within the bounds of `grid` and `false` otherwise. After writing the function, use it in `moveParticle` to prevent particles from being moved out of bounds. |
+| 4 | Task | Fix Particle Streaking | Modify the `moveParticle` function in `canvas.js` to stop the particles from streaking as they fall. |
+| 5 | Task | Prevent Particle Overwrite | Utilizing `getParticle` (which returns the particle at `(row, col)`), add a check in the `moveParticle` function in `canvas.js` to make sure a particle cannot move on top of another particle. |
+| 6 | Task | Water Movement Variations | Mess around with water physics! Change the probabilities of movement, add extra movement options, make floating water, or add a random chance to teleport to a random location. Add **`3`** new behaviors to water's `update` function. |
+| 7 | Task | Create `Stone` Class | Create a new class called `Stone` that extends the `Particle` class. In its constructor, set the color to `"gray"` and the type to `"stone"`. Make sure to add `Stone` as an option in `checkParticleType`. |
+| 8 | Task | Create `Dirt` Class | Create a new class called `Dirt` that extends the `Sand` class. In its constructor, set the color to `"brown"` and the type to `"dirt"`. Make sure to add `Dirt` as an option in `checkParticleType`. |
+| 9 | Task | Create `Grass` Class | Create a new class called `Grass` in `particles.js` that extends the `Sand` class. In its constructor, set the color to `"green"` and the type to `"grass"`. Grass can ONLY be created when water touches dirt. |
+| 10 | Challenge | Custom Physics Experimentation | Mess around with the sand physics! What happens if you have the sand move two steps every update (`row+2` or `col+2`), or if you try to move left and right first? |
+| 11 | Challenge | 3 Custom Particles | Add at least `3` new particles and make sure to add interactions with other particles (don't just add `Metal` and make it act like `Stone`). Get creative with it! |
 
 </details>
 
